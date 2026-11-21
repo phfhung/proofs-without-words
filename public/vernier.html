@@ -201,26 +201,24 @@ function drawCal(){
 // Top-scale lines are 1 mm apart and bottom-scale lines 0.9 mm apart, so the two rows of dots
 // lean at slightly different angles, and a small sideways gap becomes a large move of the crossing.
 function drawWhy(){
-  const v=mm(),Z=40,VW=470,x0=v-1.2,X=m=>(m-x0)*Z,m0=whole(),k=idx(),d=k/10,B=336,Y=j=>252-j*23;let o='';
-  const zs=$('zoom');zs.setAttribute('viewBox',`0 0 ${VW} 440`);zs.classList.remove('wide');$('zhint').hidden=true;
-  for(let j=0;j<=10;j++)o+=`<line x1="6" y1="${Y(j)}" x2="${VW-26}" y2="${Y(j)}" stroke="var(--line)" stroke-width="1"/><text x="${VW-12}" y="${Y(j)+5}" text-anchor="middle" font-size="13" font-weight="${j===k?700:400}" style="fill:${j===k?'var(--c)':'var(--muted)'}">${j}</text>`;
-  // the two scales underneath, exactly as in the close-up
+  const v=mm(),Z=40,VW=470,x0=v-1.2,X=m=>(m-x0)*Z,m0=Math.floor(v+1e-9),k=(v-m0)*10,B=336,Y=j=>252-j*23;let o='';
+  const zs=$('zoom');zs.setAttribute('viewBox',`0 0 ${VW} 424`);zs.classList.remove('wide');$('zhint').hidden=true;
+  const hit=Math.abs(k-Math.round(k))<.02?Math.round(k):-1;
+  for(let j=0;j<=10;j++)o+=`<line x1="6" y1="${Y(j)}" x2="${VW-26}" y2="${Y(j)}" stroke="var(--line)" stroke-width="1"/><text x="${VW-12}" y="${Y(j)+5}" text-anchor="middle" font-size="13" style="fill:var(--muted)">${j}</text>`;
+  // the two scales underneath, as in the close-up
   o+=`<rect class="metal" x="-4" y="270" width="${VW+8}" height="${B-270}"/><rect class="slide" x="${X(v)-20}" y="${B}" width="${9*Z+40}" height="78"/>`;
   for(let m=Math.max(0,Math.floor(x0));m<=x0+VW/Z+1;m++){const x=X(m),l=m%10===0?34:m%5===0?28:22,in_=m>=m0&&m<=m0+10;
-    o+=`<line x1="${x}" y1="${B}" x2="${x}" y2="${B-l}" stroke="${in_?'var(--a)':'var(--ink)'}" stroke-width="${in_?3:2}"/><text x="${x}" y="${B-l-7}" text-anchor="middle" font-size="13" font-weight="${m%10===0?700:400}">${m}</text>`}
-  for(let j=0;j<=10;j++){const x=X(v+j*.9);o+=`<line x1="${x}" y1="${B}" x2="${x}" y2="${B+(j%5===0?32:24)}" stroke="var(--b)" stroke-width="3"/><text x="${x}" y="${B+(j%5===0?32:24)+17}" text-anchor="middle" font-size="14" font-weight="${j===k?700:400}" style="fill:var(--b)">${j}</text>`}
-  // each line lifted to the height of its number
+    o+=`<line x1="${x}" y1="${B}" x2="${x}" y2="${B-l}" stroke="${in_?'var(--a)':'var(--ink)'}" stroke-width="2"/><text x="${x}" y="${B-l-7}" text-anchor="middle" font-size="13" font-weight="${m%10===0?700:400}">${m}</text>`}
+  for(let j=0;j<=10;j++){const x=X(v+j*.9);o+=`<line x1="${x}" y1="${B}" x2="${x}" y2="${B+(j%5===0?32:24)}" stroke="var(--b)" stroke-width="2"/><text x="${x}" y="${B+(j%5===0?32:24)+17}" text-anchor="middle" font-size="14" style="fill:var(--b)">${j}</text>`}
+  // each line lifted to the height of its number: two rows of dots, two straight lines
   for(let j=0;j<=10;j++){const a=X(m0+j),b=X(v+j*.9);
-    o+=`<line x1="${a}" y1="${Y(j)}" x2="${a}" y2="${B}" stroke="var(--a)" stroke-width="1" opacity=".35"/><line x1="${b}" y1="${Y(j)}" x2="${b}" y2="${B}" stroke="var(--b)" stroke-width="1" opacity=".35"/>`;
-    if(j<k)o+=`<line x1="${a}" y1="${Y(j)}" x2="${b}" y2="${Y(j)}" stroke="var(--c)" stroke-width="5"/>`}
+    o+=`<line x1="${a}" y1="${Y(j)}" x2="${a}" y2="${B}" stroke="var(--a)" stroke-width="1" opacity=".22"/><line x1="${b}" y1="${Y(j)}" x2="${b}" y2="${B}" stroke="var(--b)" stroke-width="1" opacity=".22"/>`}
   o+=`<line x1="${X(m0)}" y1="${Y(0)}" x2="${X(m0+10)}" y2="${Y(10)}" stroke="var(--a)" stroke-width="2.5"/><line x1="${X(v)}" y1="${Y(0)}" x2="${X(v+9)}" y2="${Y(10)}" stroke="var(--b)" stroke-width="2.5"/>`;
-  for(let j=0;j<=10;j++)o+=`<circle cx="${X(m0+j)}" cy="${Y(j)}" r="5" fill="var(--a)" stroke="var(--ink)" stroke-width="1"/><circle cx="${X(v+j*.9)}" cy="${Y(j)}" r="5" fill="var(--b)" stroke="var(--ink)" stroke-width="1"/>`;
-  o+=`<circle cx="${X(m0+k)}" cy="${Y(k)}" r="12" fill="none" stroke="var(--c)" stroke-width="3"/>`;
-  // the magnification, in three labels
-  const tx=VW-36,T=(y,t,c,w=700)=>`<text x="${tx}" y="${y}" text-anchor="end" font-size="15" font-weight="${w}" style="fill:${c}" paint-order="stroke" stroke="var(--card)" stroke-width="5">${t}</text>`;
-  if(k===0)o+=T(Y(1)-2,'no gap: line 0 matches','var(--c)');
-  else{const up=k>5;o+=T(up?Y(2)+4:Y(9)+4,`gap at the bottom: ${d.toFixed(1)} mm`,'var(--c)')+T(up?Y(1)+4:Y(8)+4,`the rows cross at line ${k}`,'var(--ink)')+T(up?Y(0)+4:Y(7)+4,`${k} mm along: 10 × bigger`,'var(--ink)')}
-  o+=`<line x1="${X(m0)}" y1="${B+99}" x2="${X(m0+k)}" y2="${B+99}" stroke="var(--c)" stroke-width="3"/>`+(k?`<text x="${(X(m0)+X(m0+k))/2}" y="${B+94}" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--c)">${k} mm</text>`:'');
+  for(let j=0;j<=10;j++){const r=j===hit?5.5:3.2;o+=`<circle cx="${X(m0+j)}" cy="${Y(j)}" r="${r}" fill="var(--a)"/><circle cx="${X(v+j*.9)}" cy="${Y(j)}" r="${r}" fill="var(--b)"/>`}
+  // the gap at the bottom, and the crossing it produces
+  if(k>.02)o+=`<line x1="${X(m0)}" y1="${Y(0)+9}" x2="${X(v)}" y2="${Y(0)+9}" stroke="var(--c)" stroke-width="4"/>`;
+  o+=`<line x1="${X(m0+k)}" y1="${Y(k)}" x2="${VW-26}" y2="${Y(k)}" stroke="var(--c)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+  o+=`<circle cx="${X(m0+k)}" cy="${Y(k)}" r="10" fill="none" stroke="var(--c)" stroke-width="3"/>`;
   zs.innerHTML=o;
 }
 function drawZoom(){
@@ -252,13 +250,14 @@ function drawZoom(){
 function readout(){
   const r=$('read');
   if(hidden()){r.innerHTML=tab===3?`<span class="big">? mm</span><span>Question ${game.done+1} of ${game.done+game.left}</span>`:`<span class="big">? mm</span><span>Read the two scales, then check yourself.</span>`;return}
+  if(tab===1){const v=mm(),g=v-Math.floor(v+1e-9);r.innerHTML=`<span class="big">${v.toFixed(2)} mm</span><span><b style="color:var(--c)">Gap</b> ${g.toFixed(2)} mm, so the lines cross ${(g*10).toFixed(1)} rows up</span>`;return}
   const k=idx(),part=N===10?k/10:k*.05;
   r.innerHTML=`<span class="big">${fmt(mm())} mm</span><span><b class="ka">Top scale:</b> the zero mark is past ${whole()}</span><span><b class="kb">Bottom scale:</b> ${N===10||k%2===0?`line ${N===10?k:k/2}`:`the line between ${(k-1)/2} and ${(k+1)/2}`} matches, so add ${fmt(part)}</span>`;
 }
 function notes(){
   const n=$('notes');
   if(tab===0)n.innerHTML=`<h2>How to read it</h2><ol class="how"><li>Drag the sliding jaw, or use the slider.</li><li><b class="ka">Whole millimetres:</b> find the zero mark on the bottom scale. Read the last top line it has passed.</li><li><b class="kb">The decimal:</b> look along the bottom scale for the one line that sits exactly under a top line. Its number is the tenths.</li><li>Add them. Tick &ldquo;Hide the answer&rdquo; to test yourself.</li></ol><p class="hint">Keys: left and right arrows move the jaw one step.</p>`;
-  if(tab===1)n.innerHTML=`<h2>A magnifying glass made of lines</h2><ol class="how"><li>Every scale line is lifted to a height equal to its number. <b class="ka">Top-scale lines</b> are 1 mm apart, <b class="kb">bottom-scale lines</b> 0.9 mm apart, so the two rows of dots lean at slightly different angles.</li><li>Slide the jaw a tiny bit. The <b style="color:var(--c)">gap</b> at the bottom shrinks by 0.1 mm on every row, and the rows cross where it reaches zero.</li><li>A 0.1 mm slide moves the crossing one whole line, which is 1 mm along the scale. Small gap, big move: that is the magnifying glass.</li></ol><p class="hint">Drag the jaw, or use the buttons to nudge it 0.1 mm at a time. Keys: left and right arrows.</p>`;
+  if(tab===1)n.innerHTML=`<h2>A magnifying glass made of lines</h2><ol class="how"><li>Every scale line is lifted to a height equal to its number. <b class="ka">Top-scale lines</b> are 1 mm apart and <b class="kb">bottom-scale lines</b> 0.9 mm apart, so the two rows lean at slightly different angles.</li><li>Slide the jaw slowly. The <b style="color:var(--c)">crossing</b> glides ten times as far as the jaw moves.</li><li>When the crossing lands exactly on a row, that numbered line matches.</li></ol>`;
   if(tab===2)n.innerHTML=`<h2>Measure something</h2><ol class="how"><li>Pick an object. It sits against the fixed jaw.</li><li>Drag the sliding jaw closed until it stops against the object.</li><li>Read both scales and type the measurement.</li></ol><p class="hint">Sizes are close to the real things, rounded to 0.1 mm.</p>`;
   if(tab===4)n.innerHTML=`<h2>Who came up with it?</h2><p class="hint">It took about a hundred years and three people to get from the idea to the sliding scale, and two hundred more to put it on a tool anyone could buy.</p>
 <ol class="when">
@@ -276,9 +275,17 @@ function draw(){
   drawCal();drawZoom();readout();$('rng').value=s;
   $('prev').disabled=step===0;$('next').disabled=step===WHY.length-1;
 }
-function setS(x){s=Math.max(minS,Math.min(MAXMM*N,Math.round(x)));
+function setS(x){s=Math.max(minS,Math.min(MAXMM*N,tab===1?Math.round(x*10)/10:Math.round(x)));
   if(tab===2&&obj&&!solved&&s===minS)say('The jaw is touching. Now read it.',true);
   draw()}
+let glide=0;
+// nudge buttons and arrow keys: glide one line's worth instead of jumping
+function nudge(d){
+  if(tab!==1){setS(s+d);return}
+  cancelAnimationFrame(glide);const from=s,to=Math.max(0,Math.min(MAXMM*N,d>0?Math.floor(s+1e-6)+1:Math.ceil(s-1e-6)-1)),t0=performance.now();
+  const step=now=>{const u=Math.min(1,(now-t0)/450),e=u<.5?2*u*u:1-2*(1-u)*(1-u);s=from+(to-from)*e;if(u>=1)s=to;draw();if(u<1)glide=requestAnimationFrame(step)};
+  glide=requestAnimationFrame(step);
+}
 function say(t,ok){const m=$('msg');m.hidden=!t;m.textContent=t||'';m.className=ok?'good':'err'}
 function setStep(i){step=Math.max(0,Math.min(WHY.length-1,i));s=WHY[step].s;notes();draw()}
 function pick(i){obj=OBJS[i];solved=false;minS=Math.round(obj.mm*N);s=Math.min(MAXMM*N,minS+9*N+3);$('ans').value='';say('');
@@ -300,7 +307,7 @@ function check(){
     else{game.tries++;say('Not that one. Whole part from the top scale, decimal from the matching line.')}}
 }
 function select(i){
-  tab=i;say('');minS=0;game=null;solved=false;
+  cancelAnimationFrame(glide);tab=i;say('');minS=0;game=null;solved=false;s=Math.round(s);$('rng').step=tab===1?.1:1;
   [...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
   $('c-slide').hidden=tab===3;$('c-step').hidden=true;$('c-obj').hidden=tab!==2;$('c-ans').hidden=tab!==2&&tab!==3;
   $('hidewrap').hidden=tab!==0;$('c-opt').hidden=tab===1||tab===4;$('check').hidden=tab===3;$('go').hidden=tab!==3;$('go').textContent='Start';
@@ -315,7 +322,7 @@ $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)s
 $('objs').innerHTML=OBJS.map(o=>`<button class="btn" type="button">${o.n}</button>`).join('');
 $('objs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)pick([...$('objs').children].indexOf(b))});
 $('rng').addEventListener('input',e=>setS(+e.target.value));
-$('less').addEventListener('click',()=>setS(s-1));$('more').addEventListener('click',()=>setS(s+1));
+$('less').addEventListener('click',()=>nudge(-1));$('more').addEventListener('click',()=>nudge(1));
 $('hide').addEventListener('change',draw);
 $('res').addEventListener('change',e=>{const v=mm();N=+e.target.value;$('rng').max=MAXMM*N;minS=obj&&tab===2?Math.round(obj.mm*N):0;game=null;if(tab===3){$('go').hidden=false;$('go').textContent='Start';$('ans').disabled=true}s=Math.round(v*N);notes();setS(s)});
 $('prev').addEventListener('click',()=>setStep(step-1));$('next').addEventListener('click',()=>setStep(step+1));
@@ -326,7 +333,7 @@ $('ans').addEventListener('input',()=>{if($('msg').className==='err')say('')});
 $('go').addEventListener('click',()=>{game={left:8,done:0,tries:0,t0:performance.now(),time:0};$('go').hidden=true;$('ans').disabled=false;say('');notes();nextQ()});
 // drag the sliding jaw
 let drag=null;const cal=$('cal');
-cal.addEventListener('pointerdown',e=>{if(tab===3)return;drag={x:e.clientX,s0:s,k:640/cal.getBoundingClientRect().width};cal.setPointerCapture(e.pointerId);cal.style.cursor='grabbing'});
+cal.addEventListener('pointerdown',e=>{if(tab===3)return;cancelAnimationFrame(glide);drag={x:e.clientX,s0:s,k:640/cal.getBoundingClientRect().width};cal.setPointerCapture(e.pointerId);cal.style.cursor='grabbing'});
 cal.addEventListener('pointermove',e=>{if(drag)setS(drag.s0+(e.clientX-drag.x)*drag.k/P*N)});
 const end=()=>{drag=null;cal.style.cursor='grab'};cal.addEventListener('pointerup',end);cal.addEventListener('pointercancel',end);
 document.addEventListener('keydown',e=>{
@@ -334,7 +341,7 @@ document.addEventListener('keydown',e=>{
   if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();setStep([...li.parentNode.children].indexOf(li));return}
   if(tag==='input'||tag==='select')return;
   const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!d)return;e.preventDefault();
-  if(tab!==3)setS(s+d);
+  if(tab!==3)nudge(d);
 });
 select(0);
 </script>
