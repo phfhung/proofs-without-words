@@ -98,6 +98,10 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .span{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
 .pt{fill:var(--ink)} .pa{fill:var(--a);stroke:var(--ink);stroke-width:1.5} .pb{fill:var(--b);stroke:var(--ink);stroke-width:1.5} .pc{fill:var(--c);stroke:var(--ink);stroke-width:1.5}
 .lab.plain{font-style:normal}
+.lab.ta{font-style:normal;fill:var(--a)} .lab.tb{font-style:normal;fill:var(--b)} .lab.tc{font-style:normal;fill:var(--c)}
+.ring{fill:none;stroke:var(--c);stroke-width:3.5}
+.sa{stroke:var(--a);stroke-width:7;stroke-linecap:round} .sb{stroke:var(--b);stroke-width:7;stroke-linecap:round}
+.thin{stroke:var(--ink);stroke-width:2}
 .lab.tick{font-style:normal;font-weight:400;font-size:calc(var(--fs)*.72);fill:var(--muted)}
 .pq{display:flex;align-items:center;gap:10px;flex:1 1 130px;min-width:0}
 .pq label{font-weight:700}
@@ -284,6 +288,58 @@ function sceneSquares(p,q){
     }};
 }
 
+/* 4. Sum and product as lengths: the semicircle */
+function sceneSemi(p,q){
+  const U=50,sum=p+q,pr=p*q,h=Math.sqrt(pr),r=sum*U/2,A=P(0,0),B=P(sum*U,0),T=P(p*U,h*U),F=P(p*U,0);
+  const side=p<=q?1:-1;                                   // keep the height label away from the marked point
+  return {bb:[P(0,-fsGuess(sum*U)*2.4),P(sum*U,r+fsGuess(sum*U)*1.4)],
+    draw(t,fs){
+      const d=fade(t,.05,.27),ln=fade(t,.33,.5),pt=fade(t,.5,.6),dr=fade(t,.68,.8),tri=fade(t,.82,.96);
+      let o=seg(A,B,'span',1-dr);
+      o+=txt(`sum = ${sum}`,P(sum*U/2,-fs*1.2),'plain',1-dr);
+      if(d>0)o+=`<path class="ring" pathLength="1" stroke-dasharray="${f(d)} 1" d="M0 0 A${f(r)} ${f(r)} 0 0 1 ${f(sum*U)} 0"/>`;
+      o+=seg(P(0,h*U),P(sum*U,h*U),'dash',ln);
+      o+=txt(`height √${pr}`,P(side>0?sum*U-fs*2.6:fs*2.6,h*U+fs*.75),'tc',ln*(p===q?0:1))+(p===q?txt(`height √${pr} = ${p}`,P(sum*U/2,h*U+fs*.75),'tc',ln):'');
+      o+=seg(A,T,'dash',tri)+seg(T,B,'dash',tri)+(tri>0&&p!==q?`<g opacity="${f(tri)}">${rightMark(T,A,B,fs*.5)}</g>`:'');
+      o+=seg(A,F,'sa',dr)+seg(F,B,'sb',dr)+seg(T,F,'thin',dr)+(dr>0?`<g opacity="${f(dr)}">${rightMark(F,T,p<=q?B:A,fs*.5)}</g>`:'');
+      o+=txt(p,P(p*U/2,-fs*1.2),'ta',dr)+txt(q,P(p*U+q*U/2,-fs*1.2),'tb',dr);
+      o+=circ(T,fs*.3,'pc',pt);
+      return o;
+    }};
+}
+const fsGuess=w=>Math.max(w,1)*.05;
+
+/* 5. The Carlyle circle: sum and product as coordinates */
+function sceneCarlyle(p,q){
+  const b=p+q,c=p*q,cx=-b/2,cy=(1+c)/2,R=Math.hypot(b,c-1)/2,U=280/R,M=(x,y)=>P(x*U,y*U);
+  const xl=Math.min(cx-R,-b),xr=Math.max(cx+R,0),yb=Math.min(cy-R,0),yt=Math.max(cy+R,c);
+  const fs0=Math.max((xr-xl)*U,(yt-yb)*U)*.05;
+  const X0=xl*U-fs0*2.2,X1=xr*U+fs0*2.4,Y0=yb*U-fs0*2.2,Y1=yt*U+fs0*.9;
+  return {bb:[P(X0,Y0),P(X1,Y1)],
+    draw(t,fs){
+      const g=fade(t,.05,.24),di=fade(t,.33,.42),ci=fade(t,.4,.62),rt=fade(t,.66,.76),mid=fade(t,.76,.86),pw=fade(t,.86,.97);
+      let o=seg(P(X0,0),P(X1,0),'axis')+seg(P(0,Y0),P(0,Y1),'axis');
+      const n=Math.floor(xr)-Math.ceil(xl);
+      if(n<=26)for(let x=Math.ceil(xl);x<=Math.floor(xr);x++)if(x)o+=seg(P(x*U,-fs*.14),P(x*U,fs*.14),'axis');
+      // the two given points and the guides to (-b, c)
+      o+=seg(M(-b,0),M(-b,c),'dash',g*.7)+seg(M(0,c),M(-b,c),'dash',g*.7);
+      o+=txt(neg(b),add(M(-b,0),P(0,-fs*.85)),'tick',g*(1-rt))+txt(c,add(M(0,c),P(fs*.75,0)),c===1?'tick':'tc',c===1?0:g);
+      o+=seg(M(0,1),M(-b,c),'dash',di);
+      if(ci>0)o+=`<circle class="ring" pathLength="1" stroke-dasharray="${f(ci)} 1" cx="${f(cx*U)}" cy="${f(-cy*U)}" r="${f(R*U)}"/>`;
+      o+=seg(M(cx,yb),M(cx,cy),'dash',mid)+circ(M(cx,cy),fs*.18,'pt',Math.max(di,mid));
+      o+=txt(`halfway: ${neg(b/2)}`,add(M(cx,cy),P(0,fs*.9)),'plain',mid);
+      // power of a point from the origin
+      o+=seg(M(0,0),M(0,c),'sb',pw*.55)+seg(M(0,0),M(-Math.max(p,q),0),'sa',pw*.55);
+      o+=circ(M(0,1),fs*.28,'pt')+txt('(0, 1)',add(M(0,1),P(fs*1.55,c===1?fs*.9:0)),'plain');
+      o+=circ(M(-b,c),fs*.3,'pc',g)+txt(`(${neg(b)}, ${c})`,add(M(-b,c),P(0,fs*.95)),'tc',g);
+      o+=circ(M(-p,0),fs*.3,'pa',rt)+circ(M(-q,0),fs*.3,'pb',rt);
+      if(p===q)o+=txt(`${neg(p)}, twice`,add(M(-p,0),P(0,-fs*.95)),'plain',rt);
+      else{const lo=Math.max(p,q),hi=Math.min(p,q),sq=(lo-hi)*U<fs*1.5?fs*.5:0;
+        o+=txt(neg(lo),add(M(-lo,0),P(-sq,-fs*.95)),'plain',rt)+txt(neg(hi),add(M(-hi,0),P(sq,-fs*.95)),'plain',rt)}
+      return o;
+    }};
+}
+
 const PROOFS=[
  {id:'multiply',tab:'Multiply out',title:'Where the sum and the product come from',build:sceneTiles,cuts:[.3,.65],dur:9000,
   credit:'An area picture, the same idea as algebra tiles.',
@@ -302,7 +358,19 @@ const PROOFS=[
   steps:['A common question: what is the sum of the squares of the roots? Start with a square whose side is p + q. Its area is the sum, squared.',
          'It splits into a p by p square, a q by q square, and two p by q rectangles. Each rectangle is the product.',
          'Take the two rectangles away. What is left is p² + q². So the sum of the squares is (sum)² − 2 × (product), which is b² − 2c. You never had to find the roots.'],
-  algebra:(p,q,t)=>{const b=p+q,c=p*q;return [`x² + ${b}x + ${c} = 0: sum of roots ${neg(b)}, product ${c}`,`(${neg(b)})² − 2 × ${c} = ${b*b} − ${2*c} = ${b*b-2*c}`,`check: (${neg(p)})² + (${neg(q)})² = ${p*p} + ${q*q} = ${p*p+q*q}`]}}
+  algebra:(p,q,t)=>{const b=p+q,c=p*q;return [`x² + ${b}x + ${c} = 0: sum of roots ${neg(b)}, product ${c}`,`(${neg(b)})² − 2 × ${c} = ${b*b} − ${2*c} = ${b*b-2*c}`,`check: (${neg(p)})² + (${neg(q)})² = ${p*p} + ${q*q} = ${p*p+q*q}`]}},
+ {id:'semicircle',tab:'Semicircle',title:'Sum and product as lengths',build:sceneSemi,cuts:[.3,.66],dur:9000,
+  credit:'The ancient Greek way to find two numbers from their sum and their product. The same picture is in Euclid’s Elements.',
+  steps:['Suppose you know only the sum p + q and the product pq, and you want the two numbers. Draw a line as long as the sum, and a semicircle on it.',
+         'Draw a level line whose height is the square root of the product. Mark the point where it meets the semicircle.',
+         'Drop straight down from that point. It cuts the line into two pieces, and those pieces are p and q. They add up to the sum because together they are the whole line. They multiply to the product because, for a right angle drawn in a semicircle, height × height = piece × piece.'],
+  algebra:(p,q,t)=>{const h=Math.sqrt(p*q);return [`sum ${p+q}, product ${p*q}`,`height = √${p*q} ${Number.isInteger(h)?'= '+h:'≈ '+h.toFixed(2)}`,`pieces ${p} and ${q}: ${p} + ${q} = ${p+q}, ${p} × ${q} = ${p*q}`]}},
+ {id:'circle',tab:'Carlyle circle',title:'Both roots from one circle',build:sceneCarlyle,cuts:[.3,.64],dur:10000,
+  credit:'Named after Thomas Carlyle, the Scottish writer, who worked it out as a young mathematician.',
+  steps:['Take x² + bx + c = 0. Plot two points: (0, 1), and the point that is −b across and c up. Its two coordinates are the sum of the roots and the product of the roots.',
+         'Join the two points, and draw the circle that has them at opposite ends of a diameter.',
+         'The circle crosses the x-axis exactly at the two roots. The sum: the centre is halfway between the two points, so the crossings balance around −b/2 and add up to −b. The product: from the origin, the y-axis meets the circle at distances 1 and c, and the x-axis meets it at distances p and q. Power of a point says 1 × c = p × q.'],
+  algebra:(p,q,t)=>[`x² + ${p+q}x + ${p*q} = 0`,`points (0, 1) and (${neg(p+q)}, ${p*q})`,`crossings: ${neg(p)} and ${neg(q)}`,`power of a point: 1 × ${p*q} = ${p} × ${q}`]}
 ];
 /*GEO-END*/
 
