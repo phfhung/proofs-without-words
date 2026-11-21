@@ -21,6 +21,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `vieta.html` | Vieta's formula, step by step |
 | `parabola.html` | Folding a parabola from paper |
 | `jugs.html` | The Die Hard jug puzzle |
+| `vernier.html` | Reading a vernier caliper, and why it works |
 | `prime-sprint.html` | Prime-tapping speed game |
 
 ## Trying a change locally

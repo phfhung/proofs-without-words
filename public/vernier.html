@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Vernier Caliper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.vz svg{display:block;width:100%;height:auto;touch-action:pan-y}
+#cal{cursor:grab;touch-action:none}
+.zwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.zwrap svg.wide{width:900px;max-width:none}
+.vz text{font-family:var(--body);fill:var(--ink)}
+.metal{fill:var(--tri);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.slide{fill:var(--sq);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.tk{stroke:var(--ink);stroke-width:1.2}
+.zt{stroke:var(--ink);stroke-width:2}
+.thing{fill:var(--c-soft);stroke:var(--c);stroke-width:2}
+.read{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums}
+.read span{display:block}
+.read .big{font-size:1.5rem;font-family:var(--display)}
+.picks{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.picks select,.ans input{font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.ans{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ans input{width:8.5em}
+.err{margin:0;color:#b3261e;font-weight:700;min-height:1.4em}
+.good{margin:0;color:var(--b);font-weight:700;min-height:1.4em}
+.objs{display:flex;flex-wrap:wrap;gap:8px}
+.objs .btn.sel{border-color:var(--accent);border-width:2.5px}
+.how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.toggle{display:flex;gap:8px;align-items:center;font-weight:700}
+.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+[hidden]{display:none!important}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>The vernier caliper</h1>
+    <p class="lede">A ruler shows whole millimetres. A caliper with a vernier scale shows tenths of a millimetre, with no magnifying glass and no guessing. The trick is a second scale whose lines are spaced slightly too close together.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
+
+  <main class="stage">
+    <section class="figure vz" aria-label="Caliper">
+      <svg id="cal" viewBox="0 0 640 310" role="img" aria-label="Caliper. Drag the sliding jaw."></svg>
+      <div class="zwrap" id="zwrap" tabindex="0" role="region" aria-label="Close-up of the two scales"><svg id="zoom" viewBox="0 0 420 210" role="img" aria-label="Close-up of the two scales"></svg></div>
+      <p class="hint" id="zhint" hidden>Swipe the close-up sideways to see the whole bottom scale.</p>
+      <p class="read" id="read" aria-live="polite"></p>
+
+      <div class="row" id="c-slide">
+        <button class="btn" id="less" type="button" aria-label="Close by one step">&minus;</button>
+        <input id="rng" type="range" min="0" max="500" step="1" value="237" aria-label="Open or close the jaws">
+        <button class="btn" id="more" type="button" aria-label="Open by one step">+</button>
+      </div>
+      <div class="row" id="c-step" hidden>
+        <button class="btn" id="prev" type="button" aria-label="Previous step">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next step">Next &rarr;</button>
+      </div>
+      <div id="c-obj" hidden>
+        <div class="objs" id="objs"></div>
+      </div>
+      <div class="ans" id="c-ans" hidden>
+        <label for="ans" id="anslab">Your reading (mm)</label>
+        <input id="ans" type="text" inputmode="decimal" autocomplete="off">
+        <button class="btn primary" id="check" type="button">Check</button>
+        <button class="btn" id="go" type="button" hidden>Start</button>
+      </div>
+      <p class="err" id="msg" role="status" hidden></p>
+      <div class="picks shape" id="c-opt">
+        <label class="toggle" id="hidewrap"><input id="hide" type="checkbox"> Hide the answer</label>
+        <label>Reads to <select id="res"><option value="10">0.1 mm (10 lines)</option><option value="20">0.05 mm (20 lines)</option></select></label>
+      </div>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Read it','Why it works','Measure it','Challenge'];
+const MAXMM=50,P=8,OX=40;
+let N=10,s=237,tab=0,step=0,minS=0,obj=null,solved=false;
+let game=null;                                  // {left, done, tries, t0, time}
+const mm=()=>s/N,dec=()=>N===10?1:2,fmt=x=>x.toFixed(dec());
+const whole=()=>Math.floor(s/N),idx=()=>s%N;
+// "Why it works" walks through four fixed settings (in tenths of a millimetre)
+const WHY=[
+ {s:0,t:'Close the jaws. The top scale is an ordinary ruler in millimetres. The bottom scale slides with the jaw. It has 10 spaces, but they are squeezed into 9 mm, so each space is only 0.9 mm.'},
+ {s:0,t:'So the bottom lines slowly fall behind the top ones. Line 1 is 0.1 mm short of a top line, line 2 is 0.2 mm short, line 3 is 0.3 mm short, and so on. Only line 0 and line 10 match.'},
+ {s:3,t:'Now open the jaws by just 0.3 mm. Every bottom line moves 0.3 mm to the right. Line 3 was 0.3 mm short, so now it lands exactly on a top line. No other line matches.'},
+ {s:233,t:'Open to a real measurement. The zero mark has passed 23 on the top scale, so the whole part is 23. Line 3 is the one that matches, so the extra bit is 0.3. The reading is 23 + 0.3 = 23.3 mm.'}
+];
+const OBJS=[
+ {n:'Quarter',mm:24.3,k:'circle'},{n:'Dime',mm:17.9,k:'circle'},{n:'AA battery',mm:14.5,k:'circle'},
+ {n:'LEGO brick',mm:15.8,k:'brick'},{n:'Pencil',mm:7.2,k:'circle'}
+];
+const hidden=()=>(tab===0&&$('hide').checked)||(tab===2&&!solved)||(tab===3&&game&&!game.time);
+
+function drawCal(){
+  const v=mm(),sx=v*P;let o='';
+  // the thing being measured
+  if(tab===2&&obj){const w=obj.mm*P;
+    if(obj.k==='circle')o+=`<circle class="thing" cx="${OX+w/2}" cy="${104+w/2}" r="${w/2}"/>`;
+    else{o+=`<rect class="thing" x="${OX}" y="106" width="${w}" height="${w}" rx="3"/>`;
+      for(const a of [.27,.73])for(const b of [.27,.73])o+=`<circle class="thing" cx="${OX+w*a}" cy="${106+w*b}" r="${w*.15}"/>`}}
+  // beam with the main scale, and the fixed jaw
+  o+=`<path class="metal" d="M14 52 H626 V100 H${OX} V212 H30 L14 150 Z"/>`;
+  for(let m=0;m<=72;m++){const x=OX+m*P,l=m%10===0?16:m%5===0?11:7;o+=`<line class="tk" x1="${x}" y1="100" x2="${x}" y2="${100-l}"/>`;
+    if(m%10===0)o+=`<text x="${x}" y="78" text-anchor="middle" font-size="18" font-weight="700">${m}</text>`}
+  o+=`<text x="612" y="68" text-anchor="end" font-size="12" style="fill:var(--muted)">mm</text>`;
+  // sliding jaw with the vernier scale
+  const W=(N-1)*P+34;
+  o+=`<g transform="translate(${sx} 0)"><path class="slide" d="M${OX} 100 H${OX+W} V140 H${OX+26} L${OX+10} 212 H${OX} Z"/>`;
+  for(let k=0;k<=N;k++){const x=OX+k*(N-1)/N*P,l=k%(N/2)===0?13:8;o+=`<line class="tk" x1="${x}" y1="100" x2="${x}" y2="${100+l}"/>`}
+  o+=`<text x="${OX}" y="130" text-anchor="middle" font-size="12" font-weight="700">0</text><text x="${OX+(N-1)*P}" y="130" text-anchor="middle" font-size="12" font-weight="700">10</text>`;
+  o+=`<rect x="${OX+W-20}" y="140" width="14" height="8" rx="2" class="slide"/></g>`;
+  $('cal').innerHTML=o;
+}
+function drawZoom(){
+  const v=mm(),Z=N===10?40:44,VW=N===10?420:900,x0=v-.75,X=m=>(m-x0)*Z,hid=hidden(),B=112;let o='';
+  const zs=$('zoom');zs.setAttribute('viewBox',`0 0 ${VW} 210`);zs.classList.toggle('wide',N===20);$('zhint').hidden=N!==20;
+  o+=`<rect class="metal" x="-4" y="30" width="${VW+8}" height="${B-30}"/><rect class="slide" x="${X(v)-22}" y="${B}" width="${(N-1)*Z+44}" height="94"/>`;
+  const k=idx(),m0=whole(),hit=m0+k;                       // vernier line k sits on main line m0+k
+  for(let m=Math.max(0,Math.floor(x0));m<=x0+VW/Z+1;m++){
+    const x=X(m),l=m%10===0?40:m%5===0?32:24,on=!hid&&(m===hit||m===m0);
+    o+=`<line x1="${x}" y1="${B}" x2="${x}" y2="${B-l}" stroke="${!hid&&m===hit?'var(--b)':!hid&&m===m0?'var(--a)':'var(--ink)'}" stroke-width="${on?4:2}"/>`;
+    if(N===10||m%5===0)o+=`<text x="${x}" y="${B-l-8}" text-anchor="middle" font-size="${m%10===0?17:14}" font-weight="${m%10===0||(!hid&&m===m0)?700:400}"${!hid&&m===m0?' style="fill:var(--a)"':''}>${m}</text>`;
+  }
+  for(let j=0;j<=N;j++){
+    const x=X(v+j*(N-1)/N),on=!hid&&j===k,l=j%(N/2)===0?34:N===20&&j%2?18:26;
+    o+=`<line x1="${x}" y1="${B}" x2="${x}" y2="${B+l}" stroke="${on?'var(--b)':'var(--ink)'}" stroke-width="${on?4:2}"/>`;
+    if(N===10||j%2===0)o+=`<text x="${x}" y="${B+l+18}" text-anchor="middle" font-size="15" font-weight="${on?700:400}"${on?' style="fill:var(--b)"':''}>${N===10?j:j/2}</text>`;
+  }
+  if(!hid){o+=`<path d="M${X(v)} ${B+62} l-7 12 h14 z" fill="var(--a)"/>${tab===1&&step<2?'':`<text x="${X(v)+12}" y="${B+78}" font-size="13" font-weight="700" style="fill:var(--a)">zero mark</text>`}`;
+    o+=`<circle cx="${X(hit)}" cy="${B}" r="9" fill="none" stroke="var(--b)" stroke-width="2.5"/>`}
+  if(tab===1&&step===0){const a=X(0),b=X(9);
+    o+=`<path d="M${a} 26 V19 H${b} V26" fill="none" stroke="var(--c)" stroke-width="2.5"/><text x="${(a+b)/2}" y="14" text-anchor="middle" font-size="14" font-weight="700" style="fill:var(--c)">9 mm on top</text>`;
+    o+=`<path d="M${a} ${B+70} v8 H${b} v-8" fill="none" stroke="var(--c)" stroke-width="2.5"/><text x="${(a+b)/2}" y="${B+92}" text-anchor="middle" font-size="14" font-weight="700" style="fill:var(--c)">10 spaces below, each 0.9 mm</text>`}
+  if(tab===1&&step===1)for(let j=1;j<=5;j++){const a=X(j*.9),b=X(j);
+    o+=`<rect x="${a}" y="${B-4}" width="${b-a}" height="8" fill="var(--c)"/><text x="${(a+b)/2}" y="${B+68}" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--c)">${(j/10).toFixed(1)}</text>`}
+  if(tab===1&&step===1)o+=`<text x="${X(3)}" y="${B+88}" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--c)">how far each line is short (mm)</text>`;
+  $('zoom').innerHTML=o;
+}
+function readout(){
+  const r=$('read');
+  if(hidden()){r.innerHTML=tab===3?`<span class="big">? mm</span><span>Question ${game.done+1} of ${game.done+game.left}</span>`:`<span class="big">? mm</span><span>Read the two scales, then check yourself.</span>`;return}
+  if(tab===1&&step<2){r.innerHTML=`<span class="big">0.0 mm</span><span>Jaws closed: line 0 matches the 0 on top.</span>`;return}
+  const k=idx(),part=N===10?k/10:k*.05;
+  r.innerHTML=`<span class="big">${fmt(mm())} mm</span><span><b class="ka">Top scale:</b> the zero mark is past ${whole()}</span><span><b class="kb">Bottom scale:</b> ${N===10||k%2===0?`line ${N===10?k:k/2}`:`the line between ${(k-1)/2} and ${(k+1)/2}`} matches, so add ${fmt(part)}</span>`;
+}
+function notes(){
+  const n=$('notes');
+  if(tab===0)n.innerHTML=`<h2>How to read it</h2><ol class="how"><li>Drag the sliding jaw, or use the slider.</li><li><b class="ka">Whole millimetres:</b> find the zero mark on the bottom scale. Read the last top line it has passed.</li><li><b class="kb">The decimal:</b> look along the bottom scale for the one line that sits exactly under a top line. Its number is the tenths.</li><li>Add them. Tick &ldquo;Hide the answer&rdquo; to test yourself.</li></ol><p class="hint">Keys: left and right arrows move the jaw one step.</p>`;
+  if(tab===1)n.innerHTML=`<h2>Why one line always matches</h2><ol class="steps" id="steps">${WHY.map((w,i)=>`<li role="button" tabindex="0" class="${i===step?'on':''}"><span>${w.t}</span></li>`).join('')}</ol><p class="hint">Tap a step to jump to it. Keys: left and right arrows step through.</p>`;
+  if(tab===2)n.innerHTML=`<h2>Measure something</h2><ol class="how"><li>Pick an object. It sits against the fixed jaw.</li><li>Drag the sliding jaw closed until it stops against the object.</li><li>Read both scales and type the measurement.</li></ol><p class="hint">Sizes are close to the real things, rounded to 0.1 mm.</p>`;
+  if(tab===3){let best='';try{const b=localStorage.getItem('vernier-best-'+N);if(b)best=`<p class="hint">Best time on this device: ${(+b).toFixed(1)} s</p>`}catch(e){}
+    n.innerHTML=`<h2>Challenge: eight readings</h2><ol class="how"><li>Press Start. The jaws jump to a random opening.</li><li>Type the reading and press Enter.</li><li>Eight correct readings stops the clock. A wrong answer costs nothing but time.</li></ol>${game&&game.time?`<p class="good">Done in ${game.time.toFixed(1)} s, with ${game.tries} wrong ${game.tries===1?'try':'tries'}.</p>`:''}${best}`}
+}
+function draw(){
+  drawCal();drawZoom();readout();$('rng').value=s;
+  $('prev').disabled=step===0;$('next').disabled=step===WHY.length-1;
+}
+function setS(x){s=Math.max(minS,Math.min(MAXMM*N,Math.round(x)));
+  if(tab===2&&obj&&!solved&&s===minS)say('The jaw is touching. Now read it.',true);
+  draw()}
+function say(t,ok){const m=$('msg');m.hidden=!t;m.textContent=t||'';m.className=ok?'good':'err'}
+function setStep(i){step=Math.max(0,Math.min(WHY.length-1,i));s=WHY[step].s;notes();draw()}
+function pick(i){obj=OBJS[i];solved=false;minS=Math.round(obj.mm*N);s=Math.min(MAXMM*N,minS+9*N+3);$('ans').value='';say('');
+  [...$('objs').children].forEach((b,j)=>b.classList.toggle('sel',j===i));draw()}
+function nextQ(){let t;do{t=Math.floor(Math.random()*(45*N))+2*N}while(t===s);s=t;$('ans').value='';$('ans').focus();draw()}
+function check(){
+  const raw=$('ans').value.trim().replace(',','.');
+  if(raw===''){say('Type your reading first.');return}
+  const x=Number(raw);if(!isFinite(x)){say('That is not a number. Try something like 12.3');return}
+  const right=Math.abs(x-mm())<1e-9||Math.abs(x*N-s)<1e-6;
+  if(tab===2){if(s!==minS){say('Close the jaw onto the object first.');return}
+    if(right){solved=true;say(`Correct: the ${obj.n.replace(/^(?!LEGO|AA)./,c=>c.toLowerCase())} is ${fmt(mm())} mm across.`,true);draw()}
+    else say(Math.floor(x)===whole()?'The whole part is right. Look again for the one bottom line that matches.':'Not yet. Start with the top scale: which line has the zero mark just passed?')}
+  if(tab===3&&game&&!game.time){
+    if(right){game.done++;game.left--;say('');
+      if(game.left===0){game.time=(performance.now()-game.t0)/1000;try{const b=+localStorage.getItem('vernier-best-'+N);if(!b||game.time<b)localStorage.setItem('vernier-best-'+N,game.time)}catch(e){}
+        $('go').hidden=false;$('go').textContent='Play again';notes();draw()}
+      else nextQ()}
+    else{game.tries++;say('Not that one. Whole part from the top scale, decimal from the matching line.')}}
+}
+function select(i){
+  tab=i;say('');minS=0;game=null;solved=false;
+  [...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  $('c-slide').hidden=tab===1||tab===3;$('c-step').hidden=tab!==1;$('c-obj').hidden=tab!==2;$('c-ans').hidden=tab<2;
+  $('hidewrap').hidden=tab!==0;$('c-opt').hidden=tab===1;$('check').hidden=tab===3;$('go').hidden=tab!==3;$('go').textContent='Start';
+  $('ans').disabled=tab===3;$('ans').value='';
+  if(tab===1){N=10;$('res').value='10';$('rng').max=MAXMM*N;setStep(0);return}
+  if(tab===2){notes();pick(0);return}
+  if(tab===0&&s<N)s=23*N+7*(N/10);
+  notes();draw();
+}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('objs').innerHTML=OBJS.map(o=>`<button class="btn" type="button">${o.n}</button>`).join('');
+$('objs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)pick([...$('objs').children].indexOf(b))});
+$('rng').addEventListener('input',e=>setS(+e.target.value));
+$('less').addEventListener('click',()=>setS(s-1));$('more').addEventListener('click',()=>setS(s+1));
+$('hide').addEventListener('change',draw);
+$('res').addEventListener('change',e=>{const v=mm();N=+e.target.value;$('rng').max=MAXMM*N;minS=obj&&tab===2?Math.round(obj.mm*N):0;game=null;if(tab===3){$('go').hidden=false;$('go').textContent='Start';$('ans').disabled=true}s=Math.round(v*N);notes();setS(s)});
+$('prev').addEventListener('click',()=>setStep(step-1));$('next').addEventListener('click',()=>setStep(step+1));
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li');if(li)setStep([...li.parentNode.children].indexOf(li))});
+$('check').addEventListener('click',check);
+$('ans').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check()}});
+$('ans').addEventListener('input',()=>{if($('msg').className==='err')say('')});
+$('go').addEventListener('click',()=>{game={left:8,done:0,tries:0,t0:performance.now(),time:0};$('go').hidden=true;$('ans').disabled=false;say('');notes();nextQ()});
+// drag the sliding jaw
+let drag=null;const cal=$('cal');
+cal.addEventListener('pointerdown',e=>{if(tab===1||tab===3)return;drag={x:e.clientX,s0:s,k:640/cal.getBoundingClientRect().width};cal.setPointerCapture(e.pointerId);cal.style.cursor='grabbing'});
+cal.addEventListener('pointermove',e=>{if(drag)setS(drag.s0+(e.clientX-drag.x)*drag.k/P*N)});
+const end=()=>{drag=null;cal.style.cursor='grab'};cal.addEventListener('pointerup',end);cal.addEventListener('pointercancel',end);
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();setStep([...li.parentNode.children].indexOf(li));return}
+  if(tag==='input'||tag==='select')return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!d)return;e.preventDefault();
+  if(tab===1)setStep(step+d);else if(tab!==3)setS(s+d);
+});
+select(0);
+</script>
+</body>
+</html>
