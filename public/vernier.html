@@ -102,6 +102,9 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .objs{display:flex;flex-wrap:wrap;gap:8px}
 .objs .btn.sel{border-color:var(--accent);border-width:2.5px}
 .how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.when{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.when li{border-left:3px solid var(--accent);padding-left:12px}
+.when li>b{display:block;font-family:var(--display);color:var(--accent)}
 .toggle{display:flex;gap:8px;align-items:center;font-weight:700}
 .toggle input{width:20px;height:20px;accent-color:var(--accent)}
 [hidden]{display:none!important}
@@ -155,7 +158,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const TABS=['Read it','Why it works','Measure it','Challenge'];
+const TABS=['Read it','Why it works','Measure it','Challenge','History'];
 const MAXMM=50,P=8,OX=40;
 let N=10,s=237,tab=0,step=0,minS=0,obj=null,solved=false;
 let game=null;                                  // {left, done, tries, t0, time}
@@ -231,6 +234,15 @@ function notes(){
   if(tab===0)n.innerHTML=`<h2>How to read it</h2><ol class="how"><li>Drag the sliding jaw, or use the slider.</li><li><b class="ka">Whole millimetres:</b> find the zero mark on the bottom scale. Read the last top line it has passed.</li><li><b class="kb">The decimal:</b> look along the bottom scale for the one line that sits exactly under a top line. Its number is the tenths.</li><li>Add them. Tick &ldquo;Hide the answer&rdquo; to test yourself.</li></ol><p class="hint">Keys: left and right arrows move the jaw one step.</p>`;
   if(tab===1)n.innerHTML=`<h2>Why one line always matches</h2><ol class="steps" id="steps">${WHY.map((w,i)=>`<li role="button" tabindex="0" class="${i===step?'on':''}"><span>${w.t}</span></li>`).join('')}</ol><p class="hint">Tap a step to jump to it. Keys: left and right arrows step through.</p>`;
   if(tab===2)n.innerHTML=`<h2>Measure something</h2><ol class="how"><li>Pick an object. It sits against the fixed jaw.</li><li>Drag the sliding jaw closed until it stops against the object.</li><li>Read both scales and type the measurement.</li></ol><p class="hint">Sizes are close to the real things, rounded to 0.1 mm.</p>`;
+  if(tab===4)n.innerHTML=`<h2>Who came up with it?</h2><p class="hint">It took about a hundred years and three people to get from the idea to the sliding scale, and two hundred more to put it on a tool anyone could buy.</p>
+<ol class="when">
+<li><b>1500s, Portugal</b><span><b>Pedro Nunes</b> wanted sailors and astronomers to read angles more finely. He engraved a whole stack of extra scales on the instrument, each divided into a different number of parts, and looked for the one where a line happened to match. It worked, but it was very hard to make and slow to read. His Latin name was Nonius.</span></li>
+<li><b>1604, Rome</b><span><b>Christopher Clavius</b>, who had studied under Nunes, described an easier way to make the scales in a geometry book, and mentioned the idea of a separate extra scale. But he did not fix it to the instrument.</span></li>
+<li><b>1631, Brussels</b><span><b>Pierre Vernier</b>, a surveyor and engineer from Ornans, published the idea we use today: one small scale that slides along the main one. His was for measuring angles. He divided the length of 31 half-degrees into 30 equal parts, so his spaces were slightly too wide instead of slightly too narrow. Either way, exactly one line matches.</span></li>
+<li><b>1700s, France</b><span>For a long time people called the sliding scale a &ldquo;nonius&rdquo;. The astronomer <b>J&eacute;r&ocirc;me Lalande</b> argued that Nunes&rsquo;s device was really something different, and that this one should be named after Vernier. Some languages still say nonius.</span></li>
+<li><b>1851, Rhode Island</b><span><b>Joseph R. Brown</b>, a clockmaker turned toolmaker, built a vernier caliper that read to a thousandth of an inch, at a price ordinary machinists could afford. That is the kind of tool on this page.</span></li>
+<li><b>Today</b><span>Most calipers have a digital display, but the matching-lines trick is still used inside electronic sensors that measure position.</span></li>
+</ol><p class="hint">Try it: with Vernier&rsquo;s 31-into-30 spacing each line would get 1/30 of a space <em>ahead</em>. Can you explain why one line still matches?</p>`;
   if(tab===3){let best='';try{const b=localStorage.getItem('vernier-best-'+N);if(b)best=`<p class="hint">Best time on this device: ${(+b).toFixed(1)} s</p>`}catch(e){}
     n.innerHTML=`<h2>Challenge: eight readings</h2><ol class="how"><li>Press Start. The jaws jump to a random opening.</li><li>Type the reading and press Enter.</li><li>Eight correct readings stops the clock. A wrong answer costs nothing but time.</li></ol>${game&&game.time?`<p class="good">Done in ${game.time.toFixed(1)} s, with ${game.tries} wrong ${game.tries===1?'try':'tries'}.</p>`:''}${best}`}
 }
@@ -264,8 +276,8 @@ function check(){
 function select(i){
   tab=i;say('');minS=0;game=null;solved=false;
   [...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
-  $('c-slide').hidden=tab===1||tab===3;$('c-step').hidden=tab!==1;$('c-obj').hidden=tab!==2;$('c-ans').hidden=tab<2;
-  $('hidewrap').hidden=tab!==0;$('c-opt').hidden=tab===1;$('check').hidden=tab===3;$('go').hidden=tab!==3;$('go').textContent='Start';
+  $('c-slide').hidden=tab===1||tab===3;$('c-step').hidden=tab!==1;$('c-obj').hidden=tab!==2;$('c-ans').hidden=tab!==2&&tab!==3;
+  $('hidewrap').hidden=tab!==0;$('c-opt').hidden=tab===1||tab===4;$('check').hidden=tab===3;$('go').hidden=tab!==3;$('go').textContent='Start';
   $('ans').disabled=tab===3;$('ans').value='';
   if(tab===1){N=10;$('res').value='10';$('rng').max=MAXMM*N;setStep(0);return}
   if(tab===2){notes();pick(0);return}
