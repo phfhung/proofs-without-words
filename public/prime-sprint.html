@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prime Sprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+[hidden]{display:none!important}
+/* prime sprint */
+.grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.cell{font:inherit;font-weight:700;font-variant-numeric:tabular-nums;aspect-ratio:1;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;padding:0;font-size:clamp(.78rem,2.6vw,1.1rem);touch-action:manipulation}
+.cell.hit{background:var(--b);border-color:var(--b);color:var(--card)}
+.cell.no{background:var(--card);color:var(--muted);text-decoration:line-through}
+.cell.miss{animation:miss .6s ease-out}
+@keyframes miss{0%,40%{background:var(--a);border-color:var(--a)}}
+.status{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-weight:700;min-height:2rem}
+.status .clock{font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.status.ready #gstate{color:var(--accent)}
+.status.ready+.grid{outline:2px dashed var(--accent);outline-offset:5px;border-radius:10px}
+.seg{display:flex;gap:6px}
+.btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--paper)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.stats div{background:var(--paper);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column}
+.stats .k{color:var(--muted);font-size:.85rem}
+.stats b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+ul.rules{margin:0;padding-left:1.15em;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Prime sprint</h1>
+    <p class="lede">Tap the 25 primes below 100 as fast as you can. The clock starts on your first tap, and every wrong tap costs 3 seconds.</p>
+  </header>
+
+  <main class="stage" id="game">
+    <section class="figure" aria-label="Number grid">
+      <div class="status" id="gstatus"><span id="gstate"></span><b class="clock" id="gclock">0.0 s</b></div>
+      <div class="grid" id="grid"></div>
+      <div class="row">
+        <button class="btn primary" id="gstart" type="button">Restart</button>
+        <div class="seg" role="group" aria-label="Game mode">
+          <button class="btn" id="m-order" type="button" aria-pressed="true">In order</button>
+          <button class="btn" id="m-any" type="button" aria-pressed="false">Any order</button>
+        </div>
+      </div>
+    </section>
+    <section class="notes">
+      <p class="credit">Your times stay on this device</p>
+      <h2>Scoreboard</h2>
+      <div class="stats">
+        <div><span class="k">Time</span><b id="gtime">0.0 s</b></div>
+        <div><span class="k">Found</span><b id="gfound">0 / 25</b></div>
+        <div><span class="k">Slips</span><b id="gslips">0</b></div>
+        <div><span class="k">Best on this device</span><b id="gbest">none yet</b></div>
+      </div>
+      <p class="algebra" id="gmsg" aria-live="polite"></p>
+      <ul class="rules">
+        <li>In order: tap 2, then 3, then 5, all the way up to 97.</li>
+        <li>Any order: find all 25 primes however you like.</li>
+        <li>Every wrong tap adds 3 seconds, and the game tells you why.</li>
+        <li>After 2 and 5, every prime ends in 1, 3, 7 or 9.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+/* Prime sprint */
+const PR=[];for(let n=2;n<=100;n++){let ok=true;for(let d=2;d*d<=n;d++)if(n%d===0){ok=false;break}if(ok)PR.push(n)}
+const G={mode:'order',on:false,done:false,t0:0,pen:0,slips:0,elapsed:0,found:new Set(),raf:0,best:{order:0,any:0}};
+const gMsg=s=>{$('gmsg').textContent=s};
+function gStats(){$('gfound').textContent=G.found.size+' / '+PR.length;$('gslips').textContent=G.slips}
+function gBest(){
+  let b=NaN;try{b=parseFloat(localStorage.getItem('primeSprintBest-'+G.mode))}catch(e){}
+  if(!(b>0))b=G.best[G.mode];
+  $('gbest').textContent=b>0?b.toFixed(1)+' s':'none yet';return b;
+}
+function gLoop(){
+  if(!G.on)return;
+  G.elapsed=(performance.now()-G.t0)/1000+G.pen;gClock();
+  G.raf=requestAnimationFrame(gLoop);
+}
+function gClock(){const t=G.elapsed.toFixed(1)+' s';$('gtime').textContent=t;$('gclock').textContent=t}
+function gState(cls,text){$('gstatus').className='status '+cls;$('gstate').textContent=text}
+// back to ready: board cleared, clock at zero and waiting for the first tap
+function gReset(){
+  cancelAnimationFrame(G.raf);
+  Object.assign(G,{on:false,done:false,pen:0,slips:0,elapsed:0,found:new Set()});
+  document.querySelectorAll('.cell').forEach(c=>c.className='cell');
+  $('gstart').textContent='Restart';gClock();gStats();gBest();
+  gState('ready','Ready. The clock starts on your first tap.');
+  gMsg(G.mode==='order'?'Tap the primes from smallest to largest. Start with 2.':'Tap every prime you can find, in any order.');
+}
+function gStart(){G.on=true;G.t0=performance.now();gState('run','Go!');gLoop()}
+function gFinish(){
+  G.on=false;G.done=true;cancelAnimationFrame(G.raf);
+  G.elapsed=(performance.now()-G.t0)/1000+G.pen;gClock();gState('done','Finished. Press Play again for another go.');
+  const prev=gBest(),isBest=!(prev>0)||G.elapsed<prev;
+  if(isBest){G.best[G.mode]=G.elapsed;try{localStorage.setItem('primeSprintBest-'+G.mode,G.elapsed.toFixed(2))}catch(e){}gBest()}
+  gMsg(`All ${PR.length} primes in ${G.elapsed.toFixed(1)} s with ${G.slips} ${G.slips===1?'slip':'slips'}.${isBest?' New best time!':''}`);
+  $('gstart').textContent='Play again';
+}
+$('grid').innerHTML=Array.from({length:100},(_,i)=>`<button type="button" class="cell" data-n="${i+1}">${i+1}</button>`).join('');
+$('grid').addEventListener('click',e=>{
+  const c=e.target.closest('.cell');if(!c)return;
+  if(G.done)return;
+  if(!G.on)gStart();
+  const n=+c.dataset.n;if(G.found.has(n))return;
+  const isP=PR.includes(n),next=PR.find(p=>!G.found.has(p));
+  if(isP&&(G.mode==='any'||n===next)){
+    G.found.add(n);c.classList.add('hit');gStats();
+    if(G.found.size===PR.length)gFinish();else gMsg(`Yes, ${n} is prime. Keep going.`);
+    return;
+  }
+  G.slips++;G.pen+=3;gStats();
+  c.classList.remove('miss');void c.offsetWidth;c.classList.add('miss');
+  if(n===1)gMsg('1 is not prime. A prime has exactly two factors and 1 has only one. +3 s');
+  else if(!isP){let d=2;while(n%d)d++;c.classList.add('no');gMsg(`${n} = ${d} × ${n/d}, so it is not prime. +3 s`)}
+  else gMsg(`${n} is prime, but a smaller prime comes first. +3 s`);
+});
+$('gstart').addEventListener('click',gReset);
+for(const m of ['order','any'])$('m-'+m).addEventListener('click',()=>{
+  G.mode=m;$('m-order').setAttribute('aria-pressed',m==='order');$('m-any').setAttribute('aria-pressed',m==='any');gReset();
+});
+gReset();
+</script>
+</body>
+</html>

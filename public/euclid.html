@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euclid in Pictures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.subs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.subs.chips{flex-direction:row;flex-wrap:wrap}
+.sub{font:inherit;text-align:left;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-variant-numeric:tabular-nums}
+.sub b{margin-right:8px;white-space:nowrap}
+.sub.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pair{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pair .lbl{font-weight:700}
+.pair input{font:inherit;font-weight:700;font-variant-numeric:tabular-nums;width:5.2em;padding:7px 9px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.presets{display:flex;gap:6px;flex-wrap:wrap;flex:1 1 100%}
+.presets .btn{padding:6px 11px;font-size:.92rem;font-variant-numeric:tabular-nums}
+.algebra span.dim{opacity:.35}
+/* figure marks */
+#fig *{vector-effect:non-scaling-stroke}
+.paper{fill:var(--card)}
+.frame{fill:none;stroke:var(--ink);stroke-width:2}
+.bold{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.tri{fill:var(--tri);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.sqp{fill:var(--sq);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.fa{fill:var(--a-soft)} .fb{fill:var(--b-soft)} .fc{fill:var(--c-soft)}
+.ta{fill:var(--a)} .tb{fill:var(--b)} .tc{fill:var(--c)}
+.pa{fill:var(--a);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.pb{fill:var(--b);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.s0{fill:var(--a)} .s1{fill:var(--b)} .s2{fill:var(--c)} .s3{fill:var(--tri)}
+.s0,.s1,.s2,.s3{stroke:var(--ink);stroke-width:1.5}
+.gridl{stroke:var(--ink);stroke-width:1}
+.cut{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 5}
+.lab.st{text-anchor:start}
+.lab.plain{font-style:normal}
+.oa{fill:none;stroke:var(--a);stroke-width:4;stroke-linejoin:round}
+.ob{fill:none;stroke:var(--b);stroke-width:4;stroke-linejoin:round}
+.ghost{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:6 6}
+.dash{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5}
+.mark{fill:none;stroke:var(--ink);stroke-width:1.5}
+.lab{font-family:var(--body);font-style:italic;font-weight:700;font-size:var(--fs);fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--card);stroke-width:calc(var(--fs)*.2);stroke-linejoin:round;vector-effect:none!important}
+.lab.big{font-size:calc(var(--fs)*1.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Euclid’s algorithm, in pictures</h1>
+    <p class="lede">The greatest common factor of two numbers is the side of the biggest square tile that covers a rectangle with those sides exactly. Cut off squares to find it.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage" id="proofs">
+    <section class="figure" aria-label="Figure">
+      <svg id="fig" role="img" aria-labelledby="ptitle"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Previous step">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next step">Next &rarr;</button>
+        <input id="t" type="range" min="0" max="1000" value="0" aria-label="Step through the cuts">
+        <button class="btn" id="reset" type="button">Reset</button>
+        <button class="btn" id="full" type="button">Full screen</button>
+      </div>
+      <div class="row shape">
+        <div class="pair">
+          <span class="lbl">Try your own numbers</span>
+          <label class="sr" for="na">First number</label><input id="na" type="number" inputmode="numeric" min="1" max="1200" value="48">
+          <span>and</span>
+          <label class="sr" for="nb">Second number</label><input id="nb" type="number" inputmode="numeric" min="1" max="1200" value="18">
+        </div>
+        <div class="presets" id="presets" role="group" aria-label="Example pairs"></div>
+        <output class="nums" id="nums"></output>
+      </div>
+    </section>
+
+    <section class="notes" aria-live="polite">
+      <p class="credit" id="credit"></p>
+      <h2 id="ptitle"></h2>
+      <ol class="steps" id="steps"></ol>
+      <p class="algebra" id="algebra"></p>
+      <p class="hint">Tap a step to jump to it. Keys: left and right arrows step through, then move on to the next tab.</p>
+    </section>
+  </main>
+</div>
+<script>
+/*GEO-START*/
+const clamp=(x,l=0,h=1)=>Math.max(l,Math.min(h,x));
+const ease=t=>t*t*(3-2*t);
+const f=n=>+n.toFixed(2);
+// run Euclid's algorithm and lay out the squares it cuts from an A-by-B rectangle
+function compute(a,b){
+  const A=Math.max(a,b),B=Math.min(a,b),steps=[];let x=A,y=B;
+  while(y>0){steps.push({x,y,q:Math.floor(x/y),r:x%y});[x,y]=[y,x%y]}
+  const g=x,count=steps.reduce((s,t)=>s+t.q,0),sq=[],rem=[];
+  if(count<=MAXSQ){
+    let rx=0,ry=0,rw=A,rh=B;
+    steps.forEach((st,i)=>{
+      if(rw>=rh){for(let j=0;j<st.q;j++)sq.push({x:rx+j*rh,y:ry,s:rh,i});rx+=st.q*rh;rw-=st.q*rh}
+      else{for(let j=0;j<st.q;j++)sq.push({x:rx,y:ry+j*rw,s:rw,i});ry+=st.q*rw;rh-=st.q*rw}
+      rem.push({x:rx,y:ry,w:rw,h:rh});
+    });
+  }
+  // the same process by repeated subtraction: [longer rod, shorter rod, which one just shrank]
+  const rows=[];let p=A,q=B;rows.push([p,q,-1]);
+  while(p!==q&&rows.length<=MAXSQ){if(p>q){p-=q;rows.push([p,q,0])}else{q-=p;rows.push([p,q,1])}}
+  return {A,B,steps,g,count,sq,rem,rows};
+}
+const MAXSQ=60;
+/*GEO-END*/
+
+const $=id=>document.getElementById(id);
+const svg=$('fig'),slider=$('t');
+const PRESETS=[[48,18],[36,24],[91,35],[21,13],[1071,462]];
+const VIEWS=[
+ {id:'squares',tab:'Cut squares',title:'The biggest square tile',
+  credit:'The rectangle picture of Euclid’s algorithm. Each cut is one division.',
+  steps:['Draw a rectangle with the two numbers as its sides. A square tile that covers it exactly must have a side that divides both numbers. The biggest such tile is the greatest common factor.',
+         'Cut off the biggest square that fits, as many times as it fits. That is one division: the number of squares is the quotient and the strip left over is the remainder. Any tile that covers the rectangle also covers those squares, so it must cover the leftover strip too. Repeat on the strip.',
+         'Stop when the squares fit with nothing left over. That last square tiles every bigger square, so it tiles the whole rectangle. No bigger tile can work, because every tile has to fit the last strip.']},
+ {id:'rods',tab:'Two rods',title:'Euclid’s two rods',
+  credit:'How Euclid described it in the Elements, Book VII, about 300 BC',
+  steps:['Think of the two numbers as two rods. Any ruler that measures both rods exactly also measures the difference between them.',
+         'So take the shorter rod away from the longer one. The pair gets smaller, but the rulers that measure both rods stay exactly the same.',
+         'Keep going until the two rods are equal. That length is the longest ruler that measures both: the greatest common factor.']}
+];
+let a=48,b=18,cur=0,T=0,D=compute(a,b),raf=0,playing=false,last=0;
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const R=(x,y,w,h,cls,op=1)=>op<=.01?'':`<rect class="${cls}" x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const Tx=(s,x,y,cls='',op=1,size=0)=>op<=.01?'':`<text class="lab ${cls}" x="${f(x)}" y="${f(y)}"${size?` style="font-size:${f(size)}px"`:''}${op<1?` opacity="${f(op)}"`:''}>${s}</text>`;
+function frame(x0,y0,w,h,fs){svg.setAttribute('viewBox',`${f(x0)} ${f(y0)} ${f(w)} ${f(h)}`);svg.style.setProperty('--fs',fs+'px');svg.style.aspectRatio=f(w)+' / '+f(h)}
+function tooMany(){
+  frame(0,0,600,220,24);
+  svg.innerHTML=Tx(`These numbers need ${D.count} squares.`,300,90,'plain')+Tx('Try a pair that is closer together.',300,130,'plain');
+}
+
+function drawSquares(){
+  const {A,B,sq,rem,steps,g}=D,k=600/A,W=600,H=B*k,fs=30,N=sq.length,pad=fs*1.9;
+  frame(-pad,-pad,W+2*pad,H+2*pad,fs);
+  const shown=clamp(T/.82)*N,lastOf=steps.map((_,i)=>sq.reduce((m,s,j)=>s.i===i?j:m,-1));
+  let done=-1;lastOf.forEach((j,i)=>{if(shown>=j+1)done=i});
+  let h=R(0,0,W,H,'paper');
+  if(done>=0&&done<steps.length-1){
+    const r=rem[done],oL=1-clamp((shown-(lastOf[done]+1))*3);h+=R(r.x*k,r.y*k,r.w*k,r.h*k,'cut');
+    if(Math.min(r.w,r.h)*k>fs*1.3&&Math.max(r.w,r.h)*k>fs*4)h+=Tx(`${r.w} × ${r.h} left`,(r.x+r.w/2)*k,(r.y+r.h/2)*k,'plain',oL,Math.min(fs*.8,r.w*k/6));
+  }
+  sq.forEach((s,j)=>{
+    const o=ease(clamp(shown-j));if(o<=.01)return;
+    h+=R(s.x*k,s.y*k,s.s*k,s.s*k,'s'+(s.i%4),o);
+    const side=s.s*k,size=Math.min(fs,side*.45);
+    if(size>=fs*.38)h+=Tx(s.s,(s.x+s.s/2)*k,(s.y+s.s/2)*k,'plain',o,size);
+  });
+  const oB=ease(clamp((T-.86)/.14));
+  if(oB>.01){
+    for(let x=g;x<A;x+=g)h+=`<line class="gridl" x1="${f(x*k)}" y1="0" x2="${f(x*k)}" y2="${f(H)}" opacity="${f(oB*.55)}"/>`;
+    for(let y=g;y<B;y+=g)h+=`<line class="gridl" x1="0" y1="${f(y*k)}" x2="${f(W)}" y2="${f(y*k)}" opacity="${f(oB*.55)}"/>`;
+    const l=sq[N-1];h+=R(l.x*k,l.y*k,l.s*k,l.s*k,'bold',oB);
+  }
+  h+=R(0,0,W,H,'frame')+Tx(A,W/2,-fs*.85,'plain')+Tx(B,-fs*.95,H/2,'plain');
+  svg.innerHTML=h;
+  const first=steps.map((_,i)=>sq.findIndex(s=>s.i===i));
+  [...$('algebra').children].forEach((el,i)=>el.classList.toggle('dim',i<steps.length?shown<=first[i]:T<.86));
+}
+
+function drawRods(){
+  const {A,rows,g}=D,k=600/A,n=rows.length,fs=26,th=Math.min(26,560/(n*2.7)),pitch=th*2.7,lab=Math.min(fs,th*1.15);
+  frame(-fs*.6,-fs*.7,600+fs*6.2,n*pitch+fs*.9,fs);
+  const prog=clamp(T/.9)*(n-1);let h='';
+  rows.forEach(([p,q,which],r)=>{
+    const o=r===0?1:ease(clamp(prog-(r-1)));if(o<=.01)return;
+    const y=r*pitch,end=r===n-1&&p===q;
+    h+=R(0,y,p*k,th,end?'s2':'s0',o)+R(0,y+th+3,q*k,th,end?'s2':'s1',o);
+    if(which===0)h+=R(p*k,y,q*k,th,'cut',o);
+    if(which===1)h+=R(q*k,y+th+3,p*k,th,'cut',o);
+    const e1=(which===0?p+q:p)*k,e2=(which===1?q+p:q)*k;
+    h+=Tx(end?`${p} = GCF`:p,e1+fs*.35,y+th/2,'plain st',o,lab)+(end?'':Tx(q,e2+fs*.35,y+th+3+th/2,'plain st',o,lab));
+  });
+  svg.innerHTML=h;
+  [...$('algebra').children].forEach((el,i)=>el.classList.toggle('dim',i<n?prog<i-.5:T<.9));
+}
+
+function draw(){
+  slider.value=Math.round(T*1000);updBtns();
+  if(D.count>MAXSQ)tooMany();else if(cur===0)drawSquares();else drawRods();
+  const st=T<.03?0:T<(cur===0?.86:.9001)?1:2;
+  [...$('steps').children].forEach((li,i)=>li.classList.toggle('on',i===st));
+  const subs=[...$('steps').querySelectorAll('.sub')];let on=-1;
+  if(subs.length&&st<2){
+    if(cur===0){const sh=clamp(T/.82)*D.sq.length;if(sh>1e-6)on=D.sq[Math.min(D.sq.length-1,Math.ceil(sh-1e-6)-1)].i}
+    else on=Math.round(clamp(T/.9)*(D.rows.length-1));
+  }
+  subs.forEach((el,i)=>el.classList.toggle('on',i===on));
+}
+function algebra(){
+  const {A,B,steps,rows,g,count}=D;let lines;
+  if(cur===0)lines=[...steps.map(s=>`${s.x} = ${s.q} × ${s.y} + ${s.r}`),`last square: GCF(${A}, ${B}) = ${g}`];
+  else if(count>MAXSQ)lines=[`GCF(${A}, ${B}) = ${g}`];
+  else lines=[...rows.map((r,i)=>(i?'= ':'')+`GCF(${r[0]}, ${r[1]})`),`= ${g}`];
+  $('algebra').innerHTML=lines.map(s=>`<span>${s}</span>`).join('');
+}
+function nums(){
+  const {A,B,g,steps}=D;
+  $('nums').innerHTML=`<b class="kc">GCF(${A}, ${B}) = ${g}</b> &nbsp; found in ${steps.length} division${steps.length===1?'':'s'} &nbsp; LCM = ${A*B/g}`;
+}
+function setPair(x,y,fromInput){
+  x=Math.round(clamp(+x||1,1,1200));y=Math.round(clamp(+y||1,1,1200));a=x;b=y;
+  if(!fromInput){$('na').value=x;$('nb').value=y}
+  [...$('presets').children].forEach(bn=>bn.setAttribute('aria-pressed',(+bn.dataset.a===x&&+bn.dataset.b===y)?'true':'false'));
+  stop();T=0;D=compute(a,b);nums();algebra();renderSteps();draw();
+}
+// step 2 has one clickable line per division (or per pair of rods)
+function subsHTML(){
+  if(D.count>MAXSQ)return '';
+  if(cur===0){
+    const N=D.sq.length;
+    return '<span class="subs">'+D.steps.map((s,i)=>{
+      const last=D.sq.reduce((m,q,j)=>q.i===i?j:m,-1),r=D.rem[i];
+      return `<button type="button" class="sub" data-t="${.82*(last+1)/N}"><b>${s.x} ÷ ${s.y}</b>Cut ${s.q} square${s.q===1?'':'s'} of side ${s.y}. ${s.r?`A ${Math.max(r.w,r.h)} by ${Math.min(r.w,r.h)} strip is left.`:'Nothing is left over.'}</button>`;
+    }).join('')+'</span>';
+  }
+  const n=D.rows.length;if(n<2)return '';
+  return '<span class="subs chips">'+D.rows.map((r,k)=>`<button type="button" class="sub" data-t="${.9*k/(n-1)}">${r[0]} and ${r[1]}</button>`).join('')+'</span>';
+}
+function renderSteps(){
+  $('steps').innerHTML=VIEWS[cur].steps.map((s,i)=>`<li role="button" tabindex="0"><span>${s}${i===1?subsHTML():''}</span></li>`).join('');
+}
+function showFig(){
+  const r=svg.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight)svg.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+function select(i,setHash){
+  stop();cur=(i+VIEWS.length)%VIEWS.length;T=0;const v=VIEWS[cur];
+  [...$('tabs').children].forEach((bn,k)=>bn.setAttribute('aria-selected',k===cur?'true':'false'));
+  $('credit').textContent=v.credit;$('ptitle').textContent=(cur+1)+'. '+v.title;
+  renderSteps();
+  if(setHash){try{history.replaceState(null,'','#'+v.id)}catch(e){location.hash=v.id}}
+  algebra();draw();
+}
+const FRAMES=()=>[0,cur===0?.82:.9,1];
+function STOPS(){
+  if(D.count>MAXSQ)return [0,1];
+  const o=[];
+  if(cur===0){const N=D.sq.length;for(let k=0;k<=N;k++)o.push(.82*k/N)}
+  else{const n=Math.max(2,D.rows.length);for(let k=0;k<n;k++)o.push(.9*k/(n-1))}
+  o.push(1);return o;
+}
+const DUR=()=>clamp((cur===0?D.sq.length:D.rows.length)*1100,5000,16000);
+let target=0;
+function updBtns(){$('prev').disabled=T<=0;$('next').disabled=T>=1}
+function stop(){playing=false;cancelAnimationFrame(raf)}
+function tick(now){
+  if(!playing)return;
+  const d=(now-last)/DUR();last=now;
+  T=target>T?Math.min(target,T+d):Math.max(target,T-2.5*d);draw();
+  if(T===target){stop();return}
+  raf=requestAnimationFrame(tick);
+}
+// move to the next or previous stopping point
+function go(dir){
+  if(playing){stop();T=target}
+  const s=STOPS(),to=dir>0?s.find(x=>x>T+1e-4):[...s].reverse().find(x=>x<T-1e-4);
+  if(to===undefined){draw();return}
+  target=to;
+  if(reduce||Math.abs(to-T)<.01){T=to;draw();return}
+  playing=true;last=performance.now();raf=requestAnimationFrame(tick);
+}
+// show the finished picture for step i
+function jump(i){
+  if(i<0)return;stop();T=FRAMES()[i];draw();
+  const r=svg.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight)svg.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('steps').addEventListener('click',e=>{
+  const sb=e.target.closest('.sub');
+  if(sb){stop();T=+sb.dataset.t;draw();showFig();return}
+  const li=e.target.closest('li');if(li)jump([...$('steps').children].indexOf(li));
+});
+$('tabs').innerHTML=VIEWS.map((v,i)=>`<button type="button" role="tab" data-i="${i}" aria-selected="false"><span class="n">${i+1}</span>${v.tab}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const bn=e.target.closest('button');if(bn)select(+bn.dataset.i,true)});
+$('presets').innerHTML=PRESETS.map(([x,y])=>`<button type="button" class="btn" data-a="${x}" data-b="${y}" aria-pressed="false">${x} and ${y}</button>`).join('');
+$('presets').addEventListener('click',e=>{const bn=e.target.closest('button');if(bn)setPair(bn.dataset.a,bn.dataset.b,false)});
+for(const id of ['na','nb'])$(id).addEventListener('input',()=>{if($('na').value&&$('nb').value)setPair($('na').value,$('nb').value,true)});
+$('reset').addEventListener('click',()=>{stop();T=0;draw()});
+slider.addEventListener('input',()=>{stop();T=slider.value/1000;draw()});
+const fullBtn=$('full');
+if(!document.fullscreenEnabled)fullBtn.hidden=true;
+fullBtn.addEventListener('click',()=>{
+  try{
+    if(document.fullscreenElement)document.exitFullscreen();
+    else{const r=document.documentElement.requestFullscreen();if(r&&r.catch)r.catch(()=>{})}
+  }catch(e){}
+});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&!e.target.closest('.sub')&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...$('steps').children].indexOf(li));return}
+  if(tag==='input'||tag==='select'||tag==='textarea')return;
+  if(e.key===' '&&tag!=='button'){e.preventDefault();go(1)}
+  if(e.key==='ArrowRight'){e.preventDefault();if(T>=1)select(cur+1,true);else go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(T<=0)select(cur-1,true);else go(-1)}
+});
+function fromHash(){const i=VIEWS.findIndex(v=>'#'+v.id===location.hash);return i<0?0:i}
+window.addEventListener('hashchange',()=>{const i=fromHash();if(i!==cur)select(i,false)});
+select(fromHash(),false);setPair(48,18,false);
+</script>
+</body>
+</html>

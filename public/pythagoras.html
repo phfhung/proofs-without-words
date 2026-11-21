@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pythagoras Five Ways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+/* figure marks */
+#fig *{vector-effect:non-scaling-stroke}
+.paper{fill:var(--card)}
+.frame{fill:none;stroke:var(--ink);stroke-width:2}
+.bold{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.tri{fill:var(--tri);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.sqp{fill:var(--sq);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.fa{fill:var(--a-soft)} .fb{fill:var(--b-soft)} .fc{fill:var(--c-soft)}
+.ta{fill:var(--a)} .tb{fill:var(--b)} .tc{fill:var(--c)}
+.pa{fill:var(--a);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.pb{fill:var(--b);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.oa{fill:none;stroke:var(--a);stroke-width:4;stroke-linejoin:round}
+.ob{fill:none;stroke:var(--b);stroke-width:4;stroke-linejoin:round}
+.ghost{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:6 6}
+.dash{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5}
+.mark{fill:none;stroke:var(--ink);stroke-width:1.5}
+.lab{font-family:var(--body);font-style:italic;font-weight:700;font-size:var(--fs);fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--card);stroke-width:calc(var(--fs)*.2);stroke-linejoin:round;vector-effect:none!important}
+.lab.big{font-size:calc(var(--fs)*1.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Pythagoras, five ways</h1>
+    <p class="lede">Five picture proofs that a² + b² = c² in every right triangle, from easiest to deepest. Press Next to go one step at a time, or drag the slider to move the pieces yourself.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a proof"></nav>
+
+  <main class="stage" id="proofs">
+    <section class="figure" aria-label="Figure">
+      <svg id="fig" role="img" aria-labelledby="ptitle"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Previous step">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next step">Next &rarr;</button>
+        <input id="t" type="range" min="0" max="1000" value="0" aria-label="Move the pieces">
+        <button class="btn" id="reset" type="button">Reset</button>
+        <button class="btn" id="full" type="button">Full screen</button>
+      </div>
+      <div class="row shape">
+        <label for="shape">Change the triangle</label>
+        <input id="shape" type="range" min="0" max="6" step="1" value="4">
+        <output class="nums" id="nums" for="shape"></output>
+      </div>
+    </section>
+
+    <section class="notes" aria-live="polite">
+      <p class="credit" id="credit"></p>
+      <h2 id="ptitle"></h2>
+      <ol class="steps" id="steps"></ol>
+      <p class="algebra" id="algebra"></p>
+      <p class="hint">Tap a step to jump to it. Keys: left and right arrows step through, then move on to the next tab.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+/*GEO-START*/
+const clamp=(x,l=0,h=1)=>Math.max(l,Math.min(h,x));
+const ease=t=>t*t*(3-2*t);
+const P=(x,y)=>({x,y});
+const add=(p,q)=>P(p.x+q.x,p.y+q.y), sub=(p,q)=>P(p.x-q.x,p.y-q.y), mul=(p,k)=>P(p.x*k,p.y*k);
+const cross=(p,q)=>p.x*q.y-p.y*q.x, dot=(p,q)=>p.x*q.x+p.y*q.y, len=p=>Math.hypot(p.x,p.y);
+const unit=p=>mul(p,1/len(p));
+const rot=(p,g)=>{const c=Math.cos(g),s=Math.sin(g);return P(p.x*c-p.y*s,p.x*s+p.y*c)};
+const cen=pl=>mul(pl.reduce(add,P(0,0)),1/pl.length);
+const mid=(p,q)=>mul(add(p,q),.5);
+const lerp=(p,q,t)=>add(p,mul(sub(q,p),t));
+const stag=(t,i,n,s=.35)=>ease(clamp(t*(1+s*(n-1))-s*i));
+
+// angle that turns polygon src onto congruent polygon dst (same vertex order)
+function angOf(src,dst){
+  let g=Math.atan2(dst[1].y-dst[0].y,dst[1].x-dst[0].x)-Math.atan2(src[1].y-src[0].y,src[1].x-src[0].x);
+  while(g>Math.PI)g-=2*Math.PI; while(g<=-Math.PI)g+=2*Math.PI;
+  return Math.abs(g)<1e-9?0:g;
+}
+// rigid motion from src to dst as a function of t in [0,1]
+function mover(src,dst){
+  const cs=cen(src),cd=cen(dst),g=angOf(src,dst);
+  return t=>src.map(p=>add(lerp(cs,cd,t),rot(sub(p,cs),g*t)));
+}
+// the two right triangles [R,Pa,Pb] with the given handedness that tile an a-by-b rectangle
+function trisInRect(x0,y0,w,h,a,sign){
+  const out=[],xs=[x0,x0+w],ys=[y0,y0+h],horizA=Math.abs(w-a)<1e-9;
+  for(const i of [0,1])for(const j of [0,1]){
+    const R=P(xs[i],ys[j]),H=P(xs[1-i],ys[j]),U=P(xs[i],ys[1-j]);
+    const Pa=horizA?H:U,Pb=horizA?U:H;
+    if(Math.sign(cross(sub(Pa,R),sub(Pb,R)))===sign)out.push([R,Pa,Pb]);
+  }
+  return out;
+}
+function perms(n){const r=[];(function go(a,rest){if(!rest.length)r.push(a);rest.forEach((x,i)=>go([...a,x],rest.filter((_,j)=>j!==i)))})([],[...Array(n).keys()]);return r;}
+// match each source piece to a target so that turning and travel are smallest
+function pair(srcs,dsts){
+  let best=null,bc=Infinity;
+  for(const pm of perms(srcs.length)){
+    let c=0;srcs.forEach((s,i)=>{const d=dsts[pm[i]];c+=Math.abs(angOf(s,d))*1e4+len(sub(cen(d),cen(s)))});
+    if(c<bc){bc=c;best=pm}
+  }
+  return srcs.map((s,i)=>dsts[best[i]]);
+}
+
+const f=n=>+n.toFixed(2);
+const pts=pl=>pl.map(p=>f(p.x)+','+f(-p.y)).join(' ');
+const poly=(pl,cls,op=1)=>op<=.01?'':`<polygon class="${cls}" points="${pts(pl)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const seg=(p,q,cls,op=1)=>op<=.01?'':`<line class="${cls}" x1="${f(p.x)}" y1="${f(-p.y)}" x2="${f(q.x)}" y2="${f(-q.y)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const txt=(s,p,cls='',op=1)=>op<=.01?'':`<text class="lab ${cls}" x="${f(p.x)}" y="${f(-p.y)}"${op<1?` opacity="${f(op)}"`:''}>${s}</text>`;
+function edgeLab(s,p,q,away,off,cls='',op=1){
+  const m=mid(p,q);let n=unit(P(-(q.y-p.y),q.x-p.x));
+  if(dot(n,sub(away,m))>0)n=mul(n,-1);
+  return txt(s,add(m,mul(n,off)),cls,op);
+}
+function rightMark(R,p1,p2,s,op=1){
+  const d1=mul(unit(sub(p1,R)),s),d2=mul(unit(sub(p2,R)),s);
+  return op<=.01?'':`<polyline class="mark" points="${pts([add(R,d1),add(add(R,d1),d2),add(R,d2)])}"${op<1?` opacity="${f(op)}"`:''}/>`;
+}
+
+/* 1. Rearrangement: four triangles slide inside a square of side a+b */
+function sceneSlide(a,b){
+  const S=a+b,ctr=P(S/2,S/2);
+  const sq=[P(0,0),P(S,0),P(S,S),P(0,S)];
+  const src=[[P(0,0),P(a,0),P(0,b)],[P(S,0),P(S,a),P(a,0)],[P(S,S),P(b,S),P(S,a)],[P(0,S),P(0,b),P(b,S)]];
+  const dst=pair(src,[...trisInRect(0,0,a,b,a,1),...trisInRect(a,b,b,a,a,1)]);
+  const mv=src.map((s,i)=>mover(s,dst[i]));
+  let k=0;const order=src.map((s,i)=>len(sub(cen(s),cen(dst[i])))>1e-6?k++:-1);
+  const holeC=[P(a,0),P(S,a),P(b,S),P(0,b)],sqB=[P(a,0),P(S,0),P(S,b),P(a,b)],sqA=[P(0,b),P(a,b),P(a,S),P(0,S)];
+  const pieces=t=>src.map((s,i)=>mv[i](order[i]<0?0:stag(t,order[i],k)));
+  return {bb:sq,pieces,frame:sq,
+    draw(t,fs){
+      const o0=1-ease(clamp(t/.3)),o1=ease(clamp((t-.7)/.3)),off=fs*.85;
+      let s=poly(sq,'paper')+poly(holeC,'fc',o0)+poly(sqA,'fa',o1)+poly(sqB,'fb',o1);
+      pieces(t).forEach(p=>s+=poly(p,'tri'));
+      s+=poly(sq,'frame');
+      s+=txt('c²',ctr,'big',o0)+txt('a²',cen(sqA),'big',o1)+txt('b²',cen(sqB),'big',o1);
+      s+=edgeLab('a',P(0,0),P(a,0),ctr,off)+edgeLab('b',P(a,0),P(S,0),ctr,off);
+      s+=edgeLab('b',P(0,0),P(0,b),ctr,off)+edgeLab('a',P(0,b),P(0,S),ctr,off);
+      s+=edgeLab('c',P(a,0),P(0,b),P(0,0),off,'',o0);
+      return s;
+    }};
+}
+
+/* 2. Bhaskara: a c-square made of four triangles and a small square becomes a-square plus b-square */
+function sceneBehold(a,b){
+  const M=P((b-a)/2,(a+b)/2),h=(b-a)/2;
+  const r90=p=>add(M,rot(sub(p,M),Math.PI/2));
+  const src=[[P(0,a),P(0,0),P(b,a)]];
+  for(let i=0;i<3;i++)src.push(src[i].map(r90));
+  const sq=[P(M.x-h,M.y-h),P(M.x+h,M.y-h),P(M.x+h,M.y+h),P(M.x-h,M.y+h)];
+  const o=P(M.x-(a+b)/2,M.y-b/2);
+  const dst=pair(src,[...trisInRect(o.x,o.y,a,b,a,1),...trisInRect(o.x+a,o.y,b,a,a,1)]);
+  const mv=src.map((s,i)=>mover(s,dst[i]));
+  const dSq=sub(P(o.x+a,o.y+a),sq[0]);
+  const cSq=[P(0,0),P(b,a),P(b-a,a+b),P(-a,b)];
+  const bSq=[o,P(o.x+b,o.y),P(o.x+b,o.y+b),P(o.x,o.y+b)];
+  const aSq=[P(o.x+b,o.y),P(o.x+a+b,o.y),P(o.x+a+b,o.y+a),P(o.x+b,o.y+a)];
+  const pieces=t=>[...src.map((s,i)=>mv[i](stag(t,i,5))),sq.map(p=>add(p,mul(dSq,stag(t,4,5))))];
+  return {bb:[...cSq,...bSq,...aSq,...pieces(.3).flat(),...pieces(.6).flat()],pieces,cSq,bSq,aSq,
+    draw(t,fs){
+      const o0=1-ease(clamp(t/.25)),o1=ease(clamp((t-.8)/.2)),off=fs*.85;
+      let s=poly(cSq,'ghost');
+      pieces(t).forEach((p,i)=>s+=poly(p,i<4?'tri':'sqp'));
+      s+=poly(cSq,'tc',o0*.3)+poly(bSq,'tb',o1*.4)+poly(aSq,'ta',o1*.4)+poly(bSq,'ob',o1)+poly(aSq,'oa',o1);
+      s+=txt('c²',M,'big',o0)+txt('b²',cen(bSq),'big',o1)+txt('a²',cen(aSq),'big',o1);
+      s+=edgeLab('c',cSq[0],cSq[1],M,off,'',o0);
+      s+=edgeLab('b',bSq[0],bSq[1],cen(bSq),off,'',o1)+edgeLab('a',aSq[0],aSq[1],cen(aSq),off,'',o1);
+      return s;
+    }};
+}
+
+/* 3. Perigal: the b-square is cut in four and, with the a-square, fills the c-square */
+function scenePerigal(a,b){
+  const C=P(0,0),Ab=P(b,0),Ba=P(0,a),tri=[C,Ab,Ba];
+  const sqA=[P(-a,0),P(0,0),P(0,a),P(-a,a)];
+  const sqB=[P(0,-b),P(b,-b),P(b,0),P(0,0)];
+  const sqC=[P(b,0),P(a+b,b),P(a,a+b),P(0,a)];
+  const Mb=P(b/2,-b/2),Mc=P((a+b)/2,(a+b)/2);
+  const E=P(b,-(a+b)/2),N=P((a+b)/2,0),W=P(0,(a-b)/2),So=P((b-a)/2,-b);
+  const q=[[Mb,E,P(b,0),N],[Mb,N,P(0,0),W],[Mb,W,P(0,-b),So],[Mb,So,P(b,-b),E]];
+  const dq=q.map(pc=>{
+    const e1=unit(sub(pc[1],Mb)),e2=unit(sub(pc[3],Mb));
+    for(let k=0;k<4;k++){
+      const K=sqC[k],s1=unit(sub(sqC[(k+1)%4],K)),s2=unit(sub(sqC[(k+3)%4],K));
+      if((dot(e1,s1)>.999&&dot(e2,s2)>.999)||(dot(e1,s2)>.999&&dot(e2,s1)>.999))return sub(K,Mb);
+    }
+    return P(0,0);
+  });
+  const dA=sub(Mc,cen(sqA));
+  const pieces=t=>[...q.map((pc,i)=>pc.map(p=>add(p,mul(dq[i],stag(t,i,5))))),sqA.map(p=>add(p,mul(dA,stag(t,4,5))))];
+  return {bb:[...sqA,...sqB,...sqC],pieces,sqC,
+    draw(t,fs){
+      const o0=1-ease(clamp(t/.2)),oc=1-ease(clamp((t-.1)/.3)),off=fs*.7;
+      let s=poly(sqC,'fc',.6)+poly(sqA,'frame')+poly(sqB,'frame')+poly(sqC,'frame')+poly(tri,'tri');
+      const pc=pieces(t);pc.forEach((p,i)=>s+=poly(p,i<4?'pb':'pa'));
+      s+=edgeLab('a',C,Ba,P(-1,a/2),off)+edgeLab('b',C,Ab,P(b/2,-1),off)+edgeLab('c',Ab,Ba,Mc,off);
+      s+=txt('b²',Mb,'big',o0)+txt('c²',Mc,'big',oc)+txt('a²',cen(pc[4]),'big');
+      return s;
+    }};
+}
+
+/* 4. Garfield: two triangles and half a c-square make a trapezoid */
+function sceneGarfield(a,b){
+  const t1=[P(0,0),P(0,a),P(b,0)],t2=[P(a+b,0),P(b,0),P(a+b,b)],mv=mover(t1,t2);
+  const m3=[P(0,a),P(b,0),P(a+b,b)],trap=[P(0,0),P(a+b,0),P(a+b,b),P(0,a)];
+  const pieces=t=>[t1,mv(ease(clamp(t/.5)))];
+  return {bb:[...trap,...mv(.25),...mv(.5),...mv(.75)],pieces,
+    draw(t,fs){
+      const om=ease(clamp((t-.42)/.1)),o=ease(clamp((t-.55)/.2)),oL=ease(clamp((t-.8)/.2)),off=fs*.8,cc=cen(trap);
+      let s=poly(m3,'fc',o);
+      pieces(t).forEach(p=>s+=poly(p,'tri'));
+      s+=poly(trap,'bold',o)+rightMark(P(b,0),P(0,a),P(a+b,b),fs*.6,o);
+      s+=edgeLab('a',P(0,0),P(0,a),cc,off)+edgeLab('b',P(0,0),P(b,0),cc,off);
+      s+=edgeLab('a',P(b,0),P(a+b,0),cc,off,'',om)+edgeLab('b',P(a+b,0),P(a+b,b),cc,off,'',om);
+      s+=edgeLab('c',P(0,a),P(b,0),P(0,0),off)+edgeLab('c',P(b,0),P(a+b,b),P(a+b,0),off,'',om);
+      s+=txt('½ab',cen(t1),'',oL)+txt('½ab',cen(t2),'',oL)+txt('½c²',cen(m3),'',oL);
+      return s;
+    }};
+}
+
+/* 5. Similar triangles: the altitude splits the triangle into two smaller copies of itself */
+function sceneSimilar(a,b){
+  const c=Math.hypot(a,b),p=b*b/c,h=a*b/c;
+  const A=P(0,0),B=P(c,0),C=P(p,h),D=P(p,0);
+  const refl=(pt,L1,L2,s)=>{const d=unit(sub(L2,L1)),ft=add(L1,mul(d,dot(sub(pt,L1),d)));return add(ft,mul(sub(pt,ft),s))};
+  const D1e=refl(D,A,C,-1),D2e=refl(D,C,B,-1);
+  const pieces=t=>{
+    const s1=Math.cos(Math.PI*stag(t,0,2,.6)),s2=Math.cos(Math.PI*stag(t,1,2,.6));
+    return [[A,refl(D,A,C,s1),C],[refl(D,C,B,s2),B,C]];
+  };
+  return {bb:[A,B,C,D1e,D2e],pieces,
+    draw(t,fs){
+      const oL=ease(clamp((t-.8)/.2)),off=fs*.8,pc=pieces(t);
+      let s=poly([A,B,C],'fc')+poly(pc[0],'fb')+poly(pc[1],'fa');
+      s+=poly(pc[0],'frame')+poly(pc[1],'frame')+poly([A,B,C],'bold')+seg(C,D,'dash');
+      s+=rightMark(C,A,B,fs*.55)+rightMark(D,C,B,fs*.45);
+      s+=edgeLab('c',A,B,C,off)+edgeLab('b',A,C,D1e,off)+edgeLab('a',C,B,D2e,off);
+      s+=txt('k·b²',cen([A,D1e,C]),'',oL)+txt('k·a²',cen([D2e,B,C]),'',oL)+txt('k·c²',add(cen([A,B,C]),P(0,-h*.12)),'',oL);
+      return s;
+    }};
+}
+
+const PROOFS=[
+ {id:'slide',tab:'Slide',title:'Slide the triangles',build:sceneSlide,cuts:[.04,.9],dur:6000,
+  credit:'Known in ancient China and India, more than 2,000 years ago',
+  steps:['Four identical right triangles sit inside a square with side a + b. The tilted hole in the middle is a square with side c, so its area is c².',
+         'Slide the triangles. They never change size and the big square never changes size, so the amount of empty space stays the same.',
+         'Now the empty space is two squares, a² and b². It is the same empty space as before.'],
+  algebra:['empty space before = c²','empty space after = a² + b²','so a² + b² = c²']},
+ {id:'behold',tab:'Behold',title:'Behold!',build:sceneBehold,cuts:[.04,.9],dur:8000,
+  credit:'Bhāskara II, India, 12th century. He is said to have drawn the picture and written one word under it.',
+  steps:['Four triangles and one small square fit together into a big square with side c. Its area is c².',
+         'Move the five pieces. Nothing is stretched or cut, so the total area is still c².',
+         'The same pieces now fill a square with side b next to a square with side a.'],
+  algebra:['c² = 4 × ½ab + (b − a)²','c² = 2ab + b² − 2ab + a²','c² = a² + b²']},
+ {id:'perigal',tab:'Dissect',title:'Cut one square, fill another',build:scenePerigal,cuts:[.04,.9],dur:8000,
+  credit:'Henry Perigal, London, 1800s. The diagram is carved on his gravestone.',
+  steps:['Build a square on each side of the triangle. Cut the b² square through its centre with two lines: one parallel to the hypotenuse, one perpendicular to it.',
+         'Slide the four pieces into the corners of the c² square. They only slide. None of them turns.',
+         'The hole left in the middle is exactly the size of the a² square, so it drops in.'],
+  algebra:['four pieces of b² + all of a²','fill c² with no gaps and no overlaps','so a² + b² = c²']},
+ {id:'garfield',tab:'Trapezoid',title:'The president’s trapezoid',build:sceneGarfield,cuts:[.5,.82],dur:7000,
+  credit:'James A. Garfield, 1876, five years before he became US president',
+  steps:['Take two copies of the triangle. Turn one and stand it beside the other, so the legs make one straight line of length a + b.',
+         'Join the top corners. The middle triangle has two sides of length c with a right angle between them, because the two acute angles of the triangle add to 90°. Its area is ½c².',
+         'The whole shape is a trapezoid. Work out its area two ways and set them equal.'],
+  algebra:['½(a + b)(a + b) = ½ab + ½ab + ½c²','a² + 2ab + b² = 2ab + c²','a² + b² = c²']},
+ {id:'similar',tab:'Same shape',title:'Three triangles, one shape',build:sceneSimilar,cuts:[.04,.8],dur:7000,
+  credit:'A similar-triangles proof, often told as the one Albert Einstein found as a boy',
+  steps:['Draw the altitude from the right angle down to the hypotenuse. It cuts the triangle into two smaller right triangles.',
+         'Flip each small triangle out over its leg. All three triangles have the same angles, so they are the same shape in three sizes. Their hypotenuses are a, b and c.',
+         'For same-shaped triangles, area = k × hypotenuse², with the same number k for all three. The two small ones together make the big one.'],
+  algebra:['k·a² + k·b² = k·c²','divide both sides by k','a² + b² = c²']}
+];
+/*GEO-END*/
+
+const $=id=>document.getElementById(id);
+const svg=$('fig'),slider=$('t');
+// whole-number triangles, thinnest to squarest; the slider snaps to these
+const TRIPLES=[[12,35,37],[5,12,13],[8,15,17],[28,45,53],[3,4,5],[48,55,73],[20,21,29]];
+let tri=TRIPLES[4];
+const B=400;let A=300,cur=0,T=0,scene=null,fs=30,raf=0,playing=false,last=0;
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function buildTabs(){
+  $('tabs').innerHTML=PROOFS.map((p,i)=>`<button type="button" role="tab" id="tab-${p.id}" data-i="${i}" aria-selected="false"><span class="n">${i+1}</span>${p.tab}</button>`).join('');
+  $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select(+b.dataset.i,true)});
+}
+function rebuild(){
+  scene=PROOFS[cur].build(A,B);
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of scene.bb){x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}
+  fs=Math.max(x1-x0,y1-y0)*.05;const pad=fs*1.9,w=x1-x0+2*pad,h=y1-y0+2*pad;
+  svg.setAttribute('viewBox',`${f(x0-pad)} ${f(-y1-pad)} ${f(w)} ${f(h)}`);
+  svg.style.setProperty('--fs',f(fs)+'px');svg.style.aspectRatio=f(w)+' / '+f(h);
+  draw();
+}
+function draw(){
+  svg.innerHTML=scene.draw(T,fs);
+  slider.value=Math.round(T*1000);updBtns();
+  const c=PROOFS[cur].cuts,st=T<c[0]?0:T<c[1]?1:2;
+  [...$('steps').children].forEach((li,i)=>li.classList.toggle('on',i===st));
+}
+function select(i,setHash){
+  stop();cur=(i+PROOFS.length)%PROOFS.length;T=0;const p=PROOFS[cur];
+  [...$('tabs').children].forEach((b,k)=>b.setAttribute('aria-selected',k===cur?'true':'false'));
+  $('tab-'+p.id).scrollIntoView({block:'nearest',inline:'nearest'});
+  $('credit').textContent=p.credit;$('ptitle').textContent=(cur+1)+'. '+p.title;
+  $('steps').innerHTML=p.steps.map(s=>`<li role="button" tabindex="0"><span>${s}</span></li>`).join('');
+  $('algebra').innerHTML=p.algebra.map(s=>`<span>${s}</span>`).join('');
+  if(setHash){try{history.replaceState(null,'','#'+p.id)}catch(e){location.hash=p.id}}
+  rebuild();
+}
+function nums(){
+  const [a,b,c]=tri;
+  $('nums').innerHTML=`<b class="ka">a = ${a}</b> &nbsp; <b class="kb">b = ${b}</b> &nbsp; <b class="kc">c = ${c}</b> &nbsp;&nbsp; a² + b² = ${a*a} + ${b*b} = <b>${c*c}</b> = c²`;
+}
+const FRAMES=()=>{const c=PROOFS[cur].cuts;return [c[0]-.001,c[1]-.001,1]};
+const STOPS=()=>{const o=[0];for(const x of FRAMES())if(x>o[o.length-1]+.05)o.push(x);o[o.length-1]=1;return o};
+const DUR=()=>PROOFS[cur].dur;
+let target=0;
+function updBtns(){$('prev').disabled=T<=0;$('next').disabled=T>=1}
+function stop(){playing=false;cancelAnimationFrame(raf)}
+function tick(now){
+  if(!playing)return;
+  const d=(now-last)/DUR();last=now;
+  T=target>T?Math.min(target,T+d):Math.max(target,T-2.5*d);draw();
+  if(T===target){stop();return}
+  raf=requestAnimationFrame(tick);
+}
+// move to the next or previous stopping point
+function go(dir){
+  if(playing){stop();T=target}
+  const s=STOPS(),to=dir>0?s.find(x=>x>T+1e-4):[...s].reverse().find(x=>x<T-1e-4);
+  if(to===undefined){draw();return}
+  target=to;
+  if(reduce||Math.abs(to-T)<.01){T=to;draw();return}
+  playing=true;last=performance.now();raf=requestAnimationFrame(tick);
+}
+// show the finished picture for step i
+function jump(i){
+  if(i<0)return;stop();T=FRAMES()[i];draw();
+  const r=svg.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight)svg.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('steps').addEventListener('click',e=>{const li=e.target.closest('li');if(li)jump([...$('steps').children].indexOf(li))});
+$('reset').addEventListener('click',()=>{stop();T=0;draw()});
+slider.addEventListener('input',()=>{stop();T=slider.value/1000;draw()});
+$('shape').addEventListener('input',e=>{tri=TRIPLES[+e.target.value];A=B*tri[0]/tri[1];nums();rebuild()});
+const fullBtn=$('full');
+if(!document.fullscreenEnabled)fullBtn.hidden=true;
+fullBtn.addEventListener('click',()=>{
+  try{
+    if(document.fullscreenElement)document.exitFullscreen();
+    else{const r=document.documentElement.requestFullscreen();if(r&&r.catch)r.catch(()=>{})}
+  }catch(e){}
+});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...$('steps').children].indexOf(li));return}
+  if(tag==='input'||tag==='select'||tag==='textarea')return;
+  if(e.key===' '&&tag!=='button'){e.preventDefault();go(1)}
+  if(e.key==='ArrowRight'){e.preventDefault();if(T>=1)select(cur+1,true);else go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(T<=0)select(cur-1,true);else go(-1)}
+});
+function fromHash(){const i=PROOFS.findIndex(p=>'#'+p.id===location.hash);return i<0?0:i}
+window.addEventListener('hashchange',()=>{const i=fromHash();if(i!==cur)select(i,false)});
+buildTabs();nums();select(fromHash(),false);
+</script>
+</body>
+</html>

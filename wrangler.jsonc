@@ -1,0 +1,8 @@
+{
+  // Static site served by Cloudflare Workers. The name must match the Worker in the Cloudflare dashboard.
+  "name": "proofs-without-words",
+  "compatibility_date": "2026-11-20",
+  "assets": {
+    "directory": "./public"
+  }
+}

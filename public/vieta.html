@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vieta's Formula, Step by Step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+/* figure marks */
+#fig *{vector-effect:non-scaling-stroke}
+.paper{fill:var(--card)}
+.frame{fill:none;stroke:var(--ink);stroke-width:2}
+.bold{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.tri{fill:var(--tri);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.sqp{fill:var(--sq);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.fa{fill:var(--a-soft)} .fb{fill:var(--b-soft)} .fc{fill:var(--c-soft)}
+.ta{fill:var(--a)} .tb{fill:var(--b)} .tc{fill:var(--c)}
+.pa{fill:var(--a);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.pb{fill:var(--b);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.un{fill:var(--sq)}
+.axis{stroke:var(--ink);stroke-width:1.5}
+.grid{stroke:var(--line);stroke-width:1}
+.curve{fill:none;stroke:var(--c);stroke-width:3.5;stroke-linejoin:round}
+.span{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.pt{fill:var(--ink)} .pa{fill:var(--a);stroke:var(--ink);stroke-width:1.5} .pb{fill:var(--b);stroke:var(--ink);stroke-width:1.5} .pc{fill:var(--c);stroke:var(--ink);stroke-width:1.5}
+.lab.plain{font-style:normal}
+.lab.tick{font-style:normal;font-weight:400;font-size:calc(var(--fs)*.72);fill:var(--muted)}
+.pq{display:flex;align-items:center;gap:10px;flex:1 1 130px;min-width:0}
+.pq label{font-weight:700}
+.pq input{flex:1;min-width:0}
+.oa{fill:none;stroke:var(--a);stroke-width:4;stroke-linejoin:round}
+.ob{fill:none;stroke:var(--b);stroke-width:4;stroke-linejoin:round}
+.ghost{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:6 6}
+.dash{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5}
+.mark{fill:none;stroke:var(--ink);stroke-width:1.5}
+.lab{font-family:var(--body);font-style:italic;font-weight:700;font-size:var(--fs);fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--card);stroke-width:calc(var(--fs)*.2);stroke-linejoin:round;vector-effect:none!important}
+.lab.big{font-size:calc(var(--fs)*1.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Vieta's formula, step by step</h1>
+    <p class="lede">In x² + bx + c = 0, the roots add up to −b and multiply to c. Here is where that comes from, one step at a time. Pick two numbers p and q and press Next.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a step"></nav>
+
+  <main class="stage" id="proofs">
+    <section class="figure" aria-label="Figure">
+      <svg id="fig" role="img" aria-labelledby="ptitle"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Previous step">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next step">Next &rarr;</button>
+        <input id="t" type="range" min="0" max="1000" value="0" aria-label="Move the pieces">
+        <button class="btn" id="reset" type="button">Reset</button>
+        <button class="btn" id="full" type="button">Full screen</button>
+      </div>
+      <div class="row shape">
+        <span class="pq"><label for="shape">p</label><input id="shape" type="range" min="1" max="5" step="1" value="3"></span>
+        <span class="pq"><label for="shq">q</label><input id="shq" type="range" min="1" max="5" step="1" value="4"></span>
+        <output class="nums" id="nums" for="shape"></output>
+      </div>
+    </section>
+
+    <section class="notes" aria-live="polite">
+      <p class="credit" id="credit"></p>
+      <h2 id="ptitle"></h2>
+      <ol class="steps" id="steps"></ol>
+      <p class="algebra" id="algebra"></p>
+      <p class="hint">Tap a step to jump to it. Keys: left and right arrows step through, then move on to the next tab.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+/*GEO-START*/
+const clamp=(x,l=0,h=1)=>Math.max(l,Math.min(h,x));
+const ease=t=>t*t*(3-2*t);
+const P=(x,y)=>({x,y});
+const add=(p,q)=>P(p.x+q.x,p.y+q.y), sub=(p,q)=>P(p.x-q.x,p.y-q.y), mul=(p,k)=>P(p.x*k,p.y*k);
+const cross=(p,q)=>p.x*q.y-p.y*q.x, dot=(p,q)=>p.x*q.x+p.y*q.y, len=p=>Math.hypot(p.x,p.y);
+const unit=p=>mul(p,1/len(p));
+const rot=(p,g)=>{const c=Math.cos(g),s=Math.sin(g);return P(p.x*c-p.y*s,p.x*s+p.y*c)};
+const cen=pl=>mul(pl.reduce(add,P(0,0)),1/pl.length);
+const mid=(p,q)=>mul(add(p,q),.5);
+const lerp=(p,q,t)=>add(p,mul(sub(q,p),t));
+const stag=(t,i,n,s=.35)=>ease(clamp(t*(1+s*(n-1))-s*i));
+
+// angle that turns polygon src onto congruent polygon dst (same vertex order)
+function angOf(src,dst){
+  let g=Math.atan2(dst[1].y-dst[0].y,dst[1].x-dst[0].x)-Math.atan2(src[1].y-src[0].y,src[1].x-src[0].x);
+  while(g>Math.PI)g-=2*Math.PI; while(g<=-Math.PI)g+=2*Math.PI;
+  return Math.abs(g)<1e-9?0:g;
+}
+// rigid motion from src to dst as a function of t in [0,1]
+function mover(src,dst){
+  const cs=cen(src),cd=cen(dst),g=angOf(src,dst);
+  return t=>src.map(p=>add(lerp(cs,cd,t),rot(sub(p,cs),g*t)));
+}
+// the two right triangles [R,Pa,Pb] with the given handedness that tile an a-by-b rectangle
+function trisInRect(x0,y0,w,h,a,sign){
+  const out=[],xs=[x0,x0+w],ys=[y0,y0+h],horizA=Math.abs(w-a)<1e-9;
+  for(const i of [0,1])for(const j of [0,1]){
+    const R=P(xs[i],ys[j]),H=P(xs[1-i],ys[j]),U=P(xs[i],ys[1-j]);
+    const Pa=horizA?H:U,Pb=horizA?U:H;
+    if(Math.sign(cross(sub(Pa,R),sub(Pb,R)))===sign)out.push([R,Pa,Pb]);
+  }
+  return out;
+}
+function perms(n){const r=[];(function go(a,rest){if(!rest.length)r.push(a);rest.forEach((x,i)=>go([...a,x],rest.filter((_,j)=>j!==i)))})([],[...Array(n).keys()]);return r;}
+// match each source piece to a target so that turning and travel are smallest
+function pair(srcs,dsts){
+  let best=null,bc=Infinity;
+  for(const pm of perms(srcs.length)){
+    let c=0;srcs.forEach((s,i)=>{const d=dsts[pm[i]];c+=Math.abs(angOf(s,d))*1e4+len(sub(cen(d),cen(s)))});
+    if(c<bc){bc=c;best=pm}
+  }
+  return srcs.map((s,i)=>dsts[best[i]]);
+}
+
+const f=n=>+n.toFixed(2);
+const pts=pl=>pl.map(p=>f(p.x)+','+f(-p.y)).join(' ');
+const poly=(pl,cls,op=1)=>op<=.01?'':`<polygon class="${cls}" points="${pts(pl)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const seg=(p,q,cls,op=1)=>op<=.01?'':`<line class="${cls}" x1="${f(p.x)}" y1="${f(-p.y)}" x2="${f(q.x)}" y2="${f(-q.y)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const txt=(s,p,cls='',op=1)=>op<=.01?'':`<text class="lab ${cls}" x="${f(p.x)}" y="${f(-p.y)}"${op<1?` opacity="${f(op)}"`:''}>${s}</text>`;
+function edgeLab(s,p,q,away,off,cls='',op=1){
+  const m=mid(p,q);let n=unit(P(-(q.y-p.y),q.x-p.x));
+  if(dot(n,sub(away,m))>0)n=mul(n,-1);
+  return txt(s,add(m,mul(n,off)),cls,op);
+}
+function rightMark(R,p1,p2,s,op=1){
+  const d1=mul(unit(sub(p1,R)),s),d2=mul(unit(sub(p2,R)),s);
+  return op<=.01?'':`<polyline class="mark" points="${pts([add(R,d1),add(add(R,d1),d2),add(R,d2)])}"${op<1?` opacity="${f(op)}"`:''}/>`;
+}
+
+const circ=(c,r,cls,op=1)=>op<=.01?'':`<circle class="${cls}" cx="${f(c.x)}" cy="${f(-c.y)}" r="${f(r)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const rect=(x,y,w,h)=>[P(x,y),P(x+w,y),P(x+w,y+h),P(x,y+h)];
+const neg=n=>'−'+n;
+const fade=(t,a,b)=>ease(clamp((t-a)/(b-a)));
+
+/* 1. Multiply out (x+p)(x+q) with an area picture */
+function sceneTiles(p,q){
+  const X=160,U=30,G=16;
+  const Wd=Math.max(X+G+(p+q)*U,X+G+p*U),Ht=X+G+q*U;
+  // each q strip turns upright and joins the p strips
+  const movers=[];for(let j=0;j<q;j++){const X0=X+G+(p+j)*U;movers.push(mover(rect(0,X+G+j*U,X,U),[P(X0+U,0),P(X0+U,X),P(X0,X),P(X0,0)]))}
+  return {bb:[P(-56,-44),P(Wd,Ht)],
+    draw(t,fs){
+      const s=fade(t,.3,.5),g=G*s,m=fade(t,.65,.9),fin=fade(t,.9,1),lab=fade(t,.42,.55);
+      let o=poly(rect(0,0,X,X),'sqp fc');
+      for(let i=0;i<p;i++)o+=poly(rect(X+g+i*U,0,U,X),'sqp fa');
+      for(let j=0;j<q;j++){
+        // before the cut the strip sits at gap g; shift the mover's start by the remaining gap
+        const pl=movers[j](m).map(pt=>add(pt,P(0,(g-G)*(1-m))));
+        o+=poly(pl,'sqp fb');
+      }
+      for(let i=0;i<p;i++)for(let j=0;j<q;j++)o+=poly(rect(X+g+i*U,X+g+j*U,U,U),'sqp un');
+      // side lengths of the whole rectangle
+      o+=txt(`x + ${p}`,P((X+p*U)/2,-fs*1.1),'plain',1-s)+txt(`x + ${q}`,P(-fs*1.9,(X+q*U)/2),'plain',1-s);
+      o+=txt('x²',P(X/2,X/2),'big',lab);
+      o+=txt(`${p}x`,P(X+g+p*U/2,X/2),'',lab*(1-m))+txt(`${q}x`,P(X/2,X+g+q*U/2),'',lab*(1-m));
+      o+=txt(`${p*q}`,P(X+g+p*U/2,X+g+q*U/2),'plain',lab);
+      o+=txt(`${p+q}x`,P(X+G+(p+q)*U/2,X/2),'big',fin)+txt(`${p} + ${q} = ${p+q} strips`,P(X+G+(p+q)*U/2,-fs*1.1),'plain',fin);
+      o+=txt(`${p} × ${q}`,P(X+G+p*U/2,X+G+q*U+fs*.9),'plain',fin);
+      return o;
+    }};
+}
+
+/* 2. Where the roots are, on the graph */
+function sceneRoots(p,q){
+  const SX=50,SY=12,XL=-6.6,XR=1.4,YT=27,YB=-5;
+  const Y=x=>(x+p)*(x+q),M=(x,y)=>P(x*SX,y*SY);
+  const pl=[];for(let x=XL;x<=XR+1e-9;x+=.05){const y=Y(x);if(y<=YT)pl.push([x,y])}
+  const b=p+q,c=p*q,mx=-b/2;
+  return {bb:[M(XL,YB),M(XR,YT)],
+    draw(t,fs){
+      const d=fade(t,0,.2),r=fade(t,.14,.26),h=fade(t,.36,.5),k=fade(t,.68,.82);
+      let o='';
+      for(let y=10;y<=20;y+=10)o+=seg(M(XL,y),M(XR,y),'grid')+txt(y,M(.38,y),'tick');
+      o+=seg(M(XL,0),M(XR,0),'axis')+seg(M(0,YB),M(0,YT),'axis');
+      for(let x=-6;x<=1;x++)if(x)o+=seg(M(x,-.35),M(x,.35),'axis')+txt(x<0?neg(-x):x,M(x,-1.9),'tick');
+      const n=Math.max(2,Math.round(pl.length*d));
+      if(d>0)o+=`<polyline class="curve" points="${pts(pl.slice(0,n).map(([x,y])=>M(x,y)))}"/>`;
+      o+=seg(M(mx,YB),M(mx,YT),'dash',h)+txt(`halfway: ${neg(b/2)}`,M(mx,YT-1.6),'plain',h);
+      o+=seg(M(-p,0),M(-q,0),'span',h);
+      o+=circ(M(-p,0),fs*.32,'pa',r)+circ(M(-q,0),fs*.32,'pb',r);
+      if(p===q)o+=txt(`x = ${neg(p)}, twice`,M(-p,3.4),'plain',r);
+      else{const lo=Math.max(p,q),hi=Math.min(p,q);o+=txt(`x = ${neg(lo)}`,add(M(-lo,3.4),P(-fs*1.6,0)),'plain',r)+txt(`x = ${neg(hi)}`,add(M(-hi,3.4),P(fs*1.6,0)),'plain',r)}
+      o+=circ(M(0,c),fs*.32,'pc',k)+txt(c,add(M(0,c),P(fs*1.1,fs*.1)),'plain',k);
+      return o;
+    }};
+}
+
+/* 3. Sum of the squares of the roots, without solving */
+function sceneSquares(p,q){
+  const U=30,S=(p+q)*U,a=p*U,b=q*U;
+  return {bb:[P(-40,-40),P(S+34,S+34)],
+    draw(t,fs){
+      const cut=fade(t,.3,.45),lab=fade(t,.4,.55),go=fade(t,.67,.9),sl=26*go,dim=1-.72*go;
+      let o=poly(rect(0,0,S,S),'sqp un',1-cut);
+      o+=poly(rect(0,0,a,a),'sqp fa',cut)+poly(rect(a,a,b,b),'sqp fb',cut);
+      o+=poly(rect(a+sl,0,b,a),'sqp un',cut*dim)+poly(rect(0,a+sl,a,b),'sqp un',cut*dim);
+      o+=txt(`${p} + ${q} = ${p+q}`,P(S/2,-fs*1.1),'plain')+txt(`${p+q}`,P(-fs*1.1,S/2),'plain');
+      o+=txt(`${(p+q)*(p+q)}`,P(S/2,S/2),'big plain',1-cut);
+      o+=txt(`${p*p}`,P(a/2,a/2),'plain',lab)+txt(`${q*q}`,P(a+b/2,a+b/2),'plain',lab);
+      o+=txt(`${p*q}`,P(a+sl+b/2,a/2),'plain',lab*dim)+txt(`${p*q}`,P(a/2,a+sl+b/2),'plain',lab*dim);
+      return o;
+    }};
+}
+
+const PROOFS=[
+ {id:'multiply',tab:'Multiply out',title:'Where the sum and the product come from',build:sceneTiles,cuts:[.3,.65],dur:9000,
+  credit:'An area picture, the same idea as algebra tiles.',
+  steps:['Start with a rectangle. One side is x + p long and the other is x + q. Its area is (x + p)(x + q).',
+         'Cut along the lines. You get one square of area x², p strips of area x each, q more strips of area x each, and a block of p × q small squares.',
+         'Stand all the strips side by side. There are p + q of them. So the area is x² + (p + q)x + pq: the number in front of x is the sum of p and q, and the last number is their product.'],
+  algebra:(p,q,t)=>[`(x + ${p})(x + ${q}) = x² + ${p+q}x + ${p*q}`,`${p+q} = ${p} + ${q}, the sum`,`${p*q} = ${p} × ${q}, the product`]},
+ {id:'roots',tab:'The roots',title:'Where the minus sign comes from',build:sceneRoots,cuts:[.34,.67],dur:9000,
+  credit:'Named after François Viète, a French mathematician of the 1500s.',
+  steps:['A root is a value of x that makes the whole thing zero. A product is zero only when one of its factors is zero, so x + p = 0 or x + q = 0. The roots are −p and −q.',
+         'Add the roots: −p + −q = −(p + q). That is the number in front of x with its sign flipped. On the graph, the line halfway between the roots is the mirror line of the curve.',
+         'Multiply the roots: (−p)(−q) = pq. That is the last number, with no sign flip, and it is where the curve crosses the y-axis. This is Vieta’s formula: in x² + bx + c = 0, the roots add to −b and multiply to c.'],
+  algebra:(p,q,t)=>[`x² + ${p+q}x + ${p*q} = 0 has roots ${neg(p)} and ${neg(q)}`,`sum: ${neg(p)} + ${neg(q)} = ${neg(p+q)}, which is −b`,`product: (${neg(p)})(${neg(q)}) = ${p*q}, which is c`,'any roots r, s: x² − (r + s)x + rs = 0']},
+ {id:'use',tab:'Use it',title:'Squares of the roots, without solving',build:sceneSquares,cuts:[.3,.67],dur:9000,
+  credit:'Squaring removes the minus signs, so p² + q² is also the sum of the squares of the roots.',
+  steps:['A common question: what is the sum of the squares of the roots? Start with a square whose side is p + q. Its area is the sum, squared.',
+         'It splits into a p by p square, a q by q square, and two p by q rectangles. Each rectangle is the product.',
+         'Take the two rectangles away. What is left is p² + q². So the sum of the squares is (sum)² − 2 × (product), which is b² − 2c. You never had to find the roots.'],
+  algebra:(p,q,t)=>{const b=p+q,c=p*q;return [`x² + ${b}x + ${c} = 0: sum of roots ${neg(b)}, product ${c}`,`(${neg(b)})² − 2 × ${c} = ${b*b} − ${2*c} = ${b*b-2*c}`,`check: (${neg(p)})² + (${neg(q)})² = ${p*p} + ${q*q} = ${p*p+q*q}`]}}
+];
+/*GEO-END*/
+
+const $=id=>document.getElementById(id);
+const svg=$('fig'),slider=$('t');
+let VP=3,VQ=4;
+let cur=0,T=0,scene=null,fs=30,raf=0,playing=false,last=0;
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function buildTabs(){
+  $('tabs').innerHTML=PROOFS.map((p,i)=>`<button type="button" role="tab" id="tab-${p.id}" data-i="${i}" aria-selected="false"><span class="n">${i+1}</span>${p.tab}</button>`).join('');
+  $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select(+b.dataset.i,true)});
+}
+function rebuild(){
+  scene=PROOFS[cur].build(VP,VQ);
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of scene.bb){x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}
+  fs=Math.max(x1-x0,y1-y0)*.05;const pad=fs*1.9,w=x1-x0+2*pad,h=y1-y0+2*pad;
+  svg.setAttribute('viewBox',`${f(x0-pad)} ${f(-y1-pad)} ${f(w)} ${f(h)}`);
+  svg.style.setProperty('--fs',f(fs)+'px');svg.style.aspectRatio=f(w)+' / '+f(h);
+  draw();
+}
+function draw(){
+  svg.innerHTML=scene.draw(T,fs);
+  slider.value=Math.round(T*1000);updBtns();
+  const c=PROOFS[cur].cuts,st=T<c[0]?0:T<c[1]?1:2;
+  [...$('steps').children].forEach((li,i)=>li.classList.toggle('on',i===st));
+}
+function select(i,setHash){
+  stop();cur=(i+PROOFS.length)%PROOFS.length;T=0;const p=PROOFS[cur];
+  [...$('tabs').children].forEach((b,k)=>b.setAttribute('aria-selected',k===cur?'true':'false'));
+  $('tab-'+p.id).scrollIntoView({block:'nearest',inline:'nearest'});
+  $('credit').textContent=p.credit;$('ptitle').textContent=(cur+1)+'. '+p.title;
+  $('steps').innerHTML=p.steps.map(s=>`<li role="button" tabindex="0"><span>${s}</span></li>`).join('');
+  algebra();
+  if(setHash){try{history.replaceState(null,'','#'+p.id)}catch(e){location.hash=p.id}}
+  rebuild();
+}
+function algebra(){$('algebra').innerHTML=PROOFS[cur].algebra(VP,VQ,T).map(s=>`<span>${s}</span>`).join('')}
+function nums(){
+  $('nums').innerHTML=`<b class="ka">p = ${VP}</b> &nbsp; <b class="kb">q = ${VQ}</b> &nbsp;&nbsp; x² + ${VP+VQ}x + ${VP*VQ} = 0`;
+}
+const FRAMES=()=>{const c=PROOFS[cur].cuts;return [c[0]-.001,c[1]-.001,1]};
+const STOPS=()=>{const o=[0];for(const x of FRAMES())if(x>o[o.length-1]+.05)o.push(x);o[o.length-1]=1;return o};
+const DUR=()=>PROOFS[cur].dur;
+let target=0;
+function updBtns(){$('prev').disabled=T<=0;$('next').disabled=T>=1}
+function stop(){playing=false;cancelAnimationFrame(raf)}
+function tick(now){
+  if(!playing)return;
+  const d=(now-last)/DUR();last=now;
+  T=target>T?Math.min(target,T+d):Math.max(target,T-2.5*d);draw();
+  if(T===target){stop();return}
+  raf=requestAnimationFrame(tick);
+}
+// move to the next or previous stopping point
+function go(dir){
+  if(playing){stop();T=target}
+  const s=STOPS(),to=dir>0?s.find(x=>x>T+1e-4):[...s].reverse().find(x=>x<T-1e-4);
+  if(to===undefined){draw();return}
+  target=to;
+  if(reduce||Math.abs(to-T)<.01){T=to;draw();return}
+  playing=true;last=performance.now();raf=requestAnimationFrame(tick);
+}
+// show the finished picture for step i
+function jump(i){
+  if(i<0)return;stop();T=FRAMES()[i];draw();
+  const r=svg.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight)svg.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('steps').addEventListener('click',e=>{const li=e.target.closest('li');if(li)jump([...$('steps').children].indexOf(li))});
+$('reset').addEventListener('click',()=>{stop();T=0;draw()});
+slider.addEventListener('input',()=>{stop();T=slider.value/1000;draw()});
+$('shape').addEventListener('input',e=>{VP=+e.target.value;nums();algebra();rebuild()});
+$('shq').addEventListener('input',e=>{VQ=+e.target.value;nums();algebra();rebuild()});
+const fullBtn=$('full');
+if(!document.fullscreenEnabled)fullBtn.hidden=true;
+fullBtn.addEventListener('click',()=>{
+  try{
+    if(document.fullscreenElement)document.exitFullscreen();
+    else{const r=document.documentElement.requestFullscreen();if(r&&r.catch)r.catch(()=>{})}
+  }catch(e){}
+});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...$('steps').children].indexOf(li));return}
+  if(tag==='input'||tag==='select'||tag==='textarea')return;
+  if(e.key===' '&&tag!=='button'){e.preventDefault();go(1)}
+  if(e.key==='ArrowRight'){e.preventDefault();if(T>=1)select(cur+1,true);else go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(T<=0)select(cur-1,true);else go(-1)}
+});
+function fromHash(){const i=PROOFS.findIndex(p=>'#'+p.id===location.hash);return i<0?0:i}
+window.addEventListener('hashchange',()=>{const i=fromHash();if(i!==cur)select(i,false)});
+buildTabs();nums();select(fromHash(),false);
+</script>
+</body>
+</html>

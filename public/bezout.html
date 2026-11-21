@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bézout: Making the GCF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+/* figure marks */
+#fig *{vector-effect:non-scaling-stroke}
+.paper{fill:var(--card)}
+.frame{fill:none;stroke:var(--ink);stroke-width:2}
+.bold{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.tri{fill:var(--tri);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.sqp{fill:var(--sq);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.fa{fill:var(--a-soft)} .fb{fill:var(--b-soft)} .fc{fill:var(--c-soft)}
+.ta{fill:var(--a)} .tb{fill:var(--b)} .tc{fill:var(--c)}
+.pa{fill:var(--a);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.pb{fill:var(--b);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.axis{stroke:var(--ink);stroke-width:1.5}
+.ring{fill:none;stroke:var(--ink);stroke-width:1.5}
+.hopf{fill:none;stroke:var(--a);stroke-width:3.5;stroke-linecap:round}
+.hopb{fill:none;stroke:var(--b);stroke-width:3.5;stroke-linecap:round}
+.mult{fill:var(--card);stroke:var(--c);stroke-width:2.5}
+.seen{fill:var(--a);stroke:var(--ink);stroke-width:1.5}
+.goal{fill:none;stroke:var(--c);stroke-width:4}
+.pt{fill:var(--ink)}
+.lab.plain{font-style:normal}
+.lab.tick{font-style:normal;font-weight:400;font-size:calc(var(--fs)*.8);fill:var(--muted)}
+.pq{display:flex;align-items:center;gap:10px;flex:1 1 130px;min-width:0}
+.pq label{font-weight:700}
+.pq input{flex:1;min-width:0}
+.subs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sub{font:inherit;text-align:left;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-variant-numeric:tabular-nums}
+.sub.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.oa{fill:none;stroke:var(--a);stroke-width:4;stroke-linejoin:round}
+.ob{fill:none;stroke:var(--b);stroke-width:4;stroke-linejoin:round}
+.ghost{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:6 6}
+.dash{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5}
+.mark{fill:none;stroke:var(--ink);stroke-width:1.5}
+.lab{font-family:var(--body);font-style:italic;font-weight:700;font-size:var(--fs);fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--card);stroke-width:calc(var(--fs)*.2);stroke-linejoin:round;vector-effect:none!important}
+.lab.big{font-size:calc(var(--fs)*1.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Bézout: making the GCF</h1>
+    <p class="lede">Take any two whole numbers. By adding and subtracting copies of them you can always make their greatest common factor, and nothing smaller. Here are two ways to see it. Pick the numbers and press Next.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage" id="proofs">
+    <section class="figure" aria-label="Figure">
+      <svg id="fig" role="img" aria-labelledby="ptitle"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Previous step">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next step">Next &rarr;</button>
+        <input id="t" type="range" min="0" max="1000" value="0" aria-label="Move the pieces">
+        <button class="btn" id="reset" type="button">Reset</button>
+        <button class="btn" id="full" type="button">Full screen</button>
+      </div>
+      <div class="row shape">
+        <span class="pq"><label for="shape">a</label><input id="shape" type="range" min="2" max="15" step="1" value="5"></span>
+        <span class="pq"><label for="shq">b</label><input id="shq" type="range" min="2" max="15" step="1" value="3"></span>
+        <output class="nums" id="nums" for="shape"></output>
+      </div>
+    </section>
+
+    <section class="notes" aria-live="polite">
+      <p class="credit" id="credit"></p>
+      <h2 id="ptitle"></h2>
+      <ol class="steps" id="steps"></ol>
+      <p class="algebra" id="algebra"></p>
+      <p class="hint">Tap a step to jump to it. Keys: left and right arrows step through, then move on to the next tab.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+/*GEO-START*/
+const clamp=(x,l=0,h=1)=>Math.max(l,Math.min(h,x));
+const ease=t=>t*t*(3-2*t);
+const P=(x,y)=>({x,y});
+const add=(p,q)=>P(p.x+q.x,p.y+q.y), sub=(p,q)=>P(p.x-q.x,p.y-q.y), mul=(p,k)=>P(p.x*k,p.y*k);
+const cross=(p,q)=>p.x*q.y-p.y*q.x, dot=(p,q)=>p.x*q.x+p.y*q.y, len=p=>Math.hypot(p.x,p.y);
+const unit=p=>mul(p,1/len(p));
+const rot=(p,g)=>{const c=Math.cos(g),s=Math.sin(g);return P(p.x*c-p.y*s,p.x*s+p.y*c)};
+const cen=pl=>mul(pl.reduce(add,P(0,0)),1/pl.length);
+const mid=(p,q)=>mul(add(p,q),.5);
+const lerp=(p,q,t)=>add(p,mul(sub(q,p),t));
+const stag=(t,i,n,s=.35)=>ease(clamp(t*(1+s*(n-1))-s*i));
+
+// angle that turns polygon src onto congruent polygon dst (same vertex order)
+function angOf(src,dst){
+  let g=Math.atan2(dst[1].y-dst[0].y,dst[1].x-dst[0].x)-Math.atan2(src[1].y-src[0].y,src[1].x-src[0].x);
+  while(g>Math.PI)g-=2*Math.PI; while(g<=-Math.PI)g+=2*Math.PI;
+  return Math.abs(g)<1e-9?0:g;
+}
+// rigid motion from src to dst as a function of t in [0,1]
+function mover(src,dst){
+  const cs=cen(src),cd=cen(dst),g=angOf(src,dst);
+  return t=>src.map(p=>add(lerp(cs,cd,t),rot(sub(p,cs),g*t)));
+}
+// the two right triangles [R,Pa,Pb] with the given handedness that tile an a-by-b rectangle
+function trisInRect(x0,y0,w,h,a,sign){
+  const out=[],xs=[x0,x0+w],ys=[y0,y0+h],horizA=Math.abs(w-a)<1e-9;
+  for(const i of [0,1])for(const j of [0,1]){
+    const R=P(xs[i],ys[j]),H=P(xs[1-i],ys[j]),U=P(xs[i],ys[1-j]);
+    const Pa=horizA?H:U,Pb=horizA?U:H;
+    if(Math.sign(cross(sub(Pa,R),sub(Pb,R)))===sign)out.push([R,Pa,Pb]);
+  }
+  return out;
+}
+function perms(n){const r=[];(function go(a,rest){if(!rest.length)r.push(a);rest.forEach((x,i)=>go([...a,x],rest.filter((_,j)=>j!==i)))})([],[...Array(n).keys()]);return r;}
+// match each source piece to a target so that turning and travel are smallest
+function pair(srcs,dsts){
+  let best=null,bc=Infinity;
+  for(const pm of perms(srcs.length)){
+    let c=0;srcs.forEach((s,i)=>{const d=dsts[pm[i]];c+=Math.abs(angOf(s,d))*1e4+len(sub(cen(d),cen(s)))});
+    if(c<bc){bc=c;best=pm}
+  }
+  return srcs.map((s,i)=>dsts[best[i]]);
+}
+
+const f=n=>+n.toFixed(2);
+const pts=pl=>pl.map(p=>f(p.x)+','+f(-p.y)).join(' ');
+const poly=(pl,cls,op=1)=>op<=.01?'':`<polygon class="${cls}" points="${pts(pl)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const seg=(p,q,cls,op=1)=>op<=.01?'':`<line class="${cls}" x1="${f(p.x)}" y1="${f(-p.y)}" x2="${f(q.x)}" y2="${f(-q.y)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const txt=(s,p,cls='',op=1)=>op<=.01?'':`<text class="lab ${cls}" x="${f(p.x)}" y="${f(-p.y)}"${op<1?` opacity="${f(op)}"`:''}>${s}</text>`;
+function edgeLab(s,p,q,away,off,cls='',op=1){
+  const m=mid(p,q);let n=unit(P(-(q.y-p.y),q.x-p.x));
+  if(dot(n,sub(away,m))>0)n=mul(n,-1);
+  return txt(s,add(m,mul(n,off)),cls,op);
+}
+function rightMark(R,p1,p2,s,op=1){
+  const d1=mul(unit(sub(p1,R)),s),d2=mul(unit(sub(p2,R)),s);
+  return op<=.01?'':`<polyline class="mark" points="${pts([add(R,d1),add(add(R,d1),d2),add(R,d2)])}"${op<1?` opacity="${f(op)}"`:''}/>`;
+}
+
+const circ=(c,r,cls,op=1)=>op<=.01?'':`<circle class="${cls}" cx="${f(c.x)}" cy="${f(-c.y)}" r="${f(r)}"${op<1?` opacity="${f(op)}"`:''}/>`;
+const fade=(t,a,b)=>ease(clamp((t-a)/(b-a)));
+const T0=.06,T1=.85;                       // the moves happen between these times
+const stopsFor=n=>{const o=[0];for(let k=1;k<=n;k++)o.push(T0+(T1-T0)*k/n);o.push(1);return o};
+const prog=(t,n)=>clamp((t-T0)/(T1-T0))*n;
+const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
+// extended Euclid: g = a*x + b*y
+function bez(a,b){
+  let r0=a,r1=b,s0=1,s1=0,t0=0,t1=1;
+  while(r1){const q=Math.floor(r0/r1);[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1];[t0,t1]=[t1,t0-q*t1]}
+  return {g:r0,x:s0,y:t0};
+}
+// the frog's route: forward jumps of F and backward jumps of K that end on g without leaving the line
+function route(a,b){
+  const {g,x,y}=bez(a,b);
+  const fwdA=x>0,F=fwdA?a:b,K=fwdA?b:a,nf=fwdA?x:y,nb=-(fwdA?y:x);
+  const pos=[0],dir=[];let p=0,f=nf,k=nb;
+  while(f>0||k>0){if(k>0&&p-K>=0){p-=K;k--;dir.push(-1)}else{p+=F;f--;dir.push(1)}pos.push(p)}
+  return {g,F,K,nf,nb,pos,dir};
+}
+
+/* 1. A frog on a number line */
+function sceneFrog(a,b){
+  const R=route(a,b),{g,F,K,nf,nb,pos,dir}=R,n=dir.length;
+  const L=Math.max(...pos,2*g)+1,u=560/L,X=v=>v*u;
+  const hf=F*u*.42,hb=nb?K*u*.42:0;
+  const arc=(k,fr)=>{
+    const p=X(pos[k]),q=X(pos[k+1]),h=(dir[k]>0?1:-1)*Math.abs(q-p)*.42*2,m=(p+q)/2;
+    const cls=dir[k]>0?'hopf':'hopb';
+    return {d:`<path class="${cls}" pathLength="1" stroke-dasharray="${f(fr)} 1" d="M${f(p)} 0 Q${f(m)} ${f(-h)} ${f(q)} 0"/>`,
+            at:P((1-fr)*(1-fr)*p+2*fr*(1-fr)*m+fr*fr*q,2*fr*(1-fr)*h)};
+  };
+  const eq=nb?`${nf} × ${F} − ${nb} × ${K} = ${g}`:`${nf} × ${F} = ${g}`;
+  return {bb:[P(0,-hb-46),P(560,hf+46)],stops:stopsFor(n),dur:clamp(n*1300,5000,16000),R,eq,
+    subs:dir.map((d,k)=>({t:T0+(T1-T0)*(k+1)/n,label:`${d>0?'+':'−'}${d>0?F:K} → ${pos[k+1]}`})),
+    subOn:t=>{const s=prog(t,n);return s<=1e-6?-1:Math.min(n-1,Math.ceil(s-1e-6)-1)},
+    draw(t,fs){
+      const s=prog(t,n),fin=fade(t,.88,1);let o=seg(P(0,0),P(560,0),'axis'),frog=P(0,0);
+      const many=L/g>18;
+      for(let v=0;v<L;v++){
+        if(v%g===0){o+=circ(P(X(v),0),fs*.2,'mult');if(!many)o+=txt(v,P(X(v),-fs*.95),'tick')}
+        else o+=seg(P(X(v),-3),P(X(v),3),'axis');
+      }
+      for(let k=0;k<n;k++){
+        const fr=clamp(s-k);if(fr<=0)break;
+        const A=arc(k,fr);o+=`<g opacity="${fr<1||k===n-1?1:.55}">${A.d}</g>`;frog=A.at;
+        if(fr>=1){o+=circ(P(X(pos[k+1]),0),fs*.24,'seen');if(many)o+=txt(pos[k+1],P(X(pos[k+1]),-fs*.95),'tick')}
+      }
+      o+=circ(P(X(g),0),fs*.42,'goal',Math.max(fin,.35));
+      o+=circ(frog,fs*.3,'pt');
+      o+=txt(eq,P(280,hf+26),'plain',fin);
+      return o;
+    }};
+}
+
+/* 2. Stepping round a clock */
+function sceneClock(a,b){
+  const M=Math.max(a,b),m=Math.min(a,b),{g}=bez(a,b),n=M/g,R=170;
+  const at=i=>P(R*Math.sin(2*Math.PI*i/M),R*Math.cos(2*Math.PI*i/M));
+  const pos=[];for(let k=0;k<=n;k++)pos.push(k*m%M);
+  let kg=1;while(kg<n&&pos[kg]!==g%M)kg++;
+  const turns=(kg*m-g)/M;
+  return {bb:[P(-R-34,-R-78),P(R+34,R+34)],stops:stopsFor(n),dur:clamp(n*1300,5000,16000),M,m,g,n,kg,turns,
+    subs:pos.slice(1).map((p,k)=>({t:T0+(T1-T0)*(k+1)/n,label:`+${m} → ${p}`})),
+    subOn:t=>{const s=prog(t,n);return s<=1e-6?-1:Math.min(n-1,Math.ceil(s-1e-6)-1)},
+    draw(t,fs){
+      const s=prog(t,n),fin=fade(t,.88,1);let o=circ(P(0,0),R,'ring'),cur=at(0);
+      for(let k=0;k<n;k++){
+        const fr=clamp(s-k);if(fr<=0)break;
+        const A=at(pos[k]),B=at(pos[k+1]);cur=lerp(A,B,ease(fr));
+        o+=seg(A,cur,'hopf',fr<1||k===n-1?1:.5);
+      }
+      for(let i=0;i<M;i++){
+        const seen=pos.some((p,k)=>p===i&&(k===0||s>=k-1e-6));
+        o+=circ(at(i),fs*.24,i%g===0?(seen?'seen':'mult'):'pt',i%g===0?1:.35);
+        o+=txt(i,mul(at(i),(R+fs*1.15)/R),i%g===0?'plain':'tick');
+      }
+      o+=circ(at(g%M),fs*.45,'goal',s>=kg-1e-6?1:.35);
+      o+=circ(cur,fs*.3,'pt');
+      o+=txt(`${kg} × ${m} − ${turns} × ${M} = ${g}`,P(0,-R-fs*2.9),'plain',fin);
+      return o;
+    }};
+}
+
+const PROOFS=[
+ {id:'frog',tab:'Frog jumps',title:'A frog on a number line',build:sceneFrog,cuts:[.05,.8601],
+  credit:'Bézout’s identity, named after Étienne Bézout, a French mathematician of the 1700s.',
+  steps:(a,b,sc)=>{const {g,F,K,nf,nb}=sc.R;return [
+    `A frog starts at 0. Every jump is ${a} or ${b} long, forward or backward. Both ${a} and ${b} are multiples of ${g}, so every landing spot is a multiple of ${g}. Those spots are the circles on the line. Can the frog land on ${g} itself?`,
+    nb?`Yes. The rule: jump back ${K} whenever there is room, otherwise jump forward ${F}.`:`Yes, in one jump of ${F}.`,
+    `It lands on ${g}, after ${plural(nf,'jump')} forward`+(nb?` and ${plural(nb,'jump')} back`:'')+`. So ${sc.eq}. Repeat the whole route and it reaches ${2*g}, then ${3*g}, and every other multiple of ${g}.`]},
+  algebra:(a,b,sc)=>[sc.eq,`GCF(${a}, ${b}) = ${sc.R.g}`,`reachable: every multiple of ${sc.R.g}, and nothing else`]},
+ {id:'clock',tab:'Clock',title:'Stepping round a clock',build:sceneClock,cuts:[.05,.8601],
+  credit:'The same fact on a circle. This is why clock arithmetic works the way it does.',
+  steps:(a,b,sc)=>{const {M,m,g,n,kg,turns}=sc;return [
+    `Draw a clock with ${M} hours, numbered from 0. Start at 0 and keep stepping forward ${m} hours at a time.`,
+    `Watch where it lands.`,
+    `After ${plural(n,'step')} it is back at 0, and it has landed on every ${g===1?'hour':`multiple of ${g}`} and nothing else. It reached ${g%M===0?`${g}, which is 0 on this clock,`:g} after ${plural(kg,'step')}: that is ${kg} × ${m} = ${kg*m}, which is ${plural(turns,'full turn')} of ${M} plus ${g}. So ${kg} × ${m} − ${turns} × ${M} = ${g}.`]},
+  algebra:(a,b,sc)=>[`${sc.kg} × ${sc.m} = ${sc.kg*sc.m} = ${sc.turns} × ${sc.M} + ${sc.g}`,`${sc.kg} × ${sc.m} − ${sc.turns} × ${sc.M} = ${sc.g}`,`GCF(${a}, ${b}) = ${sc.g}`]}
+];
+/*GEO-END*/
+
+const $=id=>document.getElementById(id);
+const svg=$('fig'),slider=$('t');
+let VA=5,VB=3;
+let cur=0,T=0,scene=null,fs=30,raf=0,playing=false,last=0;
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function buildTabs(){
+  $('tabs').innerHTML=PROOFS.map((p,i)=>`<button type="button" role="tab" id="tab-${p.id}" data-i="${i}" aria-selected="false"><span class="n">${i+1}</span>${p.tab}</button>`).join('');
+  $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select(+b.dataset.i,true)});
+}
+function rebuild(){
+  scene=PROOFS[cur].build(VA,VB);renderSteps();
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of scene.bb){x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}
+  fs=Math.max(x1-x0,y1-y0)*.05;const pad=fs*1.9,w=x1-x0+2*pad,h=y1-y0+2*pad;
+  svg.setAttribute('viewBox',`${f(x0-pad)} ${f(-y1-pad)} ${f(w)} ${f(h)}`);
+  svg.style.setProperty('--fs',f(fs)+'px');svg.style.aspectRatio=f(w)+' / '+f(h);
+  draw();
+}
+function draw(){
+  svg.innerHTML=scene.draw(T,fs);
+  slider.value=Math.round(T*1000);updBtns();
+  const c=PROOFS[cur].cuts,st=T<c[0]?0:T<c[1]?1:2;
+  [...$('steps').children].forEach((li,i)=>li.classList.toggle('on',i===st));
+  const on=st<2?scene.subOn(T):-1;
+  [...$('steps').querySelectorAll('.sub')].forEach((el,i)=>el.classList.toggle('on',i===on));
+}
+function select(i,setHash){
+  stop();cur=(i+PROOFS.length)%PROOFS.length;T=0;const p=PROOFS[cur];
+  [...$('tabs').children].forEach((b,k)=>b.setAttribute('aria-selected',k===cur?'true':'false'));
+  $('tab-'+p.id).scrollIntoView({block:'nearest',inline:'nearest'});
+  $('credit').textContent=p.credit;$('ptitle').textContent=(cur+1)+'. '+p.title;
+  if(setHash){try{history.replaceState(null,'','#'+p.id)}catch(e){location.hash=p.id}}
+  rebuild();
+}
+// the numbered steps use the chosen numbers; step 2 gets one clickable chip per move
+function renderSteps(){
+  const p=PROOFS[cur],subs='<span class="subs">'+scene.subs.map(s=>`<button type="button" class="sub" data-t="${s.t}">${s.label}</button>`).join('')+'</span>';
+  $('steps').innerHTML=p.steps(VA,VB,scene).map((s,i)=>`<li role="button" tabindex="0"><span>${s}${i===1?subs:''}</span></li>`).join('');
+  $('algebra').innerHTML=p.algebra(VA,VB,scene).map(s=>`<span>${s}</span>`).join('');
+}
+function nums(){
+  $('nums').innerHTML=`<b class="ka">a = ${VA}</b> &nbsp; <b class="kb">b = ${VB}</b> &nbsp;&nbsp; GCF = <b>${bez(VA,VB).g}</b>`;
+}
+const FRAMES=()=>{const c=PROOFS[cur].cuts;return [c[0]-.001,c[1]-.001,1]};
+const STOPS=()=>scene.stops;
+const DUR=()=>scene.dur;
+let target=0;
+function updBtns(){$('prev').disabled=T<=0;$('next').disabled=T>=1}
+function stop(){playing=false;cancelAnimationFrame(raf)}
+function tick(now){
+  if(!playing)return;
+  const d=(now-last)/DUR();last=now;
+  T=target>T?Math.min(target,T+d):Math.max(target,T-2.5*d);draw();
+  if(T===target){stop();return}
+  raf=requestAnimationFrame(tick);
+}
+// move to the next or previous stopping point
+function go(dir){
+  if(playing){stop();T=target}
+  const s=STOPS(),to=dir>0?s.find(x=>x>T+1e-4):[...s].reverse().find(x=>x<T-1e-4);
+  if(to===undefined){draw();return}
+  target=to;
+  if(reduce||Math.abs(to-T)<.01){T=to;draw();return}
+  playing=true;last=performance.now();raf=requestAnimationFrame(tick);
+}
+// show the finished picture for step i
+function jump(i){
+  if(i<0)return;stop();T=FRAMES()[i];draw();
+  const r=svg.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight)svg.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('steps').addEventListener('click',e=>{
+  const sb=e.target.closest('.sub');
+  if(sb){stop();T=+sb.dataset.t;draw();const r=svg.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)svg.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});return}
+  const li=e.target.closest('li');if(li)jump([...$('steps').children].indexOf(li));
+});
+$('reset').addEventListener('click',()=>{stop();T=0;draw()});
+slider.addEventListener('input',()=>{stop();T=slider.value/1000;draw()});
+$('shape').addEventListener('input',e=>{stop();T=0;VA=+e.target.value;nums();rebuild()});
+$('shq').addEventListener('input',e=>{stop();T=0;VB=+e.target.value;nums();rebuild()});
+const fullBtn=$('full');
+if(!document.fullscreenEnabled)fullBtn.hidden=true;
+fullBtn.addEventListener('click',()=>{
+  try{
+    if(document.fullscreenElement)document.exitFullscreen();
+    else{const r=document.documentElement.requestFullscreen();if(r&&r.catch)r.catch(()=>{})}
+  }catch(e){}
+});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&!e.target.closest('.sub')&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...$('steps').children].indexOf(li));return}
+  if(tag==='input'||tag==='select'||tag==='textarea')return;
+  if(e.key===' '&&tag!=='button'){e.preventDefault();go(1)}
+  if(e.key==='ArrowRight'){e.preventDefault();if(T>=1)select(cur+1,true);else go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(T<=0)select(cur-1,true);else go(-1)}
+});
+function fromHash(){const i=PROOFS.findIndex(p=>'#'+p.id===location.hash);return i<0?0:i}
+window.addEventListener('hashchange',()=>{const i=fromHash();if(i!==cur)select(i,false)});
+buildTabs();nums();select(fromHash(),false);
+</script>
+</body>
+</html>

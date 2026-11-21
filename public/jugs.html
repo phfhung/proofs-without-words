@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Die Hard Jug Puzzle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.jg{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@media (min-width:560px){.jg{grid-template-columns:minmax(0,.8fr) minmax(0,1fr)}}
+.jg svg{display:block;width:100%;height:auto}
+.jg text{font-family:var(--body);fill:var(--ink)}
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.picks label{font-weight:700;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+.picks select{font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.ops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ops .btn{padding:10px 8px}
+.ops .oa{border-color:var(--a)} .ops .ob{border-color:var(--b)}
+.status{margin:0;font-weight:700;min-height:3em}
+.status small{display:block;font-weight:400;color:var(--muted);font-size:.92rem}
+.status.win{color:var(--b)}
+.moves{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.moves button{font:inherit;font-size:.92rem;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:5px 9px;cursor:pointer;font-variant-numeric:tabular-nums}
+.moves button.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.moves button.later{opacity:.5}
+.routes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.routes .btn{text-align:left;line-height:1.3}
+.routes .btn small{display:block;font-weight:400;color:var(--muted)}
+.routes .btn.sel{border-color:var(--accent);border-width:2.5px}
+.why{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.notes a,.lede a{color:var(--accent);font-weight:700}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>The Die Hard jug puzzle</h1>
+    <p class="lede">You have a 3-gallon jug, a 5-gallon jug and a fountain. Put exactly 4 gallons on the scale or the bomb goes off. No markings on the jugs, no guessing. <a href="https://www.youtube.com/watch?v=2vdF6NASMiE" target="_blank" rel="noopener">Watch the scene on YouTube</a>, then try it yourself.</p>
+  </header>
+
+  <main class="stage">
+    <section class="figure" aria-label="Jugs and map">
+      <div class="jg">
+        <svg id="jugs" viewBox="0 0 300 250" role="img" aria-label="The two jugs"></svg>
+        <svg id="map" viewBox="0 0 340 340" role="img" aria-label="Map of every possible state"></svg>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+      <div class="ops" id="ops">
+        <button class="btn oa" type="button" data-op="fa">Fill A</button>
+        <button class="btn ob" type="button" data-op="fb">Fill B</button>
+        <button class="btn oa" type="button" data-op="ea">Empty A</button>
+        <button class="btn ob" type="button" data-op="eb">Empty B</button>
+        <button class="btn oa" type="button" data-op="ab">Pour A into B</button>
+        <button class="btn ob" type="button" data-op="ba">Pour B into A</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Back one move">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Forward one move">Next &rarr;</button>
+        <button class="btn" id="reset" type="button">Start over</button>
+      </div>
+      <div class="picks shape">
+        <label>Jug A<select id="ja"></select></label>
+        <label>Jug B<select id="jb"></select></label>
+        <label>Target<select id="jt"></select></label>
+      </div>
+    </section>
+
+    <section class="notes">
+      <h2>Your moves</h2>
+      <ol class="moves" id="moves" aria-label="Moves so far. Tap one to jump back to it."></ol>
+      <h3>Stuck? Press Next for a hint</h3>
+      <div class="routes">
+        <button class="btn" id="r1" type="button">Keep filling A<small id="c1"></small></button>
+        <button class="btn" id="r2" type="button">Keep filling B<small id="c2"></small></button>
+      </div>
+      <p class="hint">Next always takes the next move of the outlined route from wherever you are, even after your own moves. Tap a route to switch and start again.</p>
+      <h3>What the map shows</h3>
+      <ol class="why">
+        <li>Each dot is one possible situation: across is the water in A, up is the water in B. The big dot is where you are now.</li>
+        <li>After any move, one of the jugs is completely full or completely empty. So you can only ever stand on the edge of the map. The hollow dots in the middle are impossible.</li>
+        <li>Filling or emptying slides you along a side. Pouring moves you diagonally, because the total amount of water does not change.</li>
+        <li>There are only two sensible ways round the edge: keep filling A, or keep filling B. One of them is always the shortest answer.</li>
+        <li id="gcfnote"></li>
+      </ol>
+      <p class="hint">The reason it always works is on the <a href="bezout.html">B&eacute;zout page</a>: the frog&rsquo;s jumps are the fills and the empties.</p>
+    </section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let A=3,B=5,T=4,path=[],k=0,R1=null,R2=null,active='b';
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const OPS={
+  fa:{txt:'Fill A',f:(x,y)=>[A,y]}, fb:{txt:'Fill B',f:(x,y)=>[x,B]},
+  ea:{txt:'Empty A',f:(x,y)=>[0,y]}, eb:{txt:'Empty B',f:(x,y)=>[x,0]},
+  ab:{txt:'Pour A into B',f:(x,y)=>{const d=Math.min(x,B-y);return [x-d,y+d]}},
+  ba:{txt:'Pour B into A',f:(x,y)=>{const d=Math.min(y,A-x);return [x+d,y-d]}}
+};
+const won=s=>s.x===T||s.y===T;
+// the two sensible routes: keep filling one jug, pour into the other, empty the other when it is full
+const rule=(first,x,y)=>first==='a'?(x===0?'fa':y===B?'eb':'ab'):(y===0?'fb':x===A?'ea':'ba');
+function route(first){
+  let x=0,y=0;const p=[{x:0,y:0,m:'Start'}];
+  for(let i=0;i<4*(A+B)+4;i++){
+    if(x===T||y===T)return p;
+    const op=rule(first,x,y);
+    [x,y]=OPS[op].f(x,y);p.push({x,y,m:OPS[op].txt});
+  }
+  return null;
+}
+function push(op){const s=path[k],[x,y]=OPS[op].f(s.x,s.y);path=path.slice(0,k+1);path.push({x,y,m:OPS[op].txt});k++}
+// Next always does something: redo a move you stepped back from, otherwise take the next move of the chosen route from here
+function forward(){
+  if(k<path.length-1){k++;draw();return}
+  const s=path[k];if(won(s)&&k>0)return;
+  if(!(active==='a'?R1:R2))return;
+  push(rule(active,s.x,s.y));draw();
+}
+function fill(sel,lo,hi,v){sel.innerHTML='';for(let i=lo;i<=hi;i++){const o=document.createElement('option');o.value=i;o.textContent=i+' gal';if(i===v)o.selected=true;sel.appendChild(o)}}
+function setup(){
+  R1=route('a');R2=route('b');path=[{x:0,y:0,m:'Start'}];k=0;
+  const n1=R1?R1.length-1:null,n2=R2?R2.length-1:null;
+  $('c1').textContent=n1===null?'cannot get there':n1+' moves';
+  $('c2').textContent=n2===null?'cannot get there':n2+' moves';
+  $('r1').disabled=!R1;$('r2').disabled=!R2;
+  active=(n1!==null&&n2!==null&&n1<n2)?'a':'b';
+  const g=gcd(A,B);
+  $('gcfnote').textContent=g===1?`${A} and ${B} share no factor bigger than 1, so every whole number of gallons up to ${A+B} can be made.`:`${A} and ${B} are both multiples of ${g}, so every amount you can make is a multiple of ${g}. Other targets are impossible.`;
+  draw();
+}
+function drawJugs(s){
+  const u=170/Math.max(A,B),w=84,base=215;let o='';
+  [[A,s.x,'A','var(--a)','var(--a-soft)',50],[B,s.y,'B','var(--b)','var(--b-soft)',170]].forEach(([cap,amt,name,col,soft,x])=>{
+    const h=cap*u,wh=amt*u;
+    o+=`<rect x="${x}" y="${base-wh}" width="${w}" height="${wh}" fill="${soft}"/>`;
+    if(amt>0)o+=`<line x1="${x}" y1="${base-wh}" x2="${x+w}" y2="${base-wh}" stroke="${col}" stroke-width="3"/>`;
+    o+=`<path d="M${x} ${base-h-8} V${base} H${x+w} V${base-h-8}" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>`;
+    o+=`<text x="${x+w/2}" y="${base-h/2+9}" text-anchor="middle" font-size="26" font-weight="700">${amt}</text>`;
+    o+=`<text x="${x+w/2}" y="${base+24}" text-anchor="middle" font-size="15" font-weight="700" fill="${col}" style="fill:${col}">Jug ${name}: ${cap} gal</text>`;
+  });
+  $('jugs').innerHTML=o;
+}
+function drawMap(){
+  const s=Math.min(240/A,250/B,62),ox=58,oy=30+B*s,X=v=>ox+v*s,Y=v=>oy-v*s;let o='';
+  $('map').setAttribute('viewBox',`0 0 ${Math.round(ox+A*s+40)} ${Math.round(oy+48)}`);
+  o+=`<rect x="${X(0)}" y="${Y(B)}" width="${A*s}" height="${B*s}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+  for(let i=0;i<=A;i++)o+=`<text x="${X(i)}" y="${oy+22}" text-anchor="middle" font-size="13" style="fill:var(--muted)">${i}</text>`;
+  for(let j=0;j<=B;j++)o+=`<text x="${ox-16}" y="${Y(j)+5}" text-anchor="end" font-size="13" style="fill:var(--muted)">${j}</text>`;
+  o+=`<text x="${X(A/2)}" y="${oy+42}" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--a)">water in A</text>`;
+  o+=`<text x="${ox-34}" y="${Y(B)-12}" font-size="13" font-weight="700" style="fill:var(--b)">water in B</text>`;
+  for(let i=1;i<=k;i++){const a=path[i-1],b=path[i],pour=a.x!==b.x&&a.y!==b.y;
+    o+=`<line x1="${X(a.x)}" y1="${Y(a.y)}" x2="${X(b.x)}" y2="${Y(b.y)}" stroke="var(--c)" stroke-width="${i===k?4:2.5}" opacity="${i===k?1:.5}" stroke-linecap="round"${pour?'':' stroke-dasharray="6 5"'}/>`}
+  for(let i=0;i<=A;i++)for(let j=0;j<=B;j++){const edge=i===0||i===A||j===0||j===B;
+    if(edge&&(i===T||j===T))o+=`<circle cx="${X(i)}" cy="${Y(j)}" r="10" fill="none" stroke="var(--b)" stroke-width="2.5"/>`;
+    o+=`<circle cx="${X(i)}" cy="${Y(j)}" r="${edge?4.5:3.5}" fill="${edge?'var(--ink)':'none'}" stroke="var(--muted)" stroke-width="1.2"/>`}
+  const c=path[k];o+=`<circle cx="${X(c.x)}" cy="${Y(c.y)}" r="9" fill="var(--c)" stroke="var(--card)" stroke-width="2"/>`;
+  $('map').innerHTML=o;
+}
+function draw(){
+  const s=path[k];drawJugs(s);drawMap();
+  const best=Math.min(R1?R1.length-1:1e9,R2?R2.length-1:1e9),st=$('status');
+  st.classList.toggle('win',won(s)&&k>0);
+  if(best>1e8)st.innerHTML=`${T} gallon${T===1?'':'s'} cannot be made with these jugs.<small>Try it and watch the map: you never land on a ringed dot.</small>`;
+  else if(won(s)&&k>0)st.innerHTML=`Exactly ${T} gallon${T===1?'':'s'}, in ${k} move${k===1?'':'s'}.<small>${k===best?'That is the fewest possible.':`The fewest possible is ${best}. Can you find it?`}</small>`;
+  else st.innerHTML=`Goal: get exactly ${T} gallon${T===1?'':'s'} in one jug.<small>Moves so far: ${k}. Ringed dots on the map are the goal.</small>`;
+  $('moves').innerHTML=path.map((p,i)=>`<li><button type="button" data-i="${i}" class="${i===k?'on':i>k?'later':''}">${i?i+'. '+p.m:'Start'} <span aria-hidden="true">(${p.x}, ${p.y})</span></button></li>`).join('');
+  $('prev').disabled=k===0;$('next').disabled=best>1e8||(k>=path.length-1&&won(s)&&k>0);
+  $('r1').classList.toggle('sel',active==='a');$('r2').classList.toggle('sel',active==='b');
+  for(const b of $('ops').children){const [x,y]=OPS[b.dataset.op].f(s.x,s.y);b.disabled=x===s.x&&y===s.y}
+}
+$('ops').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||b.disabled)return;
+  push(b.dataset.op);draw();
+});
+$('moves').addEventListener('click',e=>{const b=e.target.closest('button');if(b){k=+b.dataset.i;draw()}});
+$('prev').addEventListener('click',()=>{if(k>0){k--;draw()}});
+$('next').addEventListener('click',forward);
+$('reset').addEventListener('click',()=>{path=[{x:0,y:0,m:'Start'}];k=0;draw()});
+const start=()=>{path=[{x:0,y:0,m:'Start'}];k=0;draw()};
+$('r1').addEventListener('click',()=>{if(R1){active='a';start()}});
+$('r2').addEventListener('click',()=>{if(R2){active='b';start()}});
+function sizes(){A=+$('ja').value;B=+$('jb').value;const mx=Math.max(A,B);if(T>mx)T=mx;fill($('jt'),1,mx,T);setup()}
+$('ja').addEventListener('change',sizes);$('jb').addEventListener('change',sizes);
+$('jt').addEventListener('change',e=>{T=+e.target.value;setup()});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();if(tag==='select'||tag==='input')return;
+  if(e.key==='ArrowRight'){e.preventDefault();$('next').click()}
+  if(e.key==='ArrowLeft'){e.preventDefault();$('prev').click()}
+});
+fill($('ja'),2,9,A);fill($('jb'),2,12,B);fill($('jt'),1,5,T);setup();
+</script>
+</body>
+</html>
