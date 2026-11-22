@@ -98,6 +98,17 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .seq span.h{background:none;color:var(--muted);font-weight:400;font-size:.85rem;padding:0}
 .seq span.on{outline:2px solid var(--accent)}
 .steps li b{color:var(--ink)}
+.fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .4em;margin:0;padding:14px;border-radius:10px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.fm.sm{font-size:1.05rem;padding:10px 14px}
+.fm sub{font-size:.62em}
+.fm .fr,.fm .bn>span{display:inline-flex;flex-direction:column;align-items:center;line-height:1.2}
+.fm .fr>span:first-child{border-bottom:2px solid currentColor;padding:0 .3em}
+.fm .fr>span:last-child{padding:0 .3em}
+.fm .bn{display:inline-flex;align-items:center}
+.fm .bn::before{content:'(';font-size:2.3em;font-weight:400;line-height:1;margin-top:-.12em}
+.fm .bn::after{content:')';font-size:2.3em;font-weight:400;line-height:1;margin-top:-.12em}
+.fm .op{font-weight:400}
+.fm .g{display:inline-flex;align-items:center;gap:.4em;white-space:nowrap}
 [hidden]{display:none!important}
 h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 </style>
@@ -211,7 +222,7 @@ function draw1(){
     `A bad path climbs above the diagonal, so it must touch the pink line. Mark the first touch.`,
     `Flip everything after the first touch. The path now ends one left and one up.`,
     `Flip it again and you are back. So bad paths pair off with paths to the new end: ${N-1} rights and ${N+1} ups, <b>${nb}</b> of them.`,
-    `Good paths: ${all} &minus; ${nb} = <b>${all-nb}</b>. Exactly one part in ${N+1}.`][st]+'</span>';
+    `Good paths: ${all} &minus; ${nb} = <b>${all-nb}</b>. Exactly one part in ${N+1}, so C<sub>${N}</sub> = ${all} &divide; ${N+1}.`][st]+'</span>';
 }
 
 function draw2(){
@@ -240,21 +251,34 @@ function draw2(){
   $('rule').innerHTML=t;
 }
 
+const FR=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`,BN=(a,b)=>`<span class="bn" role="img" aria-label="${a} choose ${b}"><span><span>${a}</span><span>${b}</span></span></span>`,OP=x=>`<span class="op">${x}</span>`;
+const C_=x=>`<span>C<sub>${x}</sub></span>`;
+// the closed formula, in general and for one value of n
+const formula=()=>`<p class="fm" aria-label="C n equals one over n plus one, times 2n choose n"><span class="g">${C_('n')}${OP('=')}${FR('1','n + 1')}${BN('2n','n')}</span><span class="g">${OP('=')}${FR('(2n)!','(n + 1)! n!')}</span></p>`;
+const worked=m=>`<p class="fm sm">${C_(m)}${OP('=')}${FR('1',m+1)}${BN(2*m,m)}${OP('=')}${FR(choose(2*m,m),m+1)}${OP('=')}<span>${CAT[m]}</span></p>`;
 function notes(){
   const el=$('notes'),seq=m=>`<div class="seq" aria-label="The first Catalan numbers"><span class="h">pairs</span>${[1,2,3,4,5,6].map(i=>`<span class="h">${i}</span>`).join('')}<span class="h">ways</span>${[1,2,3,4,5,6].map(i=>`<span${i===m?' class="on"':''}>${CAT[i]}</span>`).join('')}</div>`;
   if(tab===0){
     const u=n>4?5:7,th=words(n).map(x=>{const p=mtn(x,3,u,n*u+3,u);return `<button class="th" type="button" data-w="${x}" aria-label="${x}"><svg width="${2*n*u+6}" height="${n*u+6}" viewBox="0 0 ${2*n*u+6} ${n*u+6}"><polyline points="${p.map(q=>q.join(',')).join(' ')}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg></button>`}).join('');
     el.innerHTML=`<h2>One count, five pictures</h2><p class="hint">Same colour, same pair. Press Next: all five pictures change together, and none of them ever repeats.</p>
 <h3>All ${CAT[n]} of them</h3><div class="gal" id="gal">${th}</div>${seq(n)}
+<h3>The formula</h3>${formula()}${worked(n)}<p class="hint">C<sub>n</sub> is the count for n pairs. The second tab shows where the formula comes from.</p>
 <h3>The five rules</h3><ol class="how"><li><b>Mountains:</b> ${n} up-strokes and ${n} down-strokes, never dipping below the ground.</li><li><b>Brackets:</b> ${n} ${n===1?'pair':'pairs'}, properly matched.</li><li><b>Path:</b> ${n} ${n===1?'step':'steps'} right and ${n} up on a grid, never going above the diagonal.</li><li><b>Handshakes:</b> ${2*n} people at a round table all shake hands at once, and no arms cross.</li><li><b>Polygon:</b> a shape with ${n+2} corners, cut into triangles by lines from corner to corner.</li></ol>
 <p class="hint">Reading across: an up-stroke is &ldquo;(&rdquo; and a step right; a down-stroke is &ldquo;)&rdquo; and a step up. Each person shakes hands with whoever holds the matching bracket.</p>`}
   if(tab===1){const N=n2,all=choose(2*N,N),nb=choose(2*N,N-1);
     el.innerHTML=`<h2>Why the formula works</h2><p class="hint">Counting the good paths directly is hard. Counting all the paths is easy, and so is counting the bad ones, once you see the flip.</p>
 <ol class="steps" id="steps">${['<b>Count every path.</b> '+all+' of them.','<b>Find the first touch</b> of the pink line.','<b>Flip the rest</b> of the path.','<b>Flip back.</b> Bad paths and paths to the new end pair off: '+nb+'.','<b>Subtract.</b> '+all+' &minus; '+nb+' = '+(all-nb)+'.'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
-<p class="hint">In symbols, with ${N} pairs: (${2*N} choose ${N}) &minus; (${2*N} choose ${N-1}) = ${all} &minus; ${nb} = ${all-nb}. It always comes to (2n choose n) &divide; (n + 1).</p>${seq(N)}
+<h3>The formula</h3>
+<p class="fm" aria-label="C n equals 2n choose n, minus 2n choose n minus 1, which is one over n plus one times 2n choose n"><span class="g">${C_('n')}${OP('=')}${BN('2n','n')}${OP('&minus;')}${BN('2n','n &minus; 1')}</span><span class="g">${OP('=')}${FR('1','n + 1')}${BN('2n','n')}</span></p>
+<p class="fm sm">${C_(N)}${OP('=')}${BN(2*N,N)}${OP('&minus;')}${BN(2*N,N-1)}${OP('=')}<span>${all} &minus; ${nb}</span>${OP('=')}<span>${all-nb}</span></p>
+<p class="hint">Why one part in n + 1: the bad count, 2n choose n &minus; 1, is exactly n &divide; (n + 1) of all the paths. What is left is 1 &divide; (n + 1) of them.</p>${worked(N)}${seq(N)}
 <p class="hint">Press &ldquo;Another path&rdquo; and try to find a bad path that the flip does not work on.</p>`}
   if(tab===2)el.innerHTML=`<h2>Big ones from small ones</h2><p class="hint">Every mountain range starts with one arch. Something smaller sits on top of it, and something smaller follows it.</p>
-<ol class="how"><li>The <b style="color:var(--a)">first arch</b> is the first time the range comes back to the ground.</li><li>The <b style="color:var(--b)">lifted part</b> and the <b style="color:var(--c)">part after</b> are chosen separately, so their counts multiply. That is one rectangle of dots.</li><li>Add up the rectangles for every place the first arch can end. Tap any dot to see its mountain.</li></ol>${seq(n)}
+<ol class="how"><li>The <b style="color:var(--a)">first arch</b> is the first time the range comes back to the ground.</li><li>The <b style="color:var(--b)">lifted part</b> and the <b style="color:var(--c)">part after</b> are chosen separately, so their counts multiply. That is one rectangle of dots.</li><li>Add up the rectangles for every place the first arch can end. Tap any dot to see its mountain.</li></ol>
+<h3>The rule</h3>
+<p class="fm sm" aria-label="C n equals C 0 times C n minus 1, plus C 1 times C n minus 2, and so on, up to C n minus 1 times C 0">${C_('n')}${OP('=')}<span>${C_('0')}${C_('n&minus;1')}</span>${OP('+')}<span>${C_('1')}${C_('n&minus;2')}</span>${OP('+ &hellip; +')}<span>${C_('n&minus;1')}${C_('0')}</span></p>
+<p class="fm sm">${C_(n)}${OP('=')}${Array.from({length:n},(_,a)=>`<span>${CAT[a]}&times;${CAT[n-1-a]}</span>`).join(OP('+'))}${OP('=')}<span>${CAT[n]}</span></p>
+<p class="hint">Start from C<sub>0</sub> = 1: there is one way to draw no mountain at all. The shortcut gives the same numbers:</p>${formula()}${seq(n)}
 <p class="hint">Try it by hand: 132 = 1&times;42 + 1&times;14 + 2&times;5 + 5&times;2 + 14&times;1 + 42&times;1.</p>`;
   mark();
 }
