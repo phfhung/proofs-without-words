@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factoring with Squares</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.sq svg{display:block;width:100%;height:auto}
+.sq text{font-family:var(--body);fill:var(--ink)}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:4.6em;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.rule .big{font-family:var(--display);font-size:1.3rem}
+.rule .sm{color:var(--muted);font-size:.9rem;font-weight:400}
+.picks{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.picks label{font-weight:700;display:flex;gap:8px;align-items:center}
+.picks select,.picks input[type=text]{font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.9rem;font-weight:700;padding:4px 9px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.chips button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.ways{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ways button{font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;width:100%;text-align:left;display:flex;gap:10px;justify-content:space-between;font-variant-numeric:tabular-nums;font-weight:700}
+.ways button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.ways .v{color:var(--muted);white-space:nowrap;font-weight:400}
+.ways .v.hit{color:var(--b);font-weight:700}
+.ways .gap{color:var(--muted);text-align:center;font-size:.9rem}
+.err{margin:0;color:#b3261e;font-weight:700}
+.how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .45em;margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.fm .op{font-weight:400}
+.notes a{color:var(--accent);font-weight:700}
+.steps li b{color:var(--ink)}
+[hidden]{display:none!important}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Factoring with squares</h1>
+    <p class="lede">Checking that a number is prime is quick. Splitting a number into its factors is slow. The best trick anyone has found starts with a picture: a square with a smaller square cut out of its corner.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
+
+  <main class="stage">
+    <section class="figure sq" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 380" role="img" aria-label="Picture"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+        <button class="btn" id="run" type="button" hidden>Run to the end</button>
+      </div>
+      <div class="rule" id="rule" aria-live="polite"></div>
+      <div class="picks shape" id="c-xy">
+        <label>Big square <select id="sx"></select></label>
+        <label>Corner <select id="sy"></select></label>
+      </div>
+      <div class="picks shape" id="c-n" hidden>
+        <label>Number to split <input id="num" type="text" inputmode="numeric" autocomplete="off" value="5959" size="8"></label>
+      </div>
+      <p class="err" id="msg" role="status" hidden></p>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Cut and slide','Hunt for the square','Join two near misses'],PINK='#d6457a';
+let tab=0,X=10,Y=3,st=0,gl=0,anim=0,N=5959,k=0,kmax=0,M=1649;
+const isPrime=x=>{if(x<2)return false;for(let d=2;d*d<=x;d++)if(x%d===0)return false;return true};
+const isq=x=>{let s=Math.floor(Math.sqrt(x));while(s*s>x)s--;while((s+1)*(s+1)<=x)s++;return s};
+const fmt=x=>x.toLocaleString('en-US');
+
+// ---------- tab 1: x squared minus y squared is a rectangle ----------
+function draw0(){
+  const x=X,y=Y,u=Math.min(26,330/(x+y)),ox=220-x*u/2,H=(x+y)*u+74,oy=H-34,e=gl<.5?2*gl*gl:1-2*(1-gl)*(1-gl);let o='';
+  $('fig').setAttribute('viewBox',`0 0 440 ${H}`);
+  // a block of unit cells, w by h, centred at (cx, cy) in cell units and turned by ang degrees
+  const block=(cx,cy,w,h,ang,fill)=>{let g=`<g transform="translate(${ox+cx*u} ${oy-cy*u}) rotate(${-ang})"><rect x="${-w*u/2}" y="${-h*u/2}" width="${w*u}" height="${h*u}" fill="${fill}"/>`;
+    for(let i=1;i<w;i++)g+=`<line x1="${-w*u/2+i*u}" y1="${-h*u/2}" x2="${-w*u/2+i*u}" y2="${h*u/2}" stroke="var(--card)"/>`;
+    for(let i=1;i<h;i++)g+=`<line x1="${-w*u/2}" y1="${-h*u/2+i*u}" x2="${w*u/2}" y2="${-h*u/2+i*u}" stroke="var(--card)"/>`;
+    return g+`<rect x="${-w*u/2}" y="${-h*u/2}" width="${w*u}" height="${h*u}" fill="none" stroke="var(--ink)" stroke-width="1.5"/></g>`};
+  o+=block((x-y)/2,x/2,x-y,x,0,'var(--a)');
+  const c0=[x-y/2,(x-y)/2],c1=[(x-y)/2,x+y/2];
+  o+=block(c0[0]+(c1[0]-c0[0])*e,c0[1]+(c1[1]-c0[1])*e,y,x-y,90*e,'var(--b)');
+  if(st===0)o+=block(x-y/2,x-y/2,y,y,0,'var(--c)');
+  else if(gl<.02)o+=`<rect x="${ox+(x-y)*u}" y="${oy-x*u}" width="${y*u}" height="${y*u}" fill="none" stroke="var(--c)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  const lab=(x1,y1,x2,y2,t,dx,dy,anc)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink)" stroke-width="1.5"/><text x="${(x1+x2)/2+dx}" y="${(y1+y2)/2+dy}" text-anchor="${anc}" font-size="15" font-weight="700">${t}</text>`;
+  if(st<2){o+=lab(ox,oy+10,ox+x*u,oy+10,`x = ${x}`,0,18,'middle');
+    o+=`<text x="${ox+(x-y/2)*u}" y="${oy-x*u-8}" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--c)">y = ${y}</text>`}
+  if(st===3){o+=lab(ox,oy+10,ox+(x-y)*u,oy+10,`x − y = ${x-y}`,0,18,'middle');
+    o+=lab(ox+(x-y)*u+10,oy,ox+(x-y)*u+10,oy-(x+y)*u,`x + y = ${x+y}`,8,5,'start')}
+  $('fig').innerHTML=o;
+  const n=x*x-y*y;
+  $('rule').innerHTML=[
+    `<span>A square ${x} wide and ${x} tall holds ${x} × ${x} small squares.</span><span class="big">${x}² = ${x*x}</span>`,
+    `<span>Take a ${y} by ${y} square out of the corner.</span><span class="big">${x}² − ${y}² = ${x*x} − ${y*y} = ${n}</span>`,
+    `<span>Slide the green arm round and stand it on top.</span><span class="big">still ${n} small squares</span>`,
+    `<span>It fits exactly: a rectangle ${x-y} wide and ${x+y} tall.</span><span class="big">${n} = ${x-y} × ${x+y}</span>`][st];
+}
+
+// ---------- tab 2: Fermat's hunt. Try x = the first whole number above the square root, then x+1, ... ----------
+const r0=()=>{const s=isq(N);return s*s===N?s:s+1};
+function setN(v){N=v;k=0;const a=r0();let j=0;while(true){const L=(a+j)*(a+j)-N,s=isq(L);if(s*s===L)break;j++}kmax=j}
+function draw1(){
+  const x=r0()+k,L=x*x-N,s=isq(L),rem=L-s*s,hit=rem===0;let o='';
+  $('fig').setAttribute('viewBox','0 0 440 380');
+  o+=`<text x="220" y="26" text-anchor="middle" font-size="15" font-weight="700">try x = ${fmt(x)}</text><text x="220" y="50" text-anchor="middle" font-size="18" font-weight="800" style="font-family:var(--display)">${fmt(x)}² − ${fmt(N)} = ${fmt(L)}</text>`;
+  if(L<=900){
+    // lay the leftover out as the biggest square it will make; the extras start the next layer, in pink
+    const p=Math.min(20,270/(s+1)),r=Math.max(1.6,p*.36),x0=220-(s+1)*p/2,y0=74+(s>0?0:p),top=y0+p,dot=(c,row,f)=>`<circle cx="${x0+(c+.5)*p}" cy="${top+(s-1-row+.5)*p}" r="${r}" fill="${f}"/>`;
+    for(let i=0;i<s;i++)for(let j=0;j<s;j++)o+=dot(i,j,hit?'var(--b)':'var(--a)');
+    for(let t=0;t<rem;t++)o+=t<s?dot(s,t,PINK):dot(s-(t-s),s,PINK);
+    o+=`<text x="220" y="${top+s*p+30}" text-anchor="middle" font-size="15" font-weight="700"${hit?' style="fill:var(--b)"':''}>${hit?`${fmt(L)} = ${s} × ${s} exactly`:`${fmt(L)} = ${s} × ${s} and ${rem} left over`}</text>`}
+  else o+=`<text x="220" y="170" text-anchor="middle" font-size="15" font-weight="700"${hit?' style="fill:var(--b)"':''}>${hit?`${fmt(L)} = ${fmt(s)} × ${fmt(s)} exactly`:`${fmt(L)} = ${fmt(s)} × ${fmt(s)} and ${fmt(rem)} left over`}</text><text x="220" y="196" text-anchor="middle" font-size="12" style="fill:var(--muted)">too many dots to draw</text>`;
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=hit?`<span>The leftover is a perfect square, so the cut-and-slide picture applies.</span><span class="big">${fmt(N)} = (${fmt(x)} − ${fmt(s)}) × (${fmt(x)} + ${fmt(s)}) = ${fmt(x-s)} × ${fmt(x+s)}</span><span class="sm">Found on try ${fmt(k+1)}.</span>`
+    :`<span>Not a square. Make the big square one larger and try again.</span><span class="sm">Try ${fmt(k+1)} of ${fmt(kmax+1)}.</span>`;
+  $('prev').disabled=k===0;$('next').disabled=k>=kmax;$('run').disabled=k>=kmax;
+  const w=$('tries');if(w){const a=r0(),row=j=>{const xx=a+j,LL=xx*xx-N,ss=isq(LL),h=ss*ss===LL;return `<li><button type="button" data-k="${j}" class="${j===k?'on':''}"><span>${fmt(xx)}² − ${fmt(N)} = ${fmt(LL)}</span><span class="v${h?' hit':''}">${h?'= '+fmt(ss)+'²':'not a square'}</span></button></li>`};
+    let t='';if(k<12)for(let j=0;j<=k;j++)t+=row(j);else{for(let j=0;j<4;j++)t+=row(j);t+=`<li class="gap">… ${fmt(k-8)} more tries …</li>`;for(let j=k-4;j<=k;j++)t+=row(j)}w.innerHTML=t}
+  const c=$('pre');if(c)[...c.children].forEach(b=>b.classList.toggle('on',+b.dataset.v===N));
+}
+
+// ---------- tab 3: two leftovers that are not squares can multiply to one ----------
+function draw2(){
+  let o='';$('fig').setAttribute('viewBox','0 0 440 380');
+  const tile=(x,y,p)=>`<rect x="${x}" y="${y}" width="30" height="30" rx="6" fill="${p===2?'var(--a)':'var(--b)'}" stroke="var(--ink)" stroke-width="1.5"/><text x="${x+15}" y="${y+21}" text-anchor="middle" font-size="16" font-weight="700" style="fill:var(--card)">${p}</text>`;
+  const line=(y,t,ps,note,c)=>{let s=`<text x="14" y="${y+21}" font-size="15" font-weight="700">${t}</text>`;ps.forEach((p,i)=>s+=tile(190+i*34,y,p));return s+`<text x="14" y="${y+48}" font-size="12" style="fill:${c||'var(--muted)'}">${note}</text>`};
+  o+=line(14,'41² − 1649 = 32 =',[2,2,2,2,2],'five 2s: one has no partner, so 32 is not a square');
+  if(st>=1)o+=line(96,'43² − 1649 = 200 =',[2,2,2,5,5],'three 2s: again one is left over');
+  if(st>=2){o+=`<text x="14" y="${199}" font-size="15" font-weight="700">32 × 200 = 6400 =</text>`;
+    [2,2,2,2,5].forEach((p,i)=>o+=tile(190+i*34,178,p)+tile(190+i*34,214,p));
+    o+=`<path d="M366 180 h8 v28 h-8 M366 216 h8 v28 h-8" fill="none" stroke="var(--ink)" stroke-width="1.5"/><text x="380" y="199" font-size="14" font-weight="700">80</text><text x="380" y="235" font-size="14" font-weight="700">80</text>`;
+    o+=`<text x="14" y="264" font-size="12" style="fill:var(--b)">together every tile has a partner: two equal rows, so 6400 = 80 × 80</text>`}
+  if(st>=3){o+=`<text x="220" y="304" text-anchor="middle" font-size="15" font-weight="700">41 × 43 = 1763, which is 114 past 1649</text>`;
+    o+=`<text x="220" y="330" text-anchor="middle" font-size="15" font-weight="700">114² − 80² = 34 × 194 = 4 × 1649</text>`;
+    o+=`<text x="220" y="362" text-anchor="middle" font-size="19" font-weight="800" style="font-family:var(--display);fill:var(--b)">34 = 2 × 17, and 1649 = 17 × 97</text>`}
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=[
+    `<span>Hunting for factors of 1649, the first try leaves 32. Not a square.</span>`,
+    `<span>Two tries later the leftover is 200. Not a square either.</span>`,
+    `<span>But multiply the two leftovers and the product is a square.</span><span class="big">32 × 200 = 80²</span>`,
+    `<span>That gives a difference of two squares that 1649 divides. The piece 114 − 80 = 34 shares a factor with 1649.</span><span class="big">1649 = 17 × 97</span>`][st];
+}
+
+function notes(){
+  const el=$('notes');
+  if(tab===0)el.innerHTML=`<h2>Cut and slide</h2>
+<ol class="steps" id="steps">${['<b>Start with a square.</b>','<b>Cut a square</b> out of the corner.','<b>Slide</b> one arm of the L on top of the other.','<b>Read off</b> the sides of the rectangle.'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
+<h3>The rule</h3><p class="fm"><span>x&sup2; &minus; y&sup2;</span><span class="op">=</span><span>(x &minus; y)(x + y)</span></p>
+<p class="hint">So if you can write a number as one square minus another, you have found its factors. For 91 it is 10&sup2; &minus; 3&sup2;, which gives 7 &times; 13. The next tab hunts for the two squares.</p>
+<p class="hint">Mental arithmetic uses the same picture backwards: 47 &times; 53 = 50&sup2; &minus; 3&sup2; = 2491.</p>`;
+  if(tab===1)el.innerHTML=`<h2>Hunt for the square</h2><p class="hint">To split a number N, try big squares just above it. Each time, look at what is left over, x&sup2; &minus; N. When the leftover is itself a perfect square, you have N = x&sup2; &minus; y&sup2;, and the factors drop out. Pierre de Fermat found this method in 1643.</p>
+<div class="chips" id="pre">${[5959,8051,2021,9991,1649,3027,999919].map(v=>`<button type="button" data-v="${v}">${fmt(v)}</button>`).join('')}</div>
+<h3>Tries so far</h3><ol class="ways" id="tries"></ol>
+<h3>Fast or slow?</h3><ol class="how"><li>8,051 falls on the first try. Its factors, 83 and 97, are close together.</li><li>3,027 = 3 &times; 1,009 takes 451 tries. Its factors are far apart, and plain dividing by 3 would have found them at once.</li><li>So secret codes built from two primes must not use primes that are close together.</li></ol>`;
+  if(tab===2)el.innerHTML=`<h2>Join two near misses</h2>
+<ol class="steps" id="steps">${['<b>A miss.</b> 41&sup2; &minus; 1649 = 32.','<b>Another miss.</b> 43&sup2; &minus; 1649 = 200.','<b>Multiply them.</b> The product is 80&sup2;.','<b>Read off a factor.</b>'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
+<p class="hint">The plain hunt needs 17 tries for 1649. Joining two misses needs only the first and the third. The price is a little more work at the end: 41&sup2; &times; 43&sup2; and 80&sup2; leave the same remainder when divided by 1649, so 1649 divides their difference, and here the bracket 114 &minus; 80 shares a factor with it.</p>
+<h3>This is how the records are set</h3><p class="hint">The fastest methods known, the quadratic sieve and the number field sieve, do exactly this on a huge scale. They collect millions of leftovers made only of small primes, then choose a set whose tiles all pair up. The &ldquo;sieve&rdquo; in the names works like the sieve of Eratosthenes, and is how those leftovers are found quickly.</p>
+<p class="hint">The largest number of this hard kind split so far has 250 digits. It was done in 2020, using a great many computers. A <a href="necklaces.html">prime test</a> on a number that size takes a fraction of a second.</p>`;
+  mark();
+}
+function mark(){const s=$('steps');if(s)[...s.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')})}
+function draw(){[draw0,draw1,draw2][tab]();if(tab!==1){$('prev').disabled=st===0;$('next').disabled=st===3;mark()}}
+function glide(v){cancelAnimationFrame(anim);const from=gl,t0=performance.now();if(from===v||tab!==0){gl=v;draw();return}
+  const f=now=>{const u=Math.min(1,(now-t0)/900);gl=from+(v-from)*u;draw();if(u<1)anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)}
+function jump(i){st=Math.max(0,Math.min(3,i));glide(st>=2?1:0)}
+function go(d){if(tab===1){k=Math.max(0,Math.min(kmax,k+d));draw()}else jump(st+d)}
+function fill(){$('sx').innerHTML=Array.from({length:10},(_,i)=>`<option value="${i+3}"${i+3===X?' selected':''}>${i+3} by ${i+3}</option>`).join('');
+  if(Y>X-1)Y=X-1;$('sy').innerHTML=Array.from({length:X-1},(_,i)=>`<option value="${i+1}"${i+1===Y?' selected':''}>${i+1} by ${i+1}</option>`).join('')}
+function pickN(v){const m=$('msg');m.hidden=true;
+  if(!Number.isInteger(v)||v<9||v>999999){m.hidden=false;m.textContent='Type a whole number from 9 to 999,999.';return}
+  if(v%2===0){m.hidden=false;m.textContent='An even number has the factor 2 already. Halve it, or try an odd number.';return}
+  if(isPrime(v)){m.hidden=false;m.textContent=fmt(v)+' is prime, so there is nothing to find. Try another number.';return}
+  $('num').value=v;setN(v);draw()}
+function select(i){cancelAnimationFrame(anim);tab=i;st=0;gl=0;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  $('c-xy').hidden=tab!==0;$('c-n').hidden=$('run').hidden=tab!==1;$('msg').hidden=true;if(tab===1)setN(N);notes();draw()}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('prev').addEventListener('click',()=>go(-1));$('next').addEventListener('click',()=>go(1));
+$('run').addEventListener('click',()=>{k=kmax;draw()});
+$('sx').addEventListener('change',e=>{X=+e.target.value;fill();cancelAnimationFrame(anim);st=0;gl=0;draw()});
+$('sy').addEventListener('change',e=>{Y=+e.target.value;cancelAnimationFrame(anim);st=0;gl=0;draw()});
+const typed=()=>{const t=$('num').value.replace(/[\s,]/g,'');if(/^\d+$/.test(t)&&+t===N)return;pickN(/^\d+$/.test(t)?+t:NaN)};
+$('num').addEventListener('change',typed);$('num').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();typed()}});
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li'),p=e.target.closest('#pre button'),t=e.target.closest('#tries button');
+  if(li)jump([...li.parentNode.children].indexOf(li));if(p)pickN(+p.dataset.v);if(t){k=+t.dataset.k;draw()}});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...li.parentNode.children].indexOf(li));return}
+  if(tag==='input'||tag==='select')return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();go(d)}});
+fill();select(0);
+</script>
+</body>
+</html>

@@ -25,6 +25,8 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `newton.html` | Square roots by guess and average (Heron and Newton) |
 | `catalan.html` | Catalan numbers: five pictures of one count, the reflection proof, and the recurrence |
 | `brackets.html` | Signs and brackets between numbers to hit a target; every bracketing drawn as a tree |
+| `necklaces.html` | Fermat's little theorem by sorting bead strings into necklaces, and the prime test built on it |
+| `squares.html` | Factoring by a difference of two squares: cut and slide, Fermat's hunt, joining two near misses |
 | `prime-sprint.html` | Prime-tapping speed game |
 
 ## Trying a change locally
