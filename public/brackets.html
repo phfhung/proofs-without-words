@@ -99,6 +99,8 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .grid button{font:inherit;font-size:.85rem;padding:6px 0;border-radius:6px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;font-variant-numeric:tabular-nums}
 .grid button.on{background:var(--b-soft);color:var(--ink);font-weight:700;border-color:var(--b)}
 .grid button.t{outline:2.5px solid var(--accent);outline-offset:1px}
+.grid span{visibility:hidden}
+.bz [data-neg]{cursor:pointer}
 .how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
 .notes a{color:var(--accent);font-weight:700}
 [hidden]{display:none!important}
@@ -110,7 +112,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
   <header>
     <a class="back" href="index.html">&larr; All activities</a>
     <h1>Brackets and targets</h1>
-    <p class="lede">Take a few numbers, such as 1 3 4 5. Put +, &minus;, &times; or &divide; between them and add brackets. Which answers can you reach? Every way of adding brackets is a tree, and counting the trees gives the Catalan numbers.</p>
+    <p class="lede">Take a few numbers, such as 1 3 4 5. Put +, &minus;, &times; or &divide; between them, add brackets, and if you like put a minus in front. Which answers can you reach? Every way of adding brackets is a tree, and counting the trees gives the Catalan numbers.</p>
   </header>
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
@@ -127,6 +129,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
         <label>Numbers <input id="nums" type="text" inputmode="numeric" autocomplete="off" value="1 3 4 5" size="11"></label>
         <label id="tw" hidden>Target <input id="target" type="number" value="24" style="width:5.5em"></label>
         <label id="kw" hidden><input id="keep" type="checkbox" checked> Keep the order</label>
+        <label id="nw" hidden><input id="neg" type="checkbox" checked> Allow a minus in front</label>
       </div>
       <p class="err" id="msg" role="status" hidden></p>
     </section>
@@ -138,7 +141,9 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 const $=id=>document.getElementById(id);
 const TABS=['Brackets are trees','Hit the target'];
 const PC=['var(--a)','var(--b)','var(--c)','#d6457a'],SYM={'+':'+','-':'−','*':'×','/':'÷'},CYC=['+','-','*','/'];
-let tab=0,nums=[1,3,4,5],ops=['+','*','-'],ti=0,target=24,keep=true,sols=[],si=0,reach=new Set();
+let tab=0,nums=[1,3,4,5],ops=['+','*','-'],ti=0,target=24,keep=true,neg=true,n1=false,sols=[],si=0,reach=new Set(),plain=new Set();
+const N=x=>(''+x).replace('-','\u2212');                    // a proper minus sign
+const vals=()=>n1?[-nums[0]].concat(nums.slice(1)):nums;   // tab 1: the first number may be negated
 // exact fractions, so division never rounds
 const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
 const Q=(p,q)=>{if(q<0){p=-p;q=-q}const g=gcd(p,q)||1;return[p/g,q/g]};
@@ -151,20 +156,22 @@ const tmemo={};
 function trees(i,j){const k=i+','+j;if(tmemo[k])return tmemo[k];const o=[];
   if(i===j)o.push({i});else for(let s=j-1;s>=i;s--)for(const l of trees(i,s))for(const r of trees(s+1,j))o.push({g:s,l,r,a:i,b:j});return tmemo[k]=o}
 const ev=(t,v,op)=>t.g===undefined?[v[t.i],1]:ap(op[t.g],ev(t.l,v,op),ev(t.r,v,op));
-const full=(t,v,op,root)=>t.g===undefined?''+v[t.i]:(root?'':'(')+full(t.l,v,op)+' '+SYM[op[t.g]]+' '+full(t.r,v,op)+(root?'':')');
+const full=(t,v,op,root)=>t.g===undefined?N(v[t.i]):(root?'':'(')+full(t.l,v,op)+' '+SYM[op[t.g]]+' '+full(t.r,v,op)+(root?'':')');
 const prec=o=>o==='+'||o==='-'?1:2;
 // does this part need brackets, given the sign above it?
 const need=(t,par,right,op)=>t.g!==undefined&&(prec(op[t.g])<prec(op[par.g])||(prec(op[t.g])===prec(op[par.g])&&right&&(op[par.g]==='-'||op[par.g]==='/')));
-function mini(t,v,op){if(t.g===undefined)return''+v[t.i];const L=mini(t.l,v,op),R=mini(t.r,v,op);
+function mini(t,v,op){if(t.g===undefined)return N(v[t.i]);const L=mini(t.l,v,op),R=mini(t.r,v,op);
   return(need(t.l,t,false,op)?'('+L+')':L)+' '+SYM[op[t.g]]+' '+(need(t.r,t,true,op)?'('+R+')':R)}
 function perms(a){const o=new Map();(function go(p,rest){if(!rest.length){o.set(p.join(','),p);return}for(let i=0;i<rest.length;i++)go(p.concat(rest[i]),rest.slice(0,i).concat(rest.slice(i+1)))})([],a);return[...o.values()]}
 
 function solve(){
-  const n=nums.length,set=CYC,T=trees(0,n-1),seen=new Map();reach=new Set();
-  for(const v of keep?[nums.slice()]:perms(nums))for(let c=0;c<Math.pow(set.length,n-1);c++){
-    const op=[];let x=c;for(let i=0;i<n-1;i++){op.push(set[x%set.length]);x=Math.floor(x/set.length)}
-    T.forEach((t,k)=>{const r=ev(t,v,op);if(!r)return;
-      if(r[1]===1){reach.add(r[0]);if(r[0]===target){const s=mini(t,v,op);if(!seen.has(s))seen.set(s,{v:v.slice(),op,k,s})}}})}
+  const n=nums.length,T=trees(0,n-1),seen=new Map();reach=new Set();plain=new Set();
+  for(const base of keep?[nums.slice()]:perms(nums))for(const flip of [false,true]){
+    if(flip&&base[0]===0)continue;const v=flip?[-base[0]].concat(base.slice(1)):base;
+    for(let c=0;c<Math.pow(4,n-1);c++){
+      const op=[];let x=c;for(let i=0;i<n-1;i++){op.push(CYC[x%4]);x=Math.floor(x/4)}
+      T.forEach((t,k)=>{const r=ev(t,v,op);if(!r||r[1]!==1)return;if(!flip)plain.add(r[0]);if(flip&&!neg)return;
+        reach.add(r[0]);if(r[0]===target){const s=mini(t,v,op);if(!seen.has(s))seen.set(s,{v,op,k,s})}})}}
   sols=[...seen.values()].sort((a,b)=>a.s.length-b.s.length||(a.s<b.s?-1:1));si=0;
 }
 
@@ -180,7 +187,7 @@ function drawTree(v,op,t,tap,minimal){
     nodes+=`<g${tap?` data-g="${t.g}"`:''}><circle cx="${x}" cy="${y}" r="15" fill="${c}"/><text x="${x}" y="${y+6.5}" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--card)">${SYM[op[t.g]]}</text></g><text x="${x+21}" y="${y+5}" font-size="15" font-weight="700" style="fill:${c}">${val?show(val):'÷ 0'}</text>`;
     return{x,y,h}})(t);
   for(let i=0;i<n;i++){
-    row+=`<rect x="${X(i)-16}" y="${LY-16}" width="32" height="32" rx="7" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.5"/><text x="${X(i)}" y="${LY+6.5}" text-anchor="middle" font-size="18" font-weight="700">${v[i]}</text>`;
+    row+=`<rect x="${X(i)-16}" y="${LY-16}" width="32" height="32" rx="7" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.5"/><text x="${X(i)}" y="${LY+6.5}" text-anchor="middle" font-size="${N(v[i]).length>2?13:N(v[i]).length>1?16:18}" font-weight="700">${N(v[i])}</text>${tap&&i===0?`<rect data-neg="1" x="${X(0)-18}" y="${LY-18}" width="36" height="36" fill="transparent"/>`:''}`;
     open[i].forEach((g,k)=>row+=`<text x="${X(i)-14-8*(open[i].length-k)}" y="${LY+8}" text-anchor="middle" font-size="24" font-weight="700" style="fill:${PC[g]}">(</text>`);
     close[i].forEach((g,k)=>row+=`<text x="${X(i)+14+8*(close[i].length-k)}" y="${LY+8}" text-anchor="middle" font-size="24" font-weight="700" style="fill:${PC[g]}">)</text>`);
     if(i<n-1){const x=(X(i)+16+8*close[i].length+X(i+1)-16-8*open[i+1].length)/2;
@@ -189,35 +196,40 @@ function drawTree(v,op,t,tap,minimal){
 }
 function draw(){
   const n=nums.length,T=trees(0,n-1);
-  if(tab===0){const t=T[ti],val=ev(t,nums,ops);drawTree(nums,ops,t,true,false);
-    $('rule').innerHTML=`<span class="big">${full(t,nums,ops,true)} = ${show(val)}</span><span class="sm">Way ${ti+1} of ${T.length} to bracket ${n} numbers. Tap a sign to change it.</span>`;
+  if(tab===0){const t=T[ti],V=vals(),val=ev(t,V,ops);drawTree(V,ops,t,true,false);
+    $('rule').innerHTML=`<span class="big">${full(t,V,ops,true)} = ${show(val)}</span><span class="sm">Way ${ti+1} of ${T.length} to bracket ${n} numbers. Tap a sign to change it, or the first number to make it negative.</span>`;
     $('prev').disabled=ti===0;$('next').disabled=ti===T.length-1;
     const w=$('ways');if(w)[...w.children].forEach((li,i)=>li.firstChild.classList.toggle('on',i===ti))}
   else{
-    if(sols.length){const s=sols[si];drawTree(s.v,s.op,T[s.k],false,true);$('rule').innerHTML=`<span class="big">${s.s} = ${target}</span><span class="sm">Way ${si+1} of ${sols.length} to make ${target}</span>`}
-    else{$('fig').innerHTML=`<text x="220" y="150" text-anchor="middle" font-size="18" font-weight="700">${target} cannot be made</text><text x="220" y="176" text-anchor="middle" font-size="13" style="fill:var(--muted)">with these numbers and these rules</text>`;
-      $('rule').innerHTML=`<span class="big">No way to make ${target}</span><span class="sm">Pick a green number below${keep?', or let the numbers change places':''}.</span>`}
+    if(sols.length){const s=sols[si];drawTree(s.v,s.op,T[s.k],false,true);$('rule').innerHTML=`<span class="big">${s.s} = ${N(target)}</span><span class="sm">Way ${si+1} of ${sols.length} to make ${N(target)}</span>`}
+    else{$('fig').innerHTML=`<text x="220" y="150" text-anchor="middle" font-size="18" font-weight="700">${N(target)} cannot be made</text><text x="220" y="176" text-anchor="middle" font-size="13" style="fill:var(--muted)">with these numbers and these rules</text>`;
+      $('rule').innerHTML=`<span class="big">No way to make ${N(target)}</span><span class="sm">Pick a green number below${keep?', or let the numbers change places':''}.</span>`}
     $('prev').disabled=si<=0;$('next').disabled=si>=sols.length-1;
     const w=$('ways');if(w)[...w.children].forEach((li,i)=>li.firstChild.classList.toggle('on',i===si))}
 }
 function notes(){
   const el=$('notes'),n=nums.length,T=trees(0,n-1);
-  if(tab===0){const vs=T.map(t=>ev(t,nums,ops)),d=new Set(vs.map(show)).size;
+  if(tab===0){const V=vals(),vs=T.map(t=>ev(t,V,ops)),d=new Set(vs.map(show)).size;
     el.innerHTML=`<h2>Brackets are trees</h2><p class="hint">Brackets say which sign to do first. Draw that as a tree: each sign joins the two parts below it, and the sign at the top is done last. Same colour, same sign.</p>
 <h3>All ${T.length} ways, ${d} different ${d===1?'answer':'answers'}</h3>
-<ol class="ways" id="ways">${T.map((t,i)=>`<li><button type="button"><span>${full(t,nums,ops,true)}</span><span class="v">= ${show(vs[i])}</span></button></li>`).join('')}</ol>
+<ol class="ways" id="ways">${T.map((t,i)=>`<li><button type="button"><span>${full(t,V,ops,true)}</span><span class="v">= ${show(vs[i])}</span></button></li>`).join('')}</ol>
 <p class="hint">Try all plus signs, then all times signs, then a mixture. When do the brackets change the answer?</p>
 <h3>How many ways?</h3><p class="hint">3 numbers can be bracketed 2 ways, 4 numbers 5 ways, 5 numbers 14 ways, 6 numbers 42 ways. These are the <a href="catalan.html">Catalan numbers</a>: pick the sign that is done last, and the two sides are smaller bracket puzzles.</p>`}
-  else{const lo=0,hi=59,neg=[...reach].filter(x=>x<0).length,big=[...reach].filter(x=>x>hi).length;
-    let g='';for(let x=lo;x<=hi;x++)g+=`<button type="button" data-t="${x}" class="${reach.has(x)?'on':''}${x===target?' t':''}" aria-label="${x}${reach.has(x)?', can be made':''}">${x}</button>`;
+  else{const hi=59,cell=x=>`<button type="button" data-t="${x}" class="${reach.has(x)?'on':''}${x===target?' t':''}" aria-label="${x}${reach.has(x)?', can be made':''}">${N(x)}</button>`;
+    let g='',h='<span></span>';for(let x=0;x<=hi;x++)g+=cell(x);for(let x=1;x<=hi;x++)h+=cell(-x);
+    const far=[...reach].filter(x=>Math.abs(x)>hi).length,sym=[...reach].every(x=>reach.has(-x));
     el.innerHTML=`<h2>Hit the target</h2><p class="hint">Green numbers can be made. Tap one to see how.</p><div class="grid" id="grid">${g}</div>
-<p class="hint">${neg||big?`Also possible: ${neg?neg+' negative '+(neg===1?'answer':'answers'):''}${neg&&big?' and ':''}${big?big+' above '+hi:''}.`:''}</p>
-<h3>${sols.length} ${sols.length===1?'way':'ways'} to make ${target}</h3>
-${sols.length?`<ol class="ways" id="ways">${sols.slice(0,40).map(s=>`<li><button type="button"><span>${s.s}</span><span class="v">= ${target}</span></button></li>`).join('')}</ol>${sols.length>40?`<p class="hint">Showing the first 40. Use Next to see them all.</p>`:''}<p class="hint">Only the brackets that matter are shown, so (1 + 3) + 4 and 1 + (3 + 4) count as one way.</p>`:`<p class="hint">${keep?'Nothing works with the numbers in this order. Untick &ldquo;Keep the order&rdquo; and try again.':'Nothing works, even with the numbers in any order.'}</p>`}`}
+<h3>Negative answers</h3><p class="hint">The same board with a minus on every number, so &minus;7 sits where 7 was.</p><div class="grid" id="grid2">${h}</div>
+<p class="hint">${far?`Also possible: ${far} ${far===1?'answer':'answers'} beyond ${hi} or below &minus;${hi}.`:''}</p>
+<h3>What a minus in front does</h3>
+${neg?`<p class="hint">It makes the two boards match: every answer now has its opposite, and nothing else is new. Whole-number answers went from ${plain.size} to ${reach.size}.</p><p class="hint">Why: a minus on the first number can be pushed up the tree to the very top. &minus;1 + 3 is the opposite of 1 &minus; 3, and &minus;1 &times; 3 is the opposite of 1 &times; 3. So with it you can make exactly the opposites of what you could make before.</p>`
+:`<p class="hint">Without it the two boards ${sym?'happen to match':'do not match'}: ${plain.size} whole-number answers. Tick &ldquo;Allow a minus in front&rdquo; and watch what changes.</p>`}
+<h3>${sols.length} ${sols.length===1?'way':'ways'} to make ${N(target)}</h3>
+${sols.length?`<ol class="ways" id="ways">${sols.slice(0,40).map(s=>`<li><button type="button"><span>${s.s}</span><span class="v">= ${N(target)}</span></button></li>`).join('')}</ol>${sols.length>40?`<p class="hint">Showing the first 40. Use Next to see them all.</p>`:''}<p class="hint">Only the brackets that matter are shown, so (1 + 3) + 4 and 1 + (3 + 4) count as one way.</p>`:`<p class="hint">${keep?'Nothing works with the numbers in this order. Untick &ldquo;Keep the order&rdquo; and try again.':'Nothing works, even with the numbers in any order.'}</p>`}`}
 }
 function refresh(){if(tab===1)solve();notes();draw()}
 function select(i){tab=i;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
-  $('tw').hidden=$('kw').hidden=tab===0;refresh()}
+  $('tw').hidden=$('kw').hidden=$('nw').hidden=tab===0;refresh()}
 function go(d){if(tab===0){const m=trees(0,nums.length-1).length;ti=Math.max(0,Math.min(m-1,ti+d))}else si=Math.max(0,Math.min(sols.length-1,si+d));draw()}
 function setNums(){
   const a=($('nums').value.match(/\d+/g)||[]).map(Number),m=$('msg');
@@ -228,11 +240,12 @@ function setNums(){
 $('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
 $('prev').addEventListener('click',()=>go(-1));$('next').addEventListener('click',()=>go(1));
-$('fig').addEventListener('click',e=>{const t=e.target.closest('[data-g]');if(t&&tab===0){const g=+t.dataset.g;ops[g]=CYC[(CYC.indexOf(ops[g])+1)%4];refresh()}});
+$('fig').addEventListener('click',e=>{if(tab===0&&e.target.closest('[data-neg]')){n1=!n1;refresh();return}const t=e.target.closest('[data-g]');if(t&&tab===0){const g=+t.dataset.g;ops[g]=CYC[(CYC.indexOf(ops[g])+1)%4];refresh()}});
 $('nums').addEventListener('change',setNums);$('nums').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();setNums()}});
 $('target').addEventListener('input',e=>{const x=Math.round(+e.target.value);if(e.target.value!==''&&isFinite(x)){target=x;refresh()}});
 $('keep').addEventListener('change',e=>{keep=e.target.checked;refresh()});
-$('notes').addEventListener('click',e=>{const c=e.target.closest('#grid button'),w=e.target.closest('#ways button');
+$('neg').addEventListener('change',e=>{neg=e.target.checked;refresh()});
+$('notes').addEventListener('click',e=>{const c=e.target.closest('.grid button'),w=e.target.closest('#ways button');
   if(c){target=+c.dataset.t;$('target').value=target;refresh();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}
   if(w){const i=[...$('ways').children].indexOf(w.parentNode);if(tab===0)ti=i;else si=i;draw();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}});
 document.addEventListener('keydown',e=>{const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='select')return;
