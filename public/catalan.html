@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalan Numbers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.cz svg{display:block;width:100%;height:auto}
+.cz text{font-family:var(--body);fill:var(--ink)}
+.cz [data-w]{cursor:pointer}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:3.2em;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;justify-content:center}
+.rule .t{font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:3px 8px;cursor:pointer;font-variant-numeric:tabular-nums}
+.rule .t.on{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.picks{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.picks select{font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.gal{display:flex;flex-wrap:wrap;gap:6px}
+.th{background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:4px;cursor:pointer;color:var(--ink);line-height:0}
+.th.on{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.th svg{display:block;width:auto;height:auto}
+.how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.seq{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center;font-variant-numeric:tabular-nums}
+.seq span{padding:5px 0;border-radius:8px;background:var(--paper);font-weight:700}
+.seq span.h{background:none;color:var(--muted);font-weight:400;font-size:.85rem;padding:0}
+.seq span.on{outline:2px solid var(--accent)}
+.steps li b{color:var(--ink)}
+[hidden]{display:none!important}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Catalan numbers</h1>
+    <p class="lede">1, 2, 5, 14, 42, 132. The same numbers count mountain ranges, matched brackets, handshakes round a table, paths under a diagonal and ways to cut up a polygon. See why they are all the same count, and where the formula comes from.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage">
+    <section class="figure cz" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 392" role="img" aria-label="Picture"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+        <button class="btn" id="alt" type="button" hidden>Another path</button>
+      </div>
+      <p class="rule" id="rule" aria-live="polite"></p>
+      <div class="picks shape">
+        <label for="size" id="sizelab">Pairs</label>
+        <select id="size"></select>
+      </div>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Five pictures','Why the formula','Big from small'];
+const PC=['var(--a)','var(--b)','var(--c)','#d6457a','#2f80d0'],PINK='#d6457a';
+const CAT=[1,1,2,5,14,42,132,429];
+const choose=(n,k)=>{let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
+const memo={};
+// every way to write n matched pairs of brackets, "(" first
+function words(n){if(memo[n])return memo[n];const o=[];(function go(s,a,b){if(s.length===2*n){o.push(s);return}if(a<n)go(s+'(',a+1,b);if(b<a)go(s+')',a,b+1)})('',0,0);return memo[n]=o}
+// which bracket closes which, and a pair number for the colours
+function info(w){const mate=[],pid=[],st=[];let c=0;for(let i=0;i<w.length;i++){if(w[i]==='('){pid[i]=c++;st.push(i)}else{const j=st.pop();mate[i]=j;mate[j]=i;pid[i]=pid[j]}}return{mate,pid}}
+// the same list, sorted by where the first arch comes back to the ground
+function grouped(n){const k='g'+n;if(memo[k])return memo[k];const o=[];for(let a=0;a<n;a++)for(const A of words(a))for(const B of words(n-1-a))o.push('('+A+')'+B);return memo[k]=o}
+// paths of n rights and n ups that climb above the diagonal somewhere
+function badPaths(n){const k='b'+n;if(memo[k])return memo[k];const o=[];(function go(s,r,u){if(s.length===2*n){let d=0;for(const ch of s){d+=ch==='U'?1:-1;if(d>0){o.push(s);break}}return}if(r<n)go(s+'R',r+1,u);if(u<n)go(s+'U',r,u+1)})('',0,0);return memo[k]=o}
+
+let tab=0,n=4,w='(()())()',n2=4,bad='RRUUURUR',st=0,fl=0,anim=0;
+const list=()=>tab===2?grouped(n):words(n);
+const cap=(x,y,t,a)=>`<text x="${x}" y="${y}" font-size="12" text-anchor="${a||'start'}" style="fill:var(--muted)">${t}</text>`;
+const mtn=(w,x0,u,y0,h)=>{const p=[[x0,y0]];let lv=0;for(let i=0;i<w.length;i++){lv+=w[i]==='('?1:-1;p.push([x0+(i+1)*u,y0-lv*h])}return p};
+
+function draw0(){
+  const {mate,pid}=info(w),u=Math.min(40,400/(2*n)),x0=220-n*u,y0=140,h=Math.min(28,104/n),p=mtn(w,x0,u,y0,h),i0=words(n).indexOf(w);let o='';
+  $('fig').setAttribute('viewBox','0 0 440 396');
+  o+=cap(20,18,'mountains')+`<text x="420" y="18" text-anchor="end" font-size="13" font-weight="700">${i0+1} of ${CAT[n]}</text>`;
+  o+=`<polygon points="${p.map(q=>q.join(',')).join(' ')}" fill="var(--paper)"/><line x1="${x0-10}" y1="${y0}" x2="${x0+2*n*u+10}" y2="${y0}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  for(let i=0;i<2*n;i++)if(w[i]==='('){const j=mate[i],y=(p[i][1]+p[i+1][1])/2;o+=`<line x1="${(p[i][0]+p[i+1][0])/2}" y1="${y}" x2="${(p[j][0]+p[j+1][0])/2}" y2="${y}" stroke="${PC[pid[i]]}" stroke-width="1.5" stroke-dasharray="3 4" opacity=".75"/>`}
+  for(let i=0;i<2*n;i++)o+=`<line x1="${p[i][0]}" y1="${p[i][1]}" x2="${p[i+1][0]}" y2="${p[i+1][1]}" stroke="${PC[pid[i]]}" stroke-width="4.5" stroke-linecap="round"/>`;
+  // brackets, one under each stroke
+  for(let i=0;i<2*n;i++){const x=x0+(i+.5)*u;o+=`<text x="${x}" y="178" text-anchor="middle" font-size="28" font-weight="700" style="font-family:ui-monospace,Menlo,Consolas,monospace;fill:${PC[pid[i]]}">${w[i]}</text><text x="${x}" y="195" text-anchor="middle" font-size="10" style="fill:var(--muted)">${i+1}</text>`}
+  // path under the diagonal: "(" is a step right, ")" a step up
+  const G=122,g=G/n,ox=14,oy=366;
+  for(let i=0;i<=n;i++)o+=`<line x1="${ox+i*g}" y1="${oy}" x2="${ox+i*g}" y2="${oy-G}" stroke="var(--line)"/><line x1="${ox}" y1="${oy-i*g}" x2="${ox+G}" y2="${oy-i*g}" stroke="var(--line)"/>`;
+  o+=`<line x1="${ox}" y1="${oy}" x2="${ox+G}" y2="${oy-G}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+  {let x=0,y=0;for(let i=0;i<2*n;i++){const nx=x+(w[i]==='('?1:0),ny=y+(w[i]===')'?1:0);o+=`<line x1="${ox+x*g}" y1="${oy-y*g}" x2="${ox+nx*g}" y2="${oy-ny*g}" stroke="${PC[pid[i]]}" stroke-width="4.5" stroke-linecap="round"/>`;x=nx;y=ny}}
+  // handshakes: person i shakes with the person holding the matching bracket
+  const cx=220,cy=305,r=51,hp=i=>{const a=(i+.5)/(2*n)*2*Math.PI;return[cx+r*Math.sin(a),cy-r*Math.cos(a),cx+(r+12)*Math.sin(a),cy-(r+12)*Math.cos(a)]};
+  o+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--paper)" stroke="var(--line)" stroke-width="1.5"/>`;
+  for(let i=0;i<2*n;i++)if(w[i]==='('){const a=hp(i),b=hp(mate[i]);o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${PC[pid[i]]}" stroke-width="3.5" stroke-linecap="round"/>`}
+  for(let i=0;i<2*n;i++){const a=hp(i);o+=`<circle cx="${a[0]}" cy="${a[1]}" r="4" fill="var(--ink)"/><text x="${a[2]}" y="${a[3]+3.5}" text-anchor="middle" font-size="10" style="fill:var(--muted)">${i+1}</text>`}
+  // polygon with n+2 corners: each pair of brackets becomes one triangle
+  const m=n+2,px=366,py=305,pr=62,V=v=>{const a=(270-180/m-v*360/m)*Math.PI/180;return[px+pr*Math.cos(a),py-pr*Math.sin(a)]},tris=[];
+  (function tri(lo,hi,i,j){if(lo>=hi)return;const e=mate[lo],k=i+(e-lo-1)/2+1;tris.push([i,k,j,pid[lo]]);tri(lo+1,e,i,k);tri(e+1,hi,k,j)})(0,2*n,0,m-1);
+  for(const t of tris)o+=`<polygon points="${[t[0],t[1],t[2]].map(v=>V(v).join(',')).join(' ')}" fill="${PC[t[3]]}" fill-opacity=".6" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/>`;
+  o+=cap(75,388,'path under the diagonal','middle')+cap(220,388,'handshakes, none crossing','middle')+cap(366,388,'polygon cut in triangles','middle')+cap(20,216,'matched brackets');
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=`<span><b>${CAT[n]}</b> ${CAT[n]===1?'way':'ways'} with ${n} ${n===1?'pair':'pairs'}. This is number ${i0+1}.</span>`;
+}
+
+function draw1(){
+  const N=n2,s=Math.min(62,330/(N+1)),gx=220-N*s/2,gy=446,P=(x,y)=>[gx+x*s,gy-y*s],L=(a,b,x)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" ${x}/>`;let o='';
+  $('fig').setAttribute('viewBox','0 0 440 470');
+  for(let i=0;i<=N;i++)o+=L(P(i,0),P(i,N),'stroke="var(--line)" stroke-width="1.5"')+L(P(0,i),P(N,i),'stroke="var(--line)" stroke-width="1.5"');
+  if(st>=2){for(let i=0;i<=N;i++)o+=L(P(i,N),P(i,N+1),'stroke="var(--line)" stroke-dasharray="3 4"');o+=L(P(0,N+1),P(N,N+1),'stroke="var(--line)" stroke-dasharray="3 4"')}
+  o+=L(P(0,0),P(N,N),'stroke="var(--muted)" stroke-dasharray="5 5" stroke-width="1.5"');
+  if(st>=1)o+=L(P(-.3,.7),P(N,N+1),`stroke="${PINK}" stroke-width="2.5"`);
+  // the path, the first place it touches the line, and the flipped tail
+  const pts=[[0,0]];let ti=-1;for(let i=0;i<2*N;i++){const q=pts[i];pts.push(bad[i]==='R'?[q[0]+1,q[1]]:[q[0],q[1]+1]);if(ti<0&&pts[i+1][1]-pts[i+1][0]===1)ti=i+1}
+  const e=fl<.5?2*fl*fl:1-2*(1-fl)*(1-fl),head=pts.slice(0,ti+1),tail=pts.slice(ti),flip=tail.map(q=>[q[0]+(q[1]-1-q[0])*e,q[1]+(q[0]+1-q[1])*e]);
+  const pl=(a,x)=>`<polyline points="${a.map(q=>P(q[0],q[1]).join(',')).join(' ')}" fill="none" stroke-linejoin="round" stroke-linecap="round" ${x}/>`;
+  if(st===0)o+=pl(pts,'stroke="var(--ink)" stroke-width="5"');
+  else{
+    if(st>=3)o+=pl(tail,'stroke="var(--c)" stroke-width="3" stroke-dasharray="2 7"');
+    o+=pl(head,'stroke="var(--a)" stroke-width="5"')+pl(flip,`stroke="${fl>0?'var(--b)':'var(--c)'}" stroke-width="5"`);
+    const t=P(pts[ti][0],pts[ti][1]);o+=`<circle cx="${t[0]}" cy="${t[1]}" r="10" fill="none" stroke="${PINK}" stroke-width="3"/>`}
+  const a=P(0,0),b=P(N,N),c=P(N-1,N+1);
+  o+=`<circle cx="${a[0]}" cy="${a[1]}" r="6" fill="var(--ink)"/><text x="${a[0]}" y="${a[1]+20}" text-anchor="middle" font-size="13" font-weight="700">start</text>`;
+  o+=`<circle cx="${b[0]}" cy="${b[1]}" r="6" fill="var(--ink)"/><text x="${b[0]+11}" y="${b[1]+5}" font-size="13" font-weight="700">end</text>`;
+  if(st>=2)o+=`<circle cx="${c[0]}" cy="${c[1]}" r="6" fill="var(--b)" stroke="var(--ink)" stroke-width="1.5"/><text x="${c[0]}" y="${c[1]-12}" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--b)">new end</text>`;
+  const all=choose(2*N,N),nb=choose(2*N,N-1);
+  if(st===4){const x0=40,W=360,sw=W/(N+1);
+    o+=`<text x="220" y="18" text-anchor="middle" font-size="13" font-weight="700">all ${all} paths, in ${N+1} equal parts</text>`;
+    o+=`<rect x="${x0}" y="26" width="${N*sw}" height="26" fill="${PINK}" fill-opacity=".35"/><rect x="${x0+N*sw}" y="26" width="${sw}" height="26" fill="var(--b)"/>`;
+    for(let i=1;i<=N;i++)o+=`<line x1="${x0+i*sw}" y1="26" x2="${x0+i*sw}" y2="52" stroke="var(--card)" stroke-width="2"/>`;
+    o+=`<rect x="${x0}" y="26" width="${W}" height="26" fill="none" stroke="var(--ink)" stroke-width="1.5"/><text x="${x0+N*sw/2}" y="44" text-anchor="middle" font-size="13" font-weight="700">${nb} bad</text><text x="${x0+(N+.5)*sw}" y="44" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--card)">${all-nb}</text>`}
+  $('fig').innerHTML=o;
+  $('rule').innerHTML='<span>'+[
+    `Every path from start to end: ${N} rights and ${N} ups in any order. That is <b>${all}</b> paths.`,
+    `A bad path climbs above the diagonal, so it must touch the pink line. Mark the first touch.`,
+    `Flip everything after the first touch. The path now ends one left and one up.`,
+    `Flip it again and you are back. So bad paths pair off with paths to the new end: ${N-1} rights and ${N+1} ups, <b>${nb}</b> of them.`,
+    `Good paths: ${all} &minus; ${nb} = <b>${all-nb}</b>. Exactly one part in ${N+1}.`][st]+'</span>';
+}
+
+function draw2(){
+  const {mate}=info(w),u=Math.min(40,400/(2*n)),x0=220-n*u,y0=150,h=Math.min(30,112/n),p=mtn(w,x0,u,y0,h),e=mate[0],k=(e-1)/2,j=n-1-k;let o='';
+  const top=(a,b)=>Math.min(...p.slice(a,b+1).map(q=>q[1]));
+  o+=cap(20,18,'mountains');
+  if(k)o+=`<rect x="${p[1][0]}" y="${top(1,e)-6}" width="${p[e][0]-p[1][0]}" height="${y0-h-top(1,e)+6}" rx="4" fill="var(--b-soft)"/>`;
+  if(j)o+=`<rect x="${p[e+1][0]}" y="${top(e+1,2*n)-6}" width="${p[2*n][0]-p[e+1][0]}" height="${y0-top(e+1,2*n)+6}" rx="4" fill="var(--c-soft)"/>`;
+  o+=`<line x1="${x0-10}" y1="${y0}" x2="${x0+2*n*u+10}" y2="${y0}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  for(let i=0;i<2*n;i++)o+=`<line x1="${p[i][0]}" y1="${p[i][1]}" x2="${p[i+1][0]}" y2="${p[i+1][1]}" stroke="${i===0||i===e?'var(--a)':i<e?'var(--b)':'var(--c)'}" stroke-width="${i===0||i===e?6:4.5}" stroke-linecap="round"/>`;
+  o+=`<rect x="20" y="166" width="12" height="12" fill="var(--a)"/><text x="38" y="177" font-size="13" font-weight="700">the first arch: one up, one down</text>`;
+  o+=`<rect x="20" y="186" width="12" height="12" fill="var(--b)"/><text x="38" y="197" font-size="13" font-weight="700">lifted on the arch: ${CAT[k]} ${CAT[k]===1?'choice':'choices'}${k?'':' (nothing)'}</text>`;
+  o+=`<rect x="20" y="206" width="12" height="12" fill="var(--c)"/><text x="38" y="217" font-size="13" font-weight="700">after the arch: ${CAT[j]} ${CAT[j]===1?'choice':'choices'}${j?'':' (nothing)'}</text>`;
+  // one dot for every mountain: rows choose the lifted part, columns choose the rest
+  const tot=CAT.slice(0,n).reduce((a,b)=>a+b,0)+(n-1)*1.4,d=Math.min(22,390/tot),T=246;let x=220-tot*d/2,mr=1;
+  for(let a=0;a<n;a++){const R=CAT[a],C=CAT[n-1-a],A=words(a),B=words(n-1-a),cur=a===k;mr=Math.max(mr,R);
+    if(cur){const ri=A.indexOf(w.slice(1,e)),ci=B.indexOf(w.slice(e+1));
+      o+=`<rect x="${x-2}" y="${T+ri*d}" width="${C*d+4}" height="${d}" rx="${d/2}" fill="var(--b-soft)"/><rect x="${x+ci*d}" y="${T-2}" width="${d}" height="${R*d+4}" rx="${d/2}" fill="var(--c-soft)" fill-opacity=".8"/>`}
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++){const ww='('+A[r]+')'+B[c],on=ww===w;
+      o+=`<circle cx="${x+(c+.5)*d}" cy="${T+(r+.5)*d}" r="${d*(on?.4:.27)}" fill="${on?'var(--accent)':cur?'var(--ink)':'var(--muted)'}" ${on?'stroke="var(--ink)" stroke-width="1.5"':cur?'':'opacity=".55"'}/><rect data-w="${ww}" x="${x+c*d}" y="${T+r*d}" width="${d}" height="${d}" fill="transparent"/>`}
+    o+=`<text x="${x+C*d/2}" y="${T+R*d+17}" text-anchor="middle" font-size="12" font-weight="700"${cur?'':' style="fill:var(--muted)"'}>${R}&times;${C}</text>`;
+    x+=(C+1.4)*d}
+  $('fig').setAttribute('viewBox',`0 0 440 ${Math.max(330,Math.ceil(T+mr*d+30))}`);
+  $('fig').innerHTML=o;
+  let t=`<span>${CAT[n]} =</span>`;for(let a=0;a<n;a++)t+=`${a?'<span>+</span>':''}<button class="t${a===k?' on':''}" type="button" data-k="${a}" aria-label="First arch with ${a} pairs on top">${CAT[a]}&times;${CAT[n-1-a]}</button>`;
+  $('rule').innerHTML=t;
+}
+
+function notes(){
+  const el=$('notes'),seq=m=>`<div class="seq" aria-label="The first Catalan numbers"><span class="h">pairs</span>${[1,2,3,4,5,6].map(i=>`<span class="h">${i}</span>`).join('')}<span class="h">ways</span>${[1,2,3,4,5,6].map(i=>`<span${i===m?' class="on"':''}>${CAT[i]}</span>`).join('')}</div>`;
+  if(tab===0){
+    const u=n>4?5:7,th=words(n).map(x=>{const p=mtn(x,3,u,n*u+3,u);return `<button class="th" type="button" data-w="${x}" aria-label="${x}"><svg width="${2*n*u+6}" height="${n*u+6}" viewBox="0 0 ${2*n*u+6} ${n*u+6}"><polyline points="${p.map(q=>q.join(',')).join(' ')}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg></button>`}).join('');
+    el.innerHTML=`<h2>One count, five pictures</h2><p class="hint">Same colour, same pair. Press Next: all five pictures change together, and none of them ever repeats.</p>
+<h3>All ${CAT[n]} of them</h3><div class="gal" id="gal">${th}</div>${seq(n)}
+<h3>The five rules</h3><ol class="how"><li><b>Mountains:</b> ${n} up-strokes and ${n} down-strokes, never dipping below the ground.</li><li><b>Brackets:</b> ${n} ${n===1?'pair':'pairs'}, properly matched.</li><li><b>Path:</b> ${n} ${n===1?'step':'steps'} right and ${n} up on a grid, never going above the diagonal.</li><li><b>Handshakes:</b> ${2*n} people at a round table all shake hands at once, and no arms cross.</li><li><b>Polygon:</b> a shape with ${n+2} corners, cut into triangles by lines from corner to corner.</li></ol>
+<p class="hint">Reading across: an up-stroke is &ldquo;(&rdquo; and a step right; a down-stroke is &ldquo;)&rdquo; and a step up. Each person shakes hands with whoever holds the matching bracket.</p>`}
+  if(tab===1){const N=n2,all=choose(2*N,N),nb=choose(2*N,N-1);
+    el.innerHTML=`<h2>Why the formula works</h2><p class="hint">Counting the good paths directly is hard. Counting all the paths is easy, and so is counting the bad ones, once you see the flip.</p>
+<ol class="steps" id="steps">${['<b>Count every path.</b> '+all+' of them.','<b>Find the first touch</b> of the pink line.','<b>Flip the rest</b> of the path.','<b>Flip back.</b> Bad paths and paths to the new end pair off: '+nb+'.','<b>Subtract.</b> '+all+' &minus; '+nb+' = '+(all-nb)+'.'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
+<p class="hint">In symbols, with ${N} pairs: (${2*N} choose ${N}) &minus; (${2*N} choose ${N-1}) = ${all} &minus; ${nb} = ${all-nb}. It always comes to (2n choose n) &divide; (n + 1).</p>${seq(N)}
+<p class="hint">Press &ldquo;Another path&rdquo; and try to find a bad path that the flip does not work on.</p>`}
+  if(tab===2)el.innerHTML=`<h2>Big ones from small ones</h2><p class="hint">Every mountain range starts with one arch. Something smaller sits on top of it, and something smaller follows it.</p>
+<ol class="how"><li>The <b style="color:var(--a)">first arch</b> is the first time the range comes back to the ground.</li><li>The <b style="color:var(--b)">lifted part</b> and the <b style="color:var(--c)">part after</b> are chosen separately, so their counts multiply. That is one rectangle of dots.</li><li>Add up the rectangles for every place the first arch can end. Tap any dot to see its mountain.</li></ol>${seq(n)}
+<p class="hint">Try it by hand: 132 = 1&times;42 + 1&times;14 + 2&times;5 + 5&times;2 + 14&times;1 + 42&times;1.</p>`;
+  mark();
+}
+function mark(){
+  const g=$('gal');if(g)[...g.children].forEach(b=>b.classList.toggle('on',b.dataset.w===w));
+  const s=$('steps');if(s)[...s.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')});
+}
+function draw(){
+  [draw0,draw1,draw2][tab]();mark();
+  if(tab===1){$('prev').disabled=st===0;$('next').disabled=st===4}
+  else{const l=list(),i=l.indexOf(w);$('prev').disabled=i<=0;$('next').disabled=i>=l.length-1}
+}
+function flipTo(v){cancelAnimationFrame(anim);const a=fl,t0=performance.now();if(a===v){draw();return}
+  const f=now=>{const u=Math.min(1,(now-t0)/700);fl=a+(v-a)*u;draw();if(u<1)anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)}
+function jump(i){st=Math.max(0,Math.min(4,i));flipTo(st>=2?1:0)}
+function go(d){
+  if(tab===1){jump(st+d);return}
+  const l=list(),i=l.indexOf(w)+d;if(i>=0&&i<l.length){w=l[i];draw()}
+}
+function sizes(){
+  const a=tab===1?[2,3,4,5,6]:[1,2,3,4,5],v=tab===1?n2:n;
+  $('sizelab').textContent=tab===1?'Grid size':'Pairs';
+  $('size').innerHTML=a.map(x=>`<option value="${x}"${x===v?' selected':''}>${x}${tab===1?' by '+x:''}</option>`).join('');
+}
+function select(i){
+  cancelAnimationFrame(anim);tab=i;st=0;fl=0;
+  [...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  $('alt').hidden=tab!==1;sizes();notes();draw();
+}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('prev').addEventListener('click',()=>go(-1));$('next').addEventListener('click',()=>go(1));
+$('alt').addEventListener('click',()=>{const l=badPaths(n2);let x;do{x=l[Math.floor(Math.random()*l.length)]}while(x===bad&&l.length>1);bad=x;draw()});
+$('size').addEventListener('change',e=>{const v=+e.target.value;cancelAnimationFrame(anim);
+  if(tab===1){n2=v;const l=badPaths(n2);bad=l[Math.floor(l.length*.62)];st=0;fl=0}else{n=v;w=list()[0]}
+  notes();draw()});
+$('fig').addEventListener('click',e=>{const t=e.target.closest('[data-w]');if(t){w=t.dataset.w;draw()}});
+$('rule').addEventListener('click',e=>{const t=e.target.closest('[data-k]');if(t){const a=+t.dataset.k;w=grouped(n).find(x=>(info(x).mate[0]-1)/2===a);draw()}});
+$('notes').addEventListener('click',e=>{const b=e.target.closest('.th'),li=e.target.closest('#steps li');
+  if(b){w=b.dataset.w;draw();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}
+  if(li)jump([...li.parentNode.children].indexOf(li))});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...li.parentNode.children].indexOf(li));return}
+  if(tag==='input'||tag==='select')return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();go(d)}
+});
+select(0);
+</script>
+</body>
+</html>

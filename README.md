@@ -23,6 +23,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `jugs.html` | The Die Hard jug puzzle |
 | `vernier.html` | Reading a vernier caliper, why it works, and a bonus tab on when clock hands meet |
 | `newton.html` | Square roots by guess and average (Heron and Newton) |
+| `catalan.html` | Catalan numbers: five pictures of one count, the reflection proof, and the recurrence |
 | `prime-sprint.html` | Prime-tapping speed game |
 
 ## Trying a change locally
