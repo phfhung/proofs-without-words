@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brackets and Targets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.bz svg{display:block;width:100%;height:auto}
+.bz text{font-family:var(--body);fill:var(--ink)}
+.bz [data-g]{cursor:pointer}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:4.4em;display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.rule .big{font-family:var(--display);font-size:1.35rem}
+.rule .sm{color:var(--muted);font-size:.9rem}
+.picks{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.picks label{font-weight:700;display:flex;gap:8px;align-items:center}
+.picks input[type=text],.picks input[type=number]{font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.picks input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.err{margin:0;color:#b3261e;font-weight:700}
+.ways{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ways button{font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;width:100%;text-align:left;display:flex;gap:10px;justify-content:space-between;font-variant-numeric:tabular-nums;font-weight:700}
+.ways button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.ways .v{color:var(--muted);white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.grid button{font:inherit;font-size:.85rem;padding:6px 0;border-radius:6px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;font-variant-numeric:tabular-nums}
+.grid button.on{background:var(--b-soft);color:var(--ink);font-weight:700;border-color:var(--b)}
+.grid button.t{outline:2.5px solid var(--accent);outline-offset:1px}
+.how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.notes a{color:var(--accent);font-weight:700}
+[hidden]{display:none!important}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Brackets and targets</h1>
+    <p class="lede">Take a few numbers, such as 1 3 4 5. Put signs between them and add brackets. Which answers can you reach? Every way of adding brackets is a tree, and counting the trees gives the Catalan numbers.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
+
+  <main class="stage">
+    <section class="figure bz" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 300" role="img" aria-label="The calculation drawn as a tree"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+      </div>
+      <p class="rule" id="rule" aria-live="polite"></p>
+      <div class="picks shape">
+        <label>Numbers <input id="nums" type="text" inputmode="numeric" autocomplete="off" value="1 3 4 5" size="11"></label>
+        <label id="tw" hidden>Target <input id="target" type="number" value="5" style="width:5.5em"></label>
+        <label id="mw" hidden><input id="mul" type="checkbox"> Allow &times; and &divide;</label>
+        <label id="kw" hidden><input id="keep" type="checkbox" checked> Keep the order</label>
+      </div>
+      <p class="err" id="msg" role="status" hidden></p>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Brackets are trees','Hit the target'];
+const PC=['var(--a)','var(--b)','var(--c)','#d6457a'],SYM={'+':'+','-':'−','*':'×','/':'÷'},CYC=['+','-','*','/'];
+let tab=0,nums=[1,3,4,5],ops=['-','-','-'],ti=0,target=5,useMul=false,keep=true,sols=[],si=0,reach=new Set(),stats={};
+// exact fractions, so division never rounds
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+const Q=(p,q)=>{if(q<0){p=-p;q=-q}const g=gcd(p,q)||1;return[p/g,q/g]};
+function ap(o,a,b){if(!a||!b)return null;
+  if(o==='+')return Q(a[0]*b[1]+b[0]*a[1],a[1]*b[1]);if(o==='-')return Q(a[0]*b[1]-b[0]*a[1],a[1]*b[1]);
+  if(o==='*')return Q(a[0]*b[0],a[1]*b[1]);return b[0]===0?null:Q(a[0]*b[1],a[1]*b[0])}
+const show=v=>v?(v[1]===1?''+v[0]:v[0]+'/'+v[1]).replace('-','−'):'no answer';
+// every way to bracket the numbers in places i..j, as a tree. g is the gap whose sign is done last.
+const tmemo={};
+function trees(i,j){const k=i+','+j;if(tmemo[k])return tmemo[k];const o=[];
+  if(i===j)o.push({i});else for(let s=j-1;s>=i;s--)for(const l of trees(i,s))for(const r of trees(s+1,j))o.push({g:s,l,r,a:i,b:j});return tmemo[k]=o}
+const ev=(t,v,op)=>t.g===undefined?[v[t.i],1]:ap(op[t.g],ev(t.l,v,op),ev(t.r,v,op));
+const full=(t,v,op,root)=>t.g===undefined?''+v[t.i]:(root?'':'(')+full(t.l,v,op)+' '+SYM[op[t.g]]+' '+full(t.r,v,op)+(root?'':')');
+const prec=o=>o==='+'||o==='-'?1:2;
+// does this part need brackets, given the sign above it?
+const need=(t,par,right,op)=>t.g!==undefined&&(prec(op[t.g])<prec(op[par.g])||(prec(op[t.g])===prec(op[par.g])&&right&&(op[par.g]==='-'||op[par.g]==='/')));
+function mini(t,v,op){if(t.g===undefined)return''+v[t.i];const L=mini(t.l,v,op),R=mini(t.r,v,op);
+  return(need(t.l,t,false,op)?'('+L+')':L)+' '+SYM[op[t.g]]+' '+(need(t.r,t,true,op)?'('+R+')':R)}
+function perms(a){const o=new Map();(function go(p,rest){if(!rest.length){o.set(p.join(','),p);return}for(let i=0;i<rest.length;i++)go(p.concat(rest[i]),rest.slice(0,i).concat(rest.slice(i+1)))})([],a);return[...o.values()]}
+
+function solve(){
+  const n=nums.length,set=useMul?CYC:['+','-'],T=trees(0,n-1),seen=new Map(),flat=new Set(),all=new Set();reach=new Set();
+  for(const v of keep?[nums.slice()]:perms(nums))for(let c=0;c<Math.pow(set.length,n-1);c++){
+    const op=[];let x=c;for(let i=0;i<n-1;i++){op.push(set[x%set.length]);x=Math.floor(x/set.length)}
+    T.forEach((t,k)=>{const r=ev(t,v,op);if(!r)return;all.add(r[0]+'/'+r[1]);if(k===0)flat.add(r[0]+'/'+r[1]);
+      if(r[1]===1){reach.add(r[0]);if(r[0]===target){const s=mini(t,v,op);if(!seen.has(s))seen.set(s,{v:v.slice(),op,k,s})}}})}
+  sols=[...seen.values()].sort((a,b)=>a.s.length-b.s.length||(a.s<b.s?-1:1));si=0;stats={all:all.size,flat:flat.size};
+}
+
+// the calculation as a tree: numbers along the bottom, each sign joins the two parts under it
+function drawTree(v,op,t,tap,minimal){
+  const n=v.length,X=i=>48+i*(344/(n-1)),LY=262,stp=Math.min(62,196/(n-1));let edges='',nodes='',row='';
+  const open=v.map(()=>[]),close=v.map(()=>[]);
+  (function walk(t,par,right){if(t.g===undefined)return;if(par&&(!minimal||need(t,par,right,op))){open[t.a].push(t.g);close[t.b].push(t.g)}walk(t.l,t,false);walk(t.r,t,true)})(t,null,false);
+  (function pos(t){
+    if(t.g===undefined)return{x:X(t.i),y:LY-16,h:0};
+    const L=pos(t.l),R=pos(t.r),h=Math.max(L.h,R.h)+1,x=(L.x+R.x)/2,y=LY-12-h*stp,c=PC[t.g],val=ev(t,v,op);
+    edges+=`<line x1="${x}" y1="${y}" x2="${L.x}" y2="${L.y}" stroke="var(--ink)" stroke-width="2"/><line x1="${x}" y1="${y}" x2="${R.x}" y2="${R.y}" stroke="var(--ink)" stroke-width="2"/>`;
+    nodes+=`<g${tap?` data-g="${t.g}"`:''}><circle cx="${x}" cy="${y}" r="15" fill="${c}"/><text x="${x}" y="${y+6.5}" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--card)">${SYM[op[t.g]]}</text></g><text x="${x+21}" y="${y+5}" font-size="15" font-weight="700" style="fill:${c}">${val?show(val):'÷ 0'}</text>`;
+    return{x,y,h}})(t);
+  for(let i=0;i<n;i++){
+    row+=`<rect x="${X(i)-16}" y="${LY-16}" width="32" height="32" rx="7" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.5"/><text x="${X(i)}" y="${LY+6.5}" text-anchor="middle" font-size="18" font-weight="700">${v[i]}</text>`;
+    open[i].forEach((g,k)=>row+=`<text x="${X(i)-14-8*(open[i].length-k)}" y="${LY+8}" text-anchor="middle" font-size="24" font-weight="700" style="fill:${PC[g]}">(</text>`);
+    close[i].forEach((g,k)=>row+=`<text x="${X(i)+14+8*(close[i].length-k)}" y="${LY+8}" text-anchor="middle" font-size="24" font-weight="700" style="fill:${PC[g]}">)</text>`);
+    if(i<n-1){const x=(X(i)+16+8*close[i].length+X(i+1)-16-8*open[i+1].length)/2;
+      row+=`<text x="${x}" y="${LY+7.5}" text-anchor="middle" font-size="22" font-weight="700" style="fill:${PC[i]}">${SYM[op[i]]}</text>${tap?`<rect data-g="${i}" x="${x-15}" y="${LY-20}" width="30" height="40" fill="transparent"/>`:''}`}}
+  $('fig').innerHTML=edges+nodes+row;
+}
+function draw(){
+  const n=nums.length,T=trees(0,n-1);
+  if(tab===0){const t=T[ti],val=ev(t,nums,ops);drawTree(nums,ops,t,true,false);
+    $('rule').innerHTML=`<span class="big">${full(t,nums,ops,true)} = ${show(val)}</span><span class="sm">Way ${ti+1} of ${T.length} to bracket ${n} numbers. Tap a sign to change it.</span>`;
+    $('prev').disabled=ti===0;$('next').disabled=ti===T.length-1;
+    const w=$('ways');if(w)[...w.children].forEach((li,i)=>li.firstChild.classList.toggle('on',i===ti))}
+  else{
+    if(sols.length){const s=sols[si];drawTree(s.v,s.op,T[s.k],false,true);$('rule').innerHTML=`<span class="big">${s.s} = ${target}</span><span class="sm">Way ${si+1} of ${sols.length} to make ${target}</span>`}
+    else{$('fig').innerHTML=`<text x="220" y="150" text-anchor="middle" font-size="18" font-weight="700">${target} cannot be made</text><text x="220" y="176" text-anchor="middle" font-size="13" style="fill:var(--muted)">with these numbers and these rules</text>`;
+      $('rule').innerHTML=`<span class="big">No way to make ${target}</span><span class="sm">Pick a green number below, or change the rules.</span>`}
+    $('prev').disabled=si<=0;$('next').disabled=si>=sols.length-1;
+    const w=$('ways');if(w)[...w.children].forEach((li,i)=>li.firstChild.classList.toggle('on',i===si))}
+}
+function notes(){
+  const el=$('notes'),n=nums.length,T=trees(0,n-1);
+  if(tab===0){const vs=T.map(t=>ev(t,nums,ops)),d=new Set(vs.map(show)).size;
+    el.innerHTML=`<h2>Brackets are trees</h2><p class="hint">Brackets say which sign to do first. Draw that as a tree: each sign joins the two parts below it, and the sign at the top is done last. Same colour, same sign.</p>
+<h3>All ${T.length} ways, ${d} different ${d===1?'answer':'answers'}</h3>
+<ol class="ways" id="ways">${T.map((t,i)=>`<li><button type="button"><span>${full(t,nums,ops,true)}</span><span class="v">= ${show(vs[i])}</span></button></li>`).join('')}</ol>
+<p class="hint">Try all plus signs, then all minus signs. When do the brackets change the answer?</p>
+<h3>How many ways?</h3><p class="hint">3 numbers can be bracketed 2 ways, 4 numbers 5 ways, 5 numbers 14 ways, 6 numbers 42 ways. These are the <a href="catalan.html">Catalan numbers</a>: pick the sign that is done last, and the two sides are smaller bracket puzzles.</p>`}
+  else{const lo=0,hi=59,sum=nums.reduce((a,b)=>a+b,0),neg=[...reach].filter(x=>x<0).length,big=[...reach].filter(x=>x>hi).length;
+    let g='';for(let x=lo;x<=hi;x++)g+=`<button type="button" data-t="${x}" class="${reach.has(x)?'on':''}${x===target?' t':''}" aria-label="${x}${reach.has(x)?', can be made':''}">${x}</button>`;
+    el.innerHTML=`<h2>Hit the target</h2><p class="hint">Green numbers can be made. Tap one to see how.</p><div class="grid" id="grid">${g}</div>
+<p class="hint">${neg||big?`Also possible: ${neg?neg+' negative '+(neg===1?'answer':'answers'):''}${neg&&big?' and ':''}${big?big+' above '+hi:''}.`:''}</p>
+${useMul?'':`<h3>With only + and &minus;</h3><ol class="how"><li>Brackets never help. Without brackets you can make ${stats.flat} different answers; with brackets, still ${stats.all}. A bracket after a minus just flips the signs inside it.</li><li>Every answer is ${sum%2?'odd':'even'}, like the total ${nums.join(' + ')} = ${sum}. Changing a + to a &minus; lowers the answer by twice that number, so odd stays odd and even stays even.</li></ol>`}
+<h3>${sols.length} ${sols.length===1?'way':'ways'} to make ${target}</h3>
+${sols.length?`<ol class="ways" id="ways">${sols.slice(0,40).map(s=>`<li><button type="button"><span>${s.s}</span><span class="v">= ${target}</span></button></li>`).join('')}</ol>${sols.length>40?`<p class="hint">Showing the first 40. Use Next to see them all.</p>`:''}<p class="hint">Only the brackets that matter are shown, so (1 + 3) + 4 and 1 + (3 + 4) count as one way.</p>`:`<p class="hint">Nothing works. Try allowing &times; and &divide;, or letting the numbers change places.</p>`}`}
+}
+function refresh(){if(tab===1)solve();notes();draw()}
+function select(i){tab=i;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  $('tw').hidden=$('mw').hidden=$('kw').hidden=tab===0;refresh()}
+function go(d){if(tab===0){const m=trees(0,nums.length-1).length;ti=Math.max(0,Math.min(m-1,ti+d))}else si=Math.max(0,Math.min(sols.length-1,si+d));draw()}
+function setNums(){
+  const a=($('nums').value.match(/\d+/g)||[]).map(Number),m=$('msg');
+  if(a.length<3||a.length>5||a.some(x=>x>99)){m.hidden=false;m.textContent='Type 3, 4 or 5 whole numbers, each 99 or less, with spaces between them.';return}
+  m.hidden=true;nums=a;while(ops.length<a.length-1)ops.push('-');ops.length=a.length-1;ti=0;refresh();
+}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('prev').addEventListener('click',()=>go(-1));$('next').addEventListener('click',()=>go(1));
+$('fig').addEventListener('click',e=>{const t=e.target.closest('[data-g]');if(t&&tab===0){const g=+t.dataset.g;ops[g]=CYC[(CYC.indexOf(ops[g])+1)%4];refresh()}});
+$('nums').addEventListener('change',setNums);$('nums').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();setNums()}});
+$('target').addEventListener('input',e=>{const x=Math.round(+e.target.value);if(e.target.value!==''&&isFinite(x)){target=x;refresh()}});
+$('mul').addEventListener('change',e=>{useMul=e.target.checked;refresh()});
+$('keep').addEventListener('change',e=>{keep=e.target.checked;refresh()});
+$('notes').addEventListener('click',e=>{const c=e.target.closest('#grid button'),w=e.target.closest('#ways button');
+  if(c){target=+c.dataset.t;$('target').value=target;refresh();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}
+  if(w){const i=[...$('ways').children].indexOf(w.parentNode);if(tab===0)ti=i;else si=i;draw();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}});
+document.addEventListener('keydown',e=>{const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='select')return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();go(d)}});
+select(0);
+</script>
+</body>
+</html>

@@ -24,6 +24,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `vernier.html` | Reading a vernier caliper, why it works, and a bonus tab on when clock hands meet |
 | `newton.html` | Square roots by guess and average (Heron and Newton) |
 | `catalan.html` | Catalan numbers: five pictures of one count, the reflection proof, and the recurrence |
+| `brackets.html` | Signs and brackets between numbers to hit a target; every bracketing drawn as a tree |
 | `prime-sprint.html` | Prime-tapping speed game |
 
 ## Trying a change locally
