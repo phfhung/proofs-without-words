@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Square Roots by Guess and Average</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.nw svg{display:block;width:100%;height:auto}
+.nw text{font-family:var(--body);fill:var(--ink)}
+.picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.picks label{font-weight:700;font-size:.92rem;display:flex;flex-direction:column;gap:4px}
+.picks input{width:100%}
+.picks output{font-family:var(--display);font-size:1.15rem}
+.guesses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.guesses button{font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;width:100%;text-align:left;display:flex;gap:10px;align-items:baseline;font-variant-numeric:tabular-nums}
+.guesses button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.guesses button.later{opacity:.45}
+.guesses .i{color:var(--muted);font-size:.85rem;min-width:4.2em}
+.guesses .v{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1rem;color:var(--muted)}
+.guesses .v b{color:var(--b)}
+.guesses .n{margin-left:auto;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center}
+pre.code{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;line-height:1.5}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+.how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Square roots by guess and average</h1>
+    <p class="lede">Guess. Divide. Average. Repeat. Each round roughly doubles the number of correct digits.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage">
+    <section class="figure nw" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 330" role="img" aria-label="Picture of the current guess"></svg>
+      <p class="rule" id="rule" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Previous guess">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next guess">Next &rarr;</button>
+        <button class="btn" id="reset" type="button">Start over</button>
+      </div>
+      <div class="picks shape">
+        <label>Square root of <output id="nout"></output><input id="num" type="range" min="2" max="99" step="1" value="20"></label>
+        <label>First guess <output id="gout"></output><input id="g0" type="range" min="1" max="20" step="1" value="8"></label>
+      </div>
+    </section>
+
+    <section class="notes">
+      <h2>The guesses</h2>
+      <ol class="guesses" id="guesses" aria-label="Guesses so far. Tap one to jump to it."></ol>
+      <p class="hint" id="cap"></p>
+      <h3>The whole algorithm</h3>
+      <pre class="code" id="code"></pre>
+      <h3>Can you improve it?</h3>
+      <ol class="how">
+        <li>Pick a smarter first guess. How many rounds does it save?</li>
+        <li>The program runs a fixed number of rounds. Write a rule for when to stop instead.</li>
+        <li>Change one line so it finds cube roots. Hint: a box with a square base, g by g, and volume N has height N &divide; g&sup2;.</li>
+        <li>What happens if the first guess is 0? What about a negative guess?</li>
+      </ol>
+      <p class="hint">This is Heron&rsquo;s method, known in ancient Babylon. Newton&rsquo;s method, found about 3,500 years later, gives exactly the same rule for square roots.</p>
+    </section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Rectangle','Tangent line'],MAXK=9;
+let N=20,G0=8,tab=0,k=0,gs=[],u=1,raf=0;      // k = guesses shown; u animates the latest step from 0 to 1
+const ease=t=>t<.5?2*t*t:1-2*(1-t)*(1-t),lerp=(a,b,t)=>a+(b-a)*t;
+function compute(){gs=[G0];for(let i=0;i<MAXK;i++){const g=gs[i],n=(g+N/g)/2;if(n===g)break;gs.push(n)}}
+function digits(g){                                  // how many characters of g agree with the true root
+  const a=g.toFixed(10),b=Math.sqrt(N).toFixed(10);let i=0;while(i<a.length&&a[i]===b[i])i++;
+  return {a,i,n:Math.max(0,a.slice(0,i).replace('.','').replace(/^0+/,'').length)};
+}
+function drawRect(){
+  const g=k>0?lerp(gs[k-1],gs[k],ease(u)):gs[0],h=N/g,big=Math.max(gs[0],N/gs[0]),r=Math.sqrt(N);
+  const S=Math.min(330/big,230/big),ox=56,oy=286,X=v=>ox+v*S,Y=v=>oy-v*S;let o='';
+  o+=`<rect x="${X(0)}" y="${Y(r)}" width="${r*S}" height="${r*S}" fill="none" stroke="var(--c)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  o+=`<rect x="${X(0)}" y="${Y(h)}" width="${g*S}" height="${h*S}" fill="var(--a-soft)" stroke="var(--ink)" stroke-width="2" opacity=".92"/>`;
+  o+=`<text x="${X(g/2)}" y="${Y(h/2)+6}" text-anchor="middle" font-size="17" font-weight="700">area ${N}</text>`;
+  o+=`<text x="${X(g/2)}" y="${oy+22}" text-anchor="middle" font-size="16" font-weight="700" style="fill:var(--a)">${g.toFixed(3)}</text>`;
+  o+=`<text x="${ox-8}" y="${Y(h/2)+5}" text-anchor="end" font-size="16" font-weight="700" style="fill:var(--b)">${h.toFixed(3)}</text>`;
+  if(u>=1&&k<gs.length-1){const a=(g+h)/2;                // where the next guess will be
+    o+=`<line x1="${X(a)}" y1="${oy+6}" x2="${X(a)}" y2="${Y(Math.max(h,r))-10}" stroke="var(--c)" stroke-width="2.5"/><text x="${X(a)}" y="${Y(Math.max(h,r))-16}" text-anchor="middle" font-size="14" font-weight="700" style="fill:var(--c)">average</text>`}
+  $('fig').innerHTML=o;
+}
+function drawTan(){
+  const big=Math.max(gs[0],N/gs[0])*1.06,f=x=>x*x-N,top=f(big),ox=44,W=380,oyTop=20,Hh=280;
+  const X=x=>ox+x/big*W,Y=y=>oyTop+(top-y)/(top+N)*Hh;let o='',pl='';
+  o+=`<line x1="${ox}" y1="${Y(0)}" x2="${ox+W+8}" y2="${Y(0)}" stroke="var(--ink)" stroke-width="1.5"/><line x1="${ox}" y1="${oyTop-6}" x2="${ox}" y2="${Y(-N)+4}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  for(let i=0;i<=80;i++){const x=big*i/80;pl+=`${X(x).toFixed(1)},${Y(f(x)).toFixed(1)} `}
+  o+=`<polyline points="${pl}" fill="none" stroke="var(--ink)" stroke-width="2.5"/><text x="${ox+12}" y="${oyTop+12}" font-size="15" font-weight="700">y = x² − ${N}</text>`;
+  o+=`<circle cx="${X(Math.sqrt(N))}" cy="${Y(0)}" r="7" fill="none" stroke="var(--c)" stroke-width="2.5"/>`;
+  for(let i=0;i<=k;i++){const g=gs[i],last=i===k,op=last?1:i===k-1?.75:.3;
+    if(i>0){const p=gs[i-1],t=i===k?ease(u):1,ex=lerp(p,g,t),ey=lerp(f(p),0,t);          // tangent from the previous guess
+      o+=`<line x1="${X(p)}" y1="${Y(f(p))}" x2="${X(ex)}" y2="${Y(ey)}" stroke="var(--b)" stroke-width="2.5" opacity="${i===k?1:.35}"/>`}
+    if(last&&u<1)continue;
+    o+=`<line x1="${X(g)}" y1="${Y(0)}" x2="${X(g)}" y2="${Y(f(g))}" stroke="var(--a)" stroke-width="2" stroke-dasharray="5 4" opacity="${op}"/><circle cx="${X(g)}" cy="${Y(f(g))}" r="5" fill="var(--a)" opacity="${op}"/><circle cx="${X(g)}" cy="${Y(0)}" r="4.5" fill="var(--ink)" opacity="${op}"/>`;
+    if(last)o+=`<text x="${X(g)}" y="${Y(0)+(f(g)>=0?20:-10)}" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--a)" paint-order="stroke" stroke="var(--card)" stroke-width="5">${g.toFixed(3)}</text>`}
+  $('fig').innerHTML=o;
+}
+function draw(){
+  (tab===0?drawRect:drawTan)();
+  const g=gs[k],nx=k<gs.length-1?gs[k+1]:null;
+  const done=(g+N/g)/2===g;
+  $('rule').innerHTML=nx===null?(done?`${g.toFixed(10)} is as close as this computer can get.`:`Still improving after ${k} rounds. A closer first guess gets there sooner.`):`next guess = (${g.toFixed(3)} + ${N} ÷ ${g.toFixed(3)}) ÷ 2 = ${nx.toFixed(3)}`;
+  $('guesses').innerHTML=gs.map((x,i)=>{const d=digits(x);return `<li><button type="button" data-i="${i}" class="${i===k?'on':i>k?'later':''}"><span class="i">${i?'guess '+i:'first guess'}</span><span class="v"><b>${d.a.slice(0,d.i)}</b>${d.a.slice(d.i)}</span><span class="n">${d.n} right</span></button></li>`}).join('');
+  $('prev').disabled=k===0;$('next').disabled=k>=gs.length-1;
+  $('cap').textContent=tab===0?`A rectangle with area ${N}: one side is the guess, the other is ${N} ÷ guess. The dashed square is the answer. Averaging the two sides makes the rectangle squarer every time.`:`The same guesses, the way Newton saw them. Stand on the curve above your guess and slide down the tangent line. Where it hits the axis is the next guess. The circle marks the true root.`;
+}
+function go(to){
+  cancelAnimationFrame(raf);const fwd=to===k+1;k=Math.max(0,Math.min(gs.length-1,to));
+  if(!fwd||matchMedia('(prefers-reduced-motion: reduce)').matches){u=1;draw();return}
+  u=0;const t0=performance.now();const step=now=>{u=Math.min(1,(now-t0)/700);draw();if(u<1)raf=requestAnimationFrame(step)};raf=requestAnimationFrame(step);
+}
+function setup(){
+  cancelAnimationFrame(raf);compute();k=0;u=1;$('nout').textContent=N;$('gout').textContent=G0;
+  $('code').textContent=`g = ${G0}\nfor i in range(${Math.max(1,gs.length-1)}):\n    g = (g + ${N} / g) / 2\n    print(g)`;
+  draw();
+}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=[...$('tabs').children].indexOf(b);[...$('tabs').children].forEach((x,j)=>x.setAttribute('aria-selected',j===tab));cancelAnimationFrame(raf);u=1;draw()});
+$('next').addEventListener('click',()=>go(k+1));$('prev').addEventListener('click',()=>go(k-1));
+$('reset').addEventListener('click',()=>go(0));
+$('guesses').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(+b.dataset.i)});
+$('num').addEventListener('input',e=>{N=+e.target.value;$('g0').max=N;if(G0>N){G0=N;$('g0').value=N}setup()});
+$('g0').addEventListener('input',e=>{G0=+e.target.value;setup()});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='select')return;
+  if(e.key==='ArrowRight'||e.key===' '&&tag!=='button'){e.preventDefault();if(k<gs.length-1)go(k+1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(k-1)}
+});
+setup();
+</script>
+</body>
+</html>

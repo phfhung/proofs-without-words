@@ -22,6 +22,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `parabola.html` | Folding a parabola from paper |
 | `jugs.html` | The Die Hard jug puzzle |
 | `vernier.html` | Reading a vernier caliper, and why it works |
+| `newton.html` | Square roots by guess and average (Heron and Newton) |
 | `prime-sprint.html` | Prime-tapping speed game |
 
 ## Trying a change locally
