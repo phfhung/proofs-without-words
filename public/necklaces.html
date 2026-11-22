@@ -91,6 +91,8 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .picks select,.picks input[type=text]{font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
 .picks input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chips button.on{box-shadow:inset 0 0 0 1.5px var(--accent);border-color:var(--accent)}
+.chips.seq button{border-color:var(--line)}
 .chips button{font:inherit;font-size:.9rem;font-weight:700;padding:4px 9px;border-radius:8px;border:1.5px solid #d6457a;background:var(--card);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
 .how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
 .fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .45em;margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
@@ -108,7 +110,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
   <header>
     <a class="back" href="index.html">&larr; All activities</a>
     <h1>Fermat&rsquo;s necklaces</h1>
-    <p class="lede">Make every possible string of beads, then sort the strings into necklaces. When the number of beads is prime, the piles all come out the same size. That one fact is behind the test computers use to check whether a huge number is prime.</p>
+    <p class="lede">Make every possible string of beads, then sort the strings into necklaces. When the number of beads is prime, the piles all come out the same size. Drawn on a clock, the same fact becomes a test for primes.</p>
   </header>
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
@@ -118,6 +120,10 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
       <div class="picks" id="c-test" hidden>
         <label>Colours <select id="base"><option>2</option><option>3</option><option>5</option><option>7</option></select></label>
         <label><input id="strong" type="checkbox"> Add the extra check</label>
+      </div>
+      <div class="picks" id="c-clock" hidden>
+        <label>Clock size <select id="cn"></select></label>
+        <label>Start from <select id="cb"><option>2</option><option>3</option><option>5</option><option>7</option></select></label>
       </div>
       <svg id="fig" viewBox="0 0 440 340" role="img" aria-label="Picture"></svg>
       <div class="row" id="c-step">
@@ -136,9 +142,10 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const TABS=['Sort the necklaces','A test for primes'];
+const TABS=['Sort the necklaces','Who passes?','Round the clock'];
 const PC=['var(--a)','var(--b)','var(--c)','#d6457a','#2f80d0'],PINK='#d6457a',MAXN={2:7,3:4,4:3,5:3},LIM=600;
-let tab=0,a=2,n=5,st=0,gl=0,sel=1,anim=0,S=null,base=2,strong=false,q=341;
+let tab=0,a=2,n=5,st=0,gl=0,sel=1,anim=0,S=null,base=2,strong=false,q=341,cn=561,cb=2,hop=0,hp=0;
+const CLOCKS=[13,15,17,25,41,91,97,341,561];
 const isPrime=x=>{if(x<2)return false;for(let d=2;d*d<=x;d++)if(x%d===0)return false;return true};
 const factor=x=>{const f=[];for(let d=2;d*d<=x;d++)while(x%d===0){f.push(d);x/=d}if(x>1)f.push(x);return f};
 const sup=x=>(''+x).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[c]).join('');
@@ -211,66 +218,96 @@ function draw1(){
   const what=strong?`passes the extra check`:`${base}${sup(q)} − ${base} is a multiple of ${q}`;
   $('rule').innerHTML=`<span><b style="color:var(--b)">Green</b> passes and is prime. <b style="color:${PINK}">Pink</b> passes but is not prime: a liar.</span>`+
     (L.length?`<div class="chips" aria-label="Liars up to ${LIM}">${L.map(m=>`<button type="button" data-q="${m}">${m}</button>`).join('')}</div>`:`<span class="sm">No liars at all up to ${LIM}.</span>`)+
-    `<span class="sm">${q===1?'1 is not counted as prime.':p?`${q} is prime, and ${what}.`:ok?`${q} = ${f} is not prime, yet ${what}.`:`${q} = ${f} fails the test, so it is caught.`}</span>`;
+    (q>=5&&q%2===1?`<div class="chips"><button type="button" data-clock="${q}" style="border-color:var(--line)">See ${q} on the clock</button></div>`:'')+`<span class="sm">${q===1?'1 is not counted as prime.':p?`${q} is prime, and ${what}.`:ok?`${q} = ${f} is not prime, yet ${what}.`:`${q} = ${f} fails the test, so it is caught.`}</span>`;
 }
-// big numbers, with exact arithmetic
-const bpow=(b,e,m)=>{let r=1n;b%=m;while(e>0n){if(e&1n)r=r*b%m;b=b*b%m;e>>=1n}return r};
-function bigTest(){
-  const raw=$('big').value.replace(/[\s,]/g,''),out=$('bigout');
-  if(!/^\d+$/.test(raw)){out.innerHTML='Type a whole number.';return}
-  const m=BigInt(raw);if(m<2n||m>=18446744073709551616n){out.innerHTML='Use a number from 2 up to 20 digits (below 18,446,744,073,709,551,616).';return}
-  const t0=performance.now();let prime=true;
-  if(m%2n===0n)prime=m===2n;else{let d=m-1n,s=0;while(d%2n===0n){d/=2n;s++}
-    for(const b of [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n]){if(b%m===0n)continue;let x=bpow(b,d,m);if(x===1n||x===m-1n)continue;let ok=false;
-      for(let i=1;i<s;i++){x=x*x%m;if(x===m-1n){ok=true;break}}if(!ok){prime=false;break}}}
-  const fer=[2n,3n,5n,7n].map(b=>`${b}: ${bpow(b,m,m)===b%m?'passes':'fails'}`).join(', ');
-  out.innerHTML=`<span class="${prime?'ok':'no'}">${raw.replace(/\B(?=(\d{3})+$)/g,',')} is ${prime?'prime':'not prime'}.</span><br>Necklace test with colours ${fer}.<br>Time taken: ${performance.now()-t0<1.5?'about a thousandth of a second':Math.round(performance.now()-t0)+' thousandths of a second'}.${prime?'':' The test does not say what the factors are.'}`;
+// ---------- tab 3: the test as hops round a clock ----------
+// n - 1 = d x 2 x 2 x ... x 2. Start at b^d, then square. A prime clock lets you reach 1 only from n - 1.
+function route(){let d=cn-1,k=0;while(d%2===0){d/=2;k++}const r=[powmod(cb,d,cn)];for(let i=0;i<k&&r[r.length-1]!==1;i++)r.push(mulmod(r[r.length-1],r[r.length-1],cn));
+  const end=r[r.length-1],v=end!==1?'never':r.length===1||r[r.length-2]===cn-1?'pass':'wrong';return{d,k,r,v}}
+function draw2(){
+  const m=cn,{d,k,r,v}=route(),cx=220,cy=236,R=140,PT=(x,rad)=>{const t=x/m*2*Math.PI;return[cx+(rad||R)*Math.sin(t),cy-(rad||R)*Math.cos(t)]};let o='';
+  $('fig').setAttribute('viewBox','0 0 440 436');
+  const roots=[];for(let x=2;x<m-1;x++)if(x*x%m===1)roots.push(x);
+  const lab=(x,t,col,w)=>{const q=PT(x,R+17),side=q[0]>cx+12?'start':q[0]<cx-12?'end':'middle';return `<text x="${q[0]}" y="${q[1]+4}" text-anchor="${side}" font-size="12" font-weight="${w||700}" style="fill:${col}">${t}</text>`};
+  o+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>`;
+  if(m<=41)for(let x=0;x<m;x++){const q=PT(x);o+=`<circle cx="${q[0]}" cy="${q[1]}" r="2.4" fill="var(--muted)"/>`}
+  // the top of the clock, close up: on a big clock n-1, 0 and 1 are too close together to tell apart
+  const bw=46,bx=cx-2.5*bw,by=24,cells=[m-2,m-1,0,1,2],at=hp>0?-1:r[hop];
+  o+=`<text x="${bx-8}" y="${by+20}" text-anchor="end" font-size="11" style="fill:var(--muted)">top, close up</text>`;
+  o+=`<path d="M${bx} ${by+30} L${cx-10} ${cy-R} M${bx+5*bw} ${by+30} L${cx+10} ${cy-R}" stroke="var(--muted)" stroke-dasharray="3 4" fill="none"/>`;
+  cells.forEach((x,i)=>{const door=i===1||i===3;o+=`<rect x="${bx+i*bw+2}" y="${by}" width="${bw-4}" height="30" rx="6" fill="${door?'var(--b-soft)':'var(--card)'}" stroke="${x===at?'var(--a)':door?'var(--b)':'var(--line)'}" stroke-width="${x===at?3.5:1.5}"/><text x="${bx+(i+.5)*bw}" y="${by+20}" text-anchor="middle" font-size="13" font-weight="700"${i===2?' style="fill:var(--muted)"':''}>${x}</text>`});
+  const used=r.slice(0,hop+1),viaDoor=used.some((x,i)=>i>0&&x===1&&used[i-1]===m-1);
+  if(viaDoor)o+=`<path d="M${bx+1.5*bw} ${by-3} C${bx+1.8*bw} ${by-20} ${bx+3.2*bw} ${by-20} ${bx+3.5*bw} ${by-5}" fill="none" stroke="var(--b)" stroke-width="2.5"/><path d="M${bx+3.5*bw} ${by-3} l-9 -3 l5 -7 z" fill="var(--b)"/>`;
+  // points whose square is 1: the two beside the top on any clock, and extra ones (pink) only when n is not prime
+  roots.forEach(x=>{const q=PT(x);o+=`<circle cx="${q[0]}" cy="${q[1]}" r="7" fill="var(--card)" stroke="${PINK}" stroke-width="3"/>`+lab(x,x,PINK)});
+  [1,m-1].forEach(x=>{const q=PT(x);o+=`<circle cx="${q[0]}" cy="${q[1]}" r="6" fill="var(--b)" stroke="var(--ink)" stroke-width="1.2"/>`+(m<=41?lab(x,x,'var(--b)'):'')});
+  // the hops
+  const seg=(x,y,f)=>{const A=PT(x),B=PT(y),E=[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f],bad=y===1&&x!==m-1,L=Math.hypot(B[0]-A[0],B[1]-A[1])||1,ux=(B[0]-A[0])/L,uy=(B[1]-A[1])/L;
+    return `<line x1="${A[0]}" y1="${A[1]}" x2="${E[0]}" y2="${E[1]}" stroke="${bad?PINK:'var(--a)'}" stroke-width="3" stroke-linecap="round"/>`+(f>=1&&L>14?`<path d="M${B[0]-ux*7} ${B[1]-uy*7} l${-ux*10-uy*5} ${-uy*10+ux*5} l${uy*10} ${-ux*10} z" fill="${bad?PINK:'var(--a)'}"/>`:'')};
+  for(let i=0;i<hop;i++)o+=seg(r[i],r[i+1],1);
+  if(hp>0&&hop<r.length-1)o+=seg(r[hop],r[hop+1],hp<.5?2*hp*hp:1-2*(1-hp)*(1-hp));
+  used.forEach((x,i)=>{const q=PT(x);if(!roots.includes(x)&&x!==1&&x!==m-1)o+=`<circle cx="${q[0]}" cy="${q[1]}" r="5" fill="var(--a)" stroke="var(--ink)" stroke-width="1.2"/>`+lab(x,x,'var(--ink)');
+    else if(roots.includes(x))o+=`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="${PINK}"/>`});
+  {const A=PT(r[hop]),B=hop<r.length-1?PT(r[hop+1]):A,e=hp<.5?2*hp*hp:1-2*(1-hp)*(1-hp);o+=`<circle cx="${A[0]+(B[0]-A[0])*e}" cy="${A[1]+(B[1]-A[1])*e}" r="9" fill="none" stroke="var(--ink)" stroke-width="2.5"/>`}
+  o+=`<circle cx="24" cy="420" r="6" fill="var(--b)" stroke="var(--ink)" stroke-width="1.2"/><text x="36" y="424" font-size="12" font-weight="700">${m-1} and 1, beside the top</text>`;
+  if(roots.length)o+=`<circle cx="238" cy="420" r="6" fill="var(--card)" stroke="${PINK}" stroke-width="3"/><text x="250" y="424" font-size="12" font-weight="700" style="fill:${PINK}">${roots.length} more that square to 1</text>`;
+  $('fig').innerHTML=o;
+  const end=hop===r.length-1,x=r[hop],pr=isPrime(m),f=factor(m).join(' × ');
+  $('rule').innerHTML=(hop===0?`<span>Start at ${r[0]}.</span><span class="sm">${m-1} = ${d}${' × 2'.repeat(k)}, so begin at ${cb}${sup(d)} and square ${k} ${k===1?'time':'times'}.</span>`:`<span class="big">${r[hop-1]} × ${r[hop-1]} lands on ${x}</span>`)+
+    (end?(v==='pass'?`<span style="color:var(--b)">${r.length===1?`It is on 1 from the start`:`It came to 1 through ${m-1}, the proper way in`}. ${m} passes.</span>${pr?'':`<span class="sm">${m} = ${f} is not prime, though. A rare liar: start from another number.</span>`}`
+      :v==='wrong'?`<span style="color:${PINK}">It came to 1 from ${r[r.length-2]}, a pink point. A prime clock has none, so ${m} = ${f} is not prime.</span>`
+      :`<span style="color:${PINK}">The squarings are used up and it is on ${x}, not 1. So ${m} = ${f} is not prime.</span>`):'');
+  $('prev').disabled=hop===0;$('next').disabled=end;
+  const w=$('seq');if(w)w.innerHTML=r.map((y,i)=>`<button type="button" data-h="${i}" class="${i===hop?'on':''}">${y}</button>`).join('<span aria-hidden="true">→</span>');
 }
+function hopTo(i){cancelAnimationFrame(anim);const r=route().r;i=Math.max(0,Math.min(r.length-1,i));
+  if(i!==hop+1){hop=i;hp=0;draw();return}
+  const t0=performance.now(),f=now=>{hp=Math.min(1,(now-t0)/800);if(hp>=1){hop=i;hp=0}draw();if(hp>0)anim=requestAnimationFrame(f)};hp=.001;anim=requestAnimationFrame(f)}
 
 function notes(){
   const el=$('notes');
   if(tab===0){const pr=isPrime(n);
     el.innerHTML=`<h2>Sort the necklaces</h2>
 <ol class="steps" id="steps">${['<b>Make every string.</b>','<b>One necklace</b> is several strings.','<b>Sort</b> the strings into piles.','<b>Count</b> the piles.'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
-<h3>Why every pile is full</h3><p class="hint">A pile comes up short only if turning the necklace part of the way round gives back the same string. Then the pattern repeats in equal blocks, and the block length divides the number of beads. A prime number of beads has no blocks to offer, except one bead repeated: a single colour.</p>
 <h3>Fermat&rsquo;s little theorem</h3><p class="fm"><span>a<sup>p</sup> &minus; a</span><span class="op">is a multiple of</span><span>p</span></p>
 <p class="fm sm"><span>${a}${sup(n)} &minus; ${a} = ${S.tot-a}</span><span class="op">${(S.tot-a)%n===0?'=':'is not a multiple of'}</span><span>${(S.tot-a)%n===0?`${n} &times; ${(S.tot-a)/n}`:n}</span></p>
-<p class="hint">It works for any number of colours a, whenever the number of beads p is prime. Pierre de Fermat stated it in 1640. ${pr?'Now try 4 or 6 beads and look for the short piles.':'Now go back to a prime number of beads.'}</p>`}
-  else el.innerHTML=`<h2>A test for primes</h2><p class="hint">Turn the necklace fact round. To test a number n, work out whether 2<sup>n</sup> &minus; 2 is a multiple of n. If it is not, n cannot be prime. The board shows every number from 1 to ${LIM}; tap a square.</p>
-<ol class="how"><li>With 2 colours, every prime passes, and only two other numbers sneak through: 341 and 561.</li><li>Change to 3 colours. 341 is caught, but new liars appear. Using several colours catches almost everything.</li><li>561 = 3 &times; 11 &times; 17 passes with every number of colours. Numbers like it are called Carmichael numbers.</li><li>Tick the extra check. On a prime clock, the only numbers whose square is 1 are 1 and the one just before the top. The check looks for any other. Almost every liar vanishes, and the few that are left are caught by trying another number of colours.</li></ol>
-<h3>Try a big number</h3><p class="hint">This is the real thing: the necklace test plus the extra check, called Miller&ndash;Rabin. Computers use it to find the big primes that keep web connections private.</p>
-<div class="picks"><input id="big" type="text" inputmode="numeric" autocomplete="off" value="1000000007" size="18" aria-label="Number to test"><button class="btn primary" id="bigo" type="button">Test</button></div>
-<div class="chips" id="pre">${[['2305843009213693951','2⁶¹ − 1'],['998244359987710471','an 18-digit number'],['561','561'],['999999999989','999,999,999,989']].map(x=>`<button type="button" data-v="${x[0]}" style="border-color:var(--line)">${x[1]}</button>`).join('')}</div>
-<p class="out" id="bigout" role="status">Press Test.</p>
-<p class="hint">Testing a number with hundreds of digits takes a blink. Finding the factors of one that fails is a different story: with today&rsquo;s methods it can be out of reach altogether. See <a href="squares.html">factoring with squares</a>.</p>`;
+<p class="hint">${pr?'Now try 4 or 6 beads, and tap a short pile to see why it is short.':'Tap a short pile: its necklace repeats a block. A prime number of beads leaves no room for that.'}</p>`}
+  if(tab===1)el.innerHTML=`<h2>Who passes?</h2><p class="hint">Each square is a number from 1 to ${LIM}. It is coloured if a<sup>n</sup> &minus; a is a multiple of n, the way it must be when n is prime. Tap a square.</p>
+<ol class="how"><li>With 2 colours only two numbers lie: 341 and 561.</li><li>561 lies for every number of colours.</li><li>Tick the extra check and the liars go. The clock tab shows what the check looks at.</li></ol>`;
+  if(tab===2)el.innerHTML=`<h2>Round the clock</h2><p class="hint">Put the numbers 0 to n &minus; 1 round a clock. Squaring a number makes it hop.</p>
+<div class="chips seq" id="seq" aria-label="The hops so far. Tap one to jump to it."></div>
+<ol class="how"><li>On every clock, two points hop straight to 1: the two beside the top.</li><li>On a prime clock they are the only ones.</li><li>So a hop into 1 from anywhere else gives the number away.</li></ol>
+<p class="hint">Try 341 and 561, the two liars from the board, then 97.</p>`;
   mark();
 }
 function mark(){const s=$('steps');if(s)[...s.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')})}
-function draw(){if(tab===0){draw0();$('prev').disabled=st===0;$('next').disabled=st===3;mark()}else draw1()}
+function draw(){if(tab===0){draw0();$('prev').disabled=st===0;$('next').disabled=st===3;mark()}else if(tab===1)draw1();else draw2()}
 function glide(v){cancelAnimationFrame(anim);const from=gl,t0=performance.now();if(from===v){draw();return}
   const f=now=>{const u=Math.min(1,(now-t0)/1000);gl=from+(v-from)*u;draw();if(u<1)anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)}
 function jump(i){st=Math.max(0,Math.min(3,i));glide(st>=2?1:0)}
 function lens(){const m=MAXN[a];if(n>m)n=m;$('len').innerHTML=Array.from({length:m-1},(_,i)=>`<option${i+2===n?' selected':''}>${i+2}</option>`).join('')}
 function select(i){cancelAnimationFrame(anim);tab=i;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
-  $('c-test').hidden=tab===0;$('c-step').hidden=$('c-size').hidden=tab===1;if(tab===0){st=0;gl=0;build()}notes();draw()}
+  $('c-test').hidden=tab!==1;$('c-step').hidden=tab===1;$('c-size').hidden=tab!==0;$('c-clock').hidden=tab!==2;if(tab===0){st=0;gl=0;build()}if(tab===2){hop=0;hp=0;clocks()}notes();draw()}
+function clocks(){const l=CLOCKS.includes(cn)?CLOCKS:CLOCKS.concat(cn).sort((x,y)=>x-y);$('cn').innerHTML=l.map(x=>`<option${x===cn?' selected':''}>${x}</option>`).join('');$('cb').value=cb}
 $('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
-$('prev').addEventListener('click',()=>jump(st-1));$('next').addEventListener('click',()=>jump(st+1));
+$('prev').addEventListener('click',()=>tab===2?hopTo(hop-1):jump(st-1));$('next').addEventListener('click',()=>tab===2?hopTo(hop+1):jump(st+1));
+$('cn').addEventListener('change',e=>{cancelAnimationFrame(anim);cn=+e.target.value;hop=0;hp=0;draw()});
+$('cb').addEventListener('change',e=>{cancelAnimationFrame(anim);cb=+e.target.value;hop=0;hp=0;draw()});
 $('col').addEventListener('change',e=>{a=+e.target.value;lens();cancelAnimationFrame(anim);st=0;gl=0;sel=1;build();notes();draw()});
 $('len').addEventListener('change',e=>{n=+e.target.value;cancelAnimationFrame(anim);st=0;gl=0;sel=1;build();notes();draw()});
 $('base').addEventListener('change',e=>{base=+e.target.value;draw()});
 $('strong').addEventListener('change',e=>{strong=e.target.checked;draw()});
 $('fig').addEventListener('click',e=>{const s=e.target.closest('[data-i]'),c=e.target.closest('[data-q]');
   if(s&&tab===0){sel=+s.dataset.i;if(st===0)jump(1);else draw()}if(c&&tab===1){q=+c.dataset.q;draw()}});
-$('rule').addEventListener('click',e=>{const c=e.target.closest('[data-q]');if(c){q=+c.dataset.q;draw()}});
-$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li'),p=e.target.closest('#pre button');
-  if(li)jump([...li.parentNode.children].indexOf(li));if(p){$('big').value=p.dataset.v;bigTest()}if(e.target.id==='bigo')bigTest()});
-$('notes').addEventListener('keydown',e=>{if(e.target.id==='big'&&e.key==='Enter'){e.preventDefault();bigTest()}});
+$('rule').addEventListener('click',e=>{const c=e.target.closest('[data-q]'),k=e.target.closest('[data-clock]');if(k){cn=+k.dataset.clock;cb=base;select(2);return}if(c){q=+c.dataset.q;draw()}});
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li'),h=e.target.closest('#seq button');
+  if(li)jump([...li.parentNode.children].indexOf(li));if(h)hopTo(+h.dataset.h)});
 document.addEventListener('keydown',e=>{
   const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
   if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...li.parentNode.children].indexOf(li));return}
-  if(tag==='input'||tag==='select'||tab!==0)return;
-  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();jump(st+d)}});
+  if(tag==='input'||tag==='select'||tab===1)return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();if(tab===2)hopTo(hop+d);else jump(st+d)}});
 lens();select(0);
 </script>
 </body>
