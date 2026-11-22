@@ -100,6 +100,9 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .grid button.on{background:var(--b-soft);color:var(--ink);font-weight:700;border-color:var(--b)}
 .grid button.t{outline:2.5px solid var(--accent);outline-offset:1px}
 .grid span{visibility:hidden}
+.out{display:flex;flex-wrap:wrap;gap:4px}
+.out button{font:inherit;font-size:.85rem;font-weight:700;padding:6px 9px;border-radius:6px;border:1.5px solid var(--b);background:var(--b-soft);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.out button.t{outline:2.5px solid var(--accent);outline-offset:1px}
 .bz [data-neg]{cursor:pointer}
 .how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
 .notes a{color:var(--accent);font-weight:700}
@@ -217,10 +220,11 @@ function notes(){
 <h3>How many ways?</h3><p class="hint">3 numbers can be bracketed 2 ways, 4 numbers 5 ways, 5 numbers 14 ways, 6 numbers 42 ways. These are the <a href="catalan.html">Catalan numbers</a>: pick the sign that is done last, and the two sides are smaller bracket puzzles.</p>`}
   else{const hi=59,cell=x=>`<button type="button" data-t="${x}" class="${reach.has(x)?'on':''}${x===target?' t':''}" aria-label="${x}${reach.has(x)?', can be made':''}">${N(x)}</button>`;
     let g='',h='<span></span>';for(let x=0;x<=hi;x++)g+=cell(x);for(let x=1;x<=hi;x++)h+=cell(-x);
-    const far=[...reach].filter(x=>Math.abs(x)>hi).length,sym=[...reach].every(x=>reach.has(-x));
+    const far=[...reach].filter(x=>Math.abs(x)>hi).sort((a,b)=>Math.abs(a)-Math.abs(b)||b-a),CAP=240,sym=[...reach].every(x=>reach.has(-x));
+    const chips=a=>a.map(x=>`<button type="button" data-t="${x}"${x===target?' class="t"':''}>${N(x)}</button>`).join(''),up=far.filter(x=>x>0),dn=far.filter(x=>x<0);
     el.innerHTML=`<h2>Hit the target</h2><p class="hint">Green numbers can be made. Tap one to see how.</p><div class="grid" id="grid">${g}</div>
 <h3>Negative answers</h3><p class="hint">The same board with a minus on every number, so &minus;7 sits where 7 was.</p><div class="grid" id="grid2">${h}</div>
-<p class="hint">${far?`Also possible: ${far} ${far===1?'answer':'answers'} beyond ${hi} or below &minus;${hi}.`:''}</p>
+${far.length?`<h3>Further out</h3><p class="hint">Answers too big for the boards, mostly from multiplying everything together.</p>${up.length?`<div class="out">${chips(up.slice(0,CAP/2))}</div>`:''}${dn.length?`<div class="out">${chips(dn.slice(0,CAP/2))}</div>`:''}${Math.max(up.length,dn.length)>CAP/2?`<p class="hint">Showing the ${CAP/2} nearest on each side, out of ${far.length}.</p>`:''}`:''}
 <h3>What a minus in front does</h3>
 ${neg?`<p class="hint">It makes the two boards match: every answer now has its opposite, and nothing else is new. Whole-number answers went from ${plain.size} to ${reach.size}.</p><p class="hint">Why: a minus on the first number can be pushed up the tree to the very top. &minus;1 + 3 is the opposite of 1 &minus; 3, and &minus;1 &times; 3 is the opposite of 1 &times; 3. So with it you can make exactly the opposites of what you could make before.</p>`
 :`<p class="hint">Without it the two boards ${sym?'happen to match':'do not match'}: ${plain.size} whole-number answers. Tick &ldquo;Allow a minus in front&rdquo; and watch what changes.</p>`}
@@ -245,7 +249,7 @@ $('nums').addEventListener('change',setNums);$('nums').addEventListener('keydown
 $('target').addEventListener('input',e=>{const x=Math.round(+e.target.value);if(e.target.value!==''&&isFinite(x)){target=x;refresh()}});
 $('keep').addEventListener('change',e=>{keep=e.target.checked;refresh()});
 $('neg').addEventListener('change',e=>{neg=e.target.checked;refresh()});
-$('notes').addEventListener('click',e=>{const c=e.target.closest('.grid button'),w=e.target.closest('#ways button');
+$('notes').addEventListener('click',e=>{const c=e.target.closest('.grid button,.out button'),w=e.target.closest('#ways button');
   if(c){target=+c.dataset.t;$('target').value=target;refresh();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}
   if(w){const i=[...$('ways').children].indexOf(w.parentNode);if(tab===0)ti=i;else si=i;draw();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}});
 document.addEventListener('keydown',e=>{const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='select')return;
