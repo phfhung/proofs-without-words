@@ -110,7 +110,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
   <header>
     <a class="back" href="index.html">&larr; All activities</a>
     <h1>Brackets and targets</h1>
-    <p class="lede">Take a few numbers, such as 1 3 4 5. Put signs between them and add brackets. Which answers can you reach? Every way of adding brackets is a tree, and counting the trees gives the Catalan numbers.</p>
+    <p class="lede">Take a few numbers, such as 1 3 4 5. Put +, &minus;, &times; or &divide; between them and add brackets. Which answers can you reach? Every way of adding brackets is a tree, and counting the trees gives the Catalan numbers.</p>
   </header>
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
@@ -125,8 +125,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
       <p class="rule" id="rule" aria-live="polite"></p>
       <div class="picks shape">
         <label>Numbers <input id="nums" type="text" inputmode="numeric" autocomplete="off" value="1 3 4 5" size="11"></label>
-        <label id="tw" hidden>Target <input id="target" type="number" value="5" style="width:5.5em"></label>
-        <label id="mw" hidden><input id="mul" type="checkbox"> Allow &times; and &divide;</label>
+        <label id="tw" hidden>Target <input id="target" type="number" value="24" style="width:5.5em"></label>
         <label id="kw" hidden><input id="keep" type="checkbox" checked> Keep the order</label>
       </div>
       <p class="err" id="msg" role="status" hidden></p>
@@ -139,7 +138,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 const $=id=>document.getElementById(id);
 const TABS=['Brackets are trees','Hit the target'];
 const PC=['var(--a)','var(--b)','var(--c)','#d6457a'],SYM={'+':'+','-':'−','*':'×','/':'÷'},CYC=['+','-','*','/'];
-let tab=0,nums=[1,3,4,5],ops=['-','-','-'],ti=0,target=5,useMul=false,keep=true,sols=[],si=0,reach=new Set(),stats={};
+let tab=0,nums=[1,3,4,5],ops=['+','*','-'],ti=0,target=24,keep=true,sols=[],si=0,reach=new Set();
 // exact fractions, so division never rounds
 const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
 const Q=(p,q)=>{if(q<0){p=-p;q=-q}const g=gcd(p,q)||1;return[p/g,q/g]};
@@ -161,12 +160,12 @@ function mini(t,v,op){if(t.g===undefined)return''+v[t.i];const L=mini(t.l,v,op),
 function perms(a){const o=new Map();(function go(p,rest){if(!rest.length){o.set(p.join(','),p);return}for(let i=0;i<rest.length;i++)go(p.concat(rest[i]),rest.slice(0,i).concat(rest.slice(i+1)))})([],a);return[...o.values()]}
 
 function solve(){
-  const n=nums.length,set=useMul?CYC:['+','-'],T=trees(0,n-1),seen=new Map(),flat=new Set(),all=new Set();reach=new Set();
+  const n=nums.length,set=CYC,T=trees(0,n-1),seen=new Map();reach=new Set();
   for(const v of keep?[nums.slice()]:perms(nums))for(let c=0;c<Math.pow(set.length,n-1);c++){
     const op=[];let x=c;for(let i=0;i<n-1;i++){op.push(set[x%set.length]);x=Math.floor(x/set.length)}
-    T.forEach((t,k)=>{const r=ev(t,v,op);if(!r)return;all.add(r[0]+'/'+r[1]);if(k===0)flat.add(r[0]+'/'+r[1]);
+    T.forEach((t,k)=>{const r=ev(t,v,op);if(!r)return;
       if(r[1]===1){reach.add(r[0]);if(r[0]===target){const s=mini(t,v,op);if(!seen.has(s))seen.set(s,{v:v.slice(),op,k,s})}}})}
-  sols=[...seen.values()].sort((a,b)=>a.s.length-b.s.length||(a.s<b.s?-1:1));si=0;stats={all:all.size,flat:flat.size};
+  sols=[...seen.values()].sort((a,b)=>a.s.length-b.s.length||(a.s<b.s?-1:1));si=0;
 }
 
 // the calculation as a tree: numbers along the bottom, each sign joins the two parts under it
@@ -197,7 +196,7 @@ function draw(){
   else{
     if(sols.length){const s=sols[si];drawTree(s.v,s.op,T[s.k],false,true);$('rule').innerHTML=`<span class="big">${s.s} = ${target}</span><span class="sm">Way ${si+1} of ${sols.length} to make ${target}</span>`}
     else{$('fig').innerHTML=`<text x="220" y="150" text-anchor="middle" font-size="18" font-weight="700">${target} cannot be made</text><text x="220" y="176" text-anchor="middle" font-size="13" style="fill:var(--muted)">with these numbers and these rules</text>`;
-      $('rule').innerHTML=`<span class="big">No way to make ${target}</span><span class="sm">Pick a green number below, or change the rules.</span>`}
+      $('rule').innerHTML=`<span class="big">No way to make ${target}</span><span class="sm">Pick a green number below${keep?', or let the numbers change places':''}.</span>`}
     $('prev').disabled=si<=0;$('next').disabled=si>=sols.length-1;
     const w=$('ways');if(w)[...w.children].forEach((li,i)=>li.firstChild.classList.toggle('on',i===si))}
 }
@@ -207,24 +206,24 @@ function notes(){
     el.innerHTML=`<h2>Brackets are trees</h2><p class="hint">Brackets say which sign to do first. Draw that as a tree: each sign joins the two parts below it, and the sign at the top is done last. Same colour, same sign.</p>
 <h3>All ${T.length} ways, ${d} different ${d===1?'answer':'answers'}</h3>
 <ol class="ways" id="ways">${T.map((t,i)=>`<li><button type="button"><span>${full(t,nums,ops,true)}</span><span class="v">= ${show(vs[i])}</span></button></li>`).join('')}</ol>
-<p class="hint">Try all plus signs, then all minus signs. When do the brackets change the answer?</p>
+<p class="hint">Try all plus signs, then all times signs, then a mixture. When do the brackets change the answer?</p>
 <h3>How many ways?</h3><p class="hint">3 numbers can be bracketed 2 ways, 4 numbers 5 ways, 5 numbers 14 ways, 6 numbers 42 ways. These are the <a href="catalan.html">Catalan numbers</a>: pick the sign that is done last, and the two sides are smaller bracket puzzles.</p>`}
-  else{const lo=0,hi=59,sum=nums.reduce((a,b)=>a+b,0),neg=[...reach].filter(x=>x<0).length,big=[...reach].filter(x=>x>hi).length;
+  else{const lo=0,hi=59,neg=[...reach].filter(x=>x<0).length,big=[...reach].filter(x=>x>hi).length;
     let g='';for(let x=lo;x<=hi;x++)g+=`<button type="button" data-t="${x}" class="${reach.has(x)?'on':''}${x===target?' t':''}" aria-label="${x}${reach.has(x)?', can be made':''}">${x}</button>`;
     el.innerHTML=`<h2>Hit the target</h2><p class="hint">Green numbers can be made. Tap one to see how.</p><div class="grid" id="grid">${g}</div>
 <p class="hint">${neg||big?`Also possible: ${neg?neg+' negative '+(neg===1?'answer':'answers'):''}${neg&&big?' and ':''}${big?big+' above '+hi:''}.`:''}</p>
-${useMul?'':`<h3>With only + and &minus;</h3><ol class="how"><li>Brackets never help. Without brackets you can make ${stats.flat} different answers; with brackets, still ${stats.all}. A bracket after a minus just flips the signs inside it.</li><li>Every answer is ${sum%2?'odd':'even'}, like the total ${nums.join(' + ')} = ${sum}. Changing a + to a &minus; lowers the answer by twice that number, so odd stays odd and even stays even.</li></ol>`}
 <h3>${sols.length} ${sols.length===1?'way':'ways'} to make ${target}</h3>
-${sols.length?`<ol class="ways" id="ways">${sols.slice(0,40).map(s=>`<li><button type="button"><span>${s.s}</span><span class="v">= ${target}</span></button></li>`).join('')}</ol>${sols.length>40?`<p class="hint">Showing the first 40. Use Next to see them all.</p>`:''}<p class="hint">Only the brackets that matter are shown, so (1 + 3) + 4 and 1 + (3 + 4) count as one way.</p>`:`<p class="hint">Nothing works. Try allowing &times; and &divide;, or letting the numbers change places.</p>`}`}
+${sols.length?`<ol class="ways" id="ways">${sols.slice(0,40).map(s=>`<li><button type="button"><span>${s.s}</span><span class="v">= ${target}</span></button></li>`).join('')}</ol>${sols.length>40?`<p class="hint">Showing the first 40. Use Next to see them all.</p>`:''}<p class="hint">Only the brackets that matter are shown, so (1 + 3) + 4 and 1 + (3 + 4) count as one way.</p>`:`<p class="hint">${keep?'Nothing works with the numbers in this order. Untick &ldquo;Keep the order&rdquo; and try again.':'Nothing works, even with the numbers in any order.'}</p>`}`}
 }
 function refresh(){if(tab===1)solve();notes();draw()}
 function select(i){tab=i;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
-  $('tw').hidden=$('mw').hidden=$('kw').hidden=tab===0;refresh()}
+  $('tw').hidden=$('kw').hidden=tab===0;refresh()}
 function go(d){if(tab===0){const m=trees(0,nums.length-1).length;ti=Math.max(0,Math.min(m-1,ti+d))}else si=Math.max(0,Math.min(sols.length-1,si+d));draw()}
 function setNums(){
   const a=($('nums').value.match(/\d+/g)||[]).map(Number),m=$('msg');
   if(a.length<3||a.length>5||a.some(x=>x>99)){m.hidden=false;m.textContent='Type 3, 4 or 5 whole numbers, each 99 or less, with spaces between them.';return}
-  m.hidden=true;nums=a;while(ops.length<a.length-1)ops.push('-');ops.length=a.length-1;ti=0;refresh();
+  m.hidden=true;if(a.join()===nums.join())return;      // nothing changed: do not rebuild under a tap
+  nums=a;while(ops.length<a.length-1)ops.push('-');ops.length=a.length-1;ti=0;refresh();
 }
 $('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
@@ -232,7 +231,6 @@ $('prev').addEventListener('click',()=>go(-1));$('next').addEventListener('click
 $('fig').addEventListener('click',e=>{const t=e.target.closest('[data-g]');if(t&&tab===0){const g=+t.dataset.g;ops[g]=CYC[(CYC.indexOf(ops[g])+1)%4];refresh()}});
 $('nums').addEventListener('change',setNums);$('nums').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();setNums()}});
 $('target').addEventListener('input',e=>{const x=Math.round(+e.target.value);if(e.target.value!==''&&isFinite(x)){target=x;refresh()}});
-$('mul').addEventListener('change',e=>{useMul=e.target.checked;refresh()});
 $('keep').addEventListener('change',e=>{keep=e.target.checked;refresh()});
 $('notes').addEventListener('click',e=>{const c=e.target.closest('#grid button'),w=e.target.closest('#ways button');
   if(c){target=+c.dataset.t;$('target').value=target;refresh();$('fig').scrollIntoView({behavior:'smooth',block:'nearest'})}
