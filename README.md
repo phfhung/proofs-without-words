@@ -21,7 +21,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `vieta.html` | Vieta's formula, step by step |
 | `parabola.html` | Folding a parabola from paper |
 | `jugs.html` | The Die Hard jug puzzle |
-| `vernier.html` | Reading a vernier caliper, and why it works |
+| `vernier.html` | Reading a vernier caliper, why it works, and a bonus tab on when clock hands meet |
 | `newton.html` | Square roots by guess and average (Heron and Newton) |
 | `prime-sprint.html` | Prime-tapping speed game |
 

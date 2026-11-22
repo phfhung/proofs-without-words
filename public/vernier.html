@@ -109,6 +109,8 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .toggle input{width:20px;height:20px;accent-color:var(--accent)}
 [hidden]{display:none!important}
 h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+#clockfig{display:flex;flex-direction:column;gap:10px}
+.steps li b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -126,12 +128,19 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
       <svg id="cal" viewBox="0 0 640 310" role="img" aria-label="Caliper. Drag the sliding jaw."></svg>
       <div class="zwrap" id="zwrap" tabindex="0" role="region" aria-label="Close-up of the two scales"><svg id="zoom" viewBox="0 0 420 210" role="img" aria-label="Close-up of the two scales"></svg></div>
       <p class="hint" id="zhint" hidden>Swipe the close-up sideways to see the whole bottom scale.</p>
+      <div id="clockfig" hidden>
+        <div class="objs" id="cpics" role="tablist" aria-label="Choose a picture"></div>
+        <svg id="ck" viewBox="0 0 470 566" role="img" aria-label="A clock, and a picture of when its hands meet"></svg>
+      </div>
       <p class="read" id="read" aria-live="polite"></p>
 
       <div class="row" id="c-slide">
         <button class="btn" id="less" type="button" aria-label="Close by one step">&minus;</button>
         <input id="rng" type="range" min="0" max="500" step="1" value="237" aria-label="Open or close the jaws">
         <button class="btn" id="more" type="button" aria-label="Open by one step">+</button>
+      </div>
+      <div class="row" id="c-ck" hidden>
+        <input id="ctime" type="range" min="180" max="240" step="0.05" value="180" aria-label="Move the time">
       </div>
       <div class="row" id="c-step" hidden>
         <button class="btn" id="prev" type="button" aria-label="Previous step">&larr; Back</button>
@@ -147,6 +156,9 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
         <button class="btn" id="go" type="button" hidden>Start</button>
       </div>
       <p class="err" id="msg" role="status" hidden></p>
+      <div class="picks" id="c-hour" hidden>
+        <label>The hands meet between <select id="hsel"></select></label>
+      </div>
       <div class="picks shape" id="c-opt">
         <label class="toggle" id="hidewrap"><input id="hide" type="checkbox"> Hide the answer</label>
         <label>Reads to <select id="res"><option value="10">0.1 mm (10 lines)</option><option value="20">0.05 mm (20 lines)</option></select></label>
@@ -158,7 +170,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const TABS=['Read it','Why it works','Measure it','Challenge','History'];
+const TABS=['Read it','Why it works','Measure it','Challenge','History','Clock puzzle'];
 const MAXMM=50,P=8,OX=40;
 let N=10,s=237,tab=0,step=0,minS=0,obj=null,solved=false;
 let game=null;                                  // {left, done, tries, t0, time}
@@ -221,6 +233,146 @@ function drawWhy(){
   o+=`<circle cx="${X(m0+k)}" cy="${Y(k)}" r="10" fill="none" stroke="var(--c)" stroke-width="3"/>`;
   zs.innerHTML=o;
 }
+// ---------- Bonus tab: when do the clock hands meet? ----------
+// Positions are in minute marks (0 to 60 round the dial). The minute hand moves 1 mark a minute,
+// the hour hand 1/12 of a mark, and at H o'clock the hour hand has a head start of 5H marks.
+const CP=['Two lines','Zoom in','Close the gap','Eleven meetings'];
+let cp=0,H=3,tm=180,zz=1,cglide=0;             // picture, hour, minutes after 12:00, zoom factor
+const PI2=Math.PI*2,TM=()=>60*H/11;            // TM: minutes after the hour when the hands meet
+const mixed=(n,d)=>{const w=Math.floor(n/d),r=n%d;return r?(w?w+' ':'')+r+'/'+d:''+w};
+const xk=k=>TM()*(1-Math.pow(12,-k));          // time after k rounds of "go to where the hour hand was"
+const meetAt=k=>k%11===0?'12:00':`${k}:${String(Math.floor(60*k/11)).padStart(2,'0')} ${60*k%11}/11`;
+function cstops(){
+  if(cp===3)return Array.from({length:12},(_,k)=>720*k/11);
+  const b=60*H,T=TM(),a=[];
+  if(cp===1)return [0,1,2,3,4].map(k=>b+xk(k));
+  if(cp===2){for(let x=0;x<T-1e-9;x+=12)a.push(b+x);a.push(b+T);return a}
+  return [b,b+T];
+}
+function cgo(d){
+  const st=cstops(),e=1e-7,to=d>0?st.find(x=>x>tm+e):[...st].reverse().find(x=>x<tm-e);
+  if(to===undefined)return;
+  cancelAnimationFrame(cglide);
+  const from=tm,z0=zz,z1=cp===1?Math.pow(12,Math.max(0,st.indexOf(to)-1)):1,zoom=Math.abs(z1-z0)>1e-9;
+  const mv=cp===3?1400:900,dur=mv+(zoom?800:0),a=800/dur,t0=performance.now();
+  const ez=u=>u<.5?2*u*u:1-2*(1-u)*(1-u),cl=u=>Math.max(0,Math.min(1,u));
+  const f=now=>{const u=Math.min(1,(now-t0)/dur);let um=u,uz=u;
+    if(zoom){if(d>0){uz=cl(u/a);um=cl((u-a)/(1-a))}else{um=cl(u/(1-a));uz=cl((u-(1-a))/a)}}
+    tm=from+(to-from)*ez(um);zz=z0*Math.pow(z1/z0,ez(uz));
+    if(u>=1){tm=to;zz=z1}
+    draw();if(u<1)cglide=requestAnimationFrame(f)};
+  cglide=requestAnimationFrame(f);
+}
+function cpick(i){
+  cancelAnimationFrame(cglide);cp=i;zz=1;tm=cp===3?720*H/11:60*H;
+  const r=$('ctime');r.min=cp===3?0:60*H;r.max=cp===3?720:60*H+60;r.step=cp===3?.5:.05;
+  $('c-ck').hidden=cp===1;
+  [...$('cpics').children].forEach((b,j)=>{b.classList.toggle('sel',j===i);b.setAttribute('aria-selected',j===i)});
+  const ol=$('cksteps');if(ol)[...ol.children].forEach((li,j)=>{li.classList.toggle('on',j===i);li.setAttribute('aria-current',j===i?'step':'false')});
+  draw();
+}
+function drawClock(){
+  if(cp===3){const h=Math.max(1,Math.min(11,Math.floor(tm/60+1e-9)));if(h!==H){H=h;$('hsel').value=H;notes()}}
+  const b=60*H,t=tm-b,T=TM(),p=5*H,sv=$('ck'),A='var(--a)',B_='var(--b)',C='var(--c)';let o='';
+  sv.setAttribute('viewBox',`0 0 470 ${cp===2?446:cp===3?552:566}`);
+  // the clock face
+  const cx=96,cy=102,R=84,pt=(a,r)=>`${(cx+r*Math.sin(a)).toFixed(2)} ${(cy-r*Math.cos(a)).toFixed(2)}`;
+  const am=(tm%60)/60*PI2,ah=tm/720*PI2,lead=((ah-am)%PI2+PI2)%PI2;
+  o+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>`;
+  for(let i=0;i<60;i++){const a=i/60*PI2,big=i%5===0;o+=`<path d="M${pt(a,R)} L${pt(a,R-(big?9:4))}" stroke="var(--ink)" stroke-width="${big?2:1}"/>`}
+  for(let i=1;i<=12;i++){const a=i/12*PI2;o+=`<text x="${(cx+(R-21)*Math.sin(a)).toFixed(1)}" y="${(cy-(R-21)*Math.cos(a)+4.5).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="700">${i}</text>`}
+  if(cp<3&&lead>.004&&lead<Math.PI)o+=`<path d="M${pt(am,30)} A30 30 0 0 1 ${pt(ah,30)}" fill="none" stroke="${C}" stroke-width="5"/>`;
+  o+=`<path d="M${cx} ${cy} L${pt(ah,46)}" stroke="${B_}" stroke-width="7" stroke-linecap="round"/><path d="M${cx} ${cy} L${pt(am,70)}" stroke="${A}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--ink)"/>`;
+  // the time, and where each hand points
+  const hh=Math.floor(tm/60+1e-9)%12||12,mi=Math.floor(tm%60+1e-9),ss=Math.floor((tm*60+1e-6)%60),two=x=>String(x).padStart(2,'0');
+  const dc=cp===1&&zz>20?5:2,mk=cp===3?tm%60:t,hk=cp===3?tm/12%60:p+t/12,g=hk-mk,km=Math.round(tm*11/720),atK=Math.abs(tm-720*km/11)<1e-6;
+  o+=`<text x="204" y="58" font-size="36" font-weight="800" style="font-family:var(--display)">${hh}:${two(mi)}:${two(ss)}</text>`;
+  o+=`<text x="204" y="88" font-size="14" font-weight="700" style="fill:${A}">minute hand at ${mk.toFixed(dc)}</text><text x="204" y="110" font-size="14" font-weight="700" style="fill:${B_}">hour hand at ${hk.toFixed(dc)}</text>`;
+  if(cp<3)o+=`<text x="204" y="132" font-size="14" font-weight="700" style="fill:${C}">${Math.abs(g)<1e-7?'gap 0':g>0?'gap '+g.toFixed(dc):'minute hand ahead by '+(-g).toFixed(dc)}</text>`;
+  if(atK&&(cp===3||km===H))o+=`<text x="204" y="${cp<3?160:138}" font-size="15" font-weight="700">${cp===3?`meeting ${km}: `:'they meet at '}${meetAt(km)}</text>`;
+  o+=`<text x="204" y="186" font-size="11" style="fill:var(--muted)">positions in minute marks, 0 to 60</text>`;
+  const legend=y=>`<circle cx="52" cy="${y-4}" r="5" fill="${A}"/><text x="62" y="${y}" font-size="12" font-weight="700" style="fill:${A}">minute hand</text><circle cx="160" cy="${y-4}" r="5" fill="${B_}"/><text x="170" y="${y}" font-size="12" font-weight="700" style="fill:${B_}">hour hand</text>`;
+  const ytitle=y=>`<text transform="translate(11 ${y}) rotate(-90)" text-anchor="middle" font-size="11" style="fill:var(--muted)">where the hand points</text>`;
+
+  if(cp<2){
+    // time across, position up. Both hands are straight lines; the picture is the same at every zoom.
+    const L=46,W=406,Bt=524,Hh=296,z=cp===1?zz:1,ox=T*(1-1/z),Rg=60/z,X=x=>L+(x-ox)/Rg*W,Y=y=>Bt-(y-ox)/Rg*Hh;
+    const raw=Rg/6,mag=Math.pow(10,Math.floor(Math.log10(raw))),n=raw/mag,st=(n<1.5?1:n<3.5?2:n<7.5?5:10)*mag,dg=Math.max(0,-Math.floor(Math.log10(st)+1e-9));
+    o+=`<clipPath id="ckc"><rect x="${L}" y="${Bt-Hh}" width="${W}" height="${Hh}"/></clipPath>`+legend(218);
+    if(cp===1)o+=`<text x="252" y="218" font-size="12" font-weight="700" style="fill:${C}">zoom &times;${Math.round(z).toLocaleString('en-US')}</text>`;
+    for(let i=Math.ceil(ox/st-1e-9);i*st<=ox+Rg+st*1e-6;i++){const gv=i*st,x=X(gv),y=Y(gv);
+      o+=`<line x1="${x}" y1="${Bt}" x2="${x}" y2="${Bt-Hh}" stroke="var(--line)"/><line x1="${L}" y1="${y}" x2="${L+W}" y2="${y}" stroke="var(--line)"/>`;
+      o+=`<text x="${x}" y="${Bt+15}" text-anchor="middle" font-size="11" style="fill:var(--muted)">${gv.toFixed(dg)}</text><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="11" style="fill:var(--muted)">${gv.toFixed(dg)}</text>`}
+    o+=`<rect x="${L}" y="${Bt-Hh}" width="${W}" height="${Hh}" fill="none" stroke="var(--ink)" stroke-width="1.2"/><text x="${L+W/2}" y="${Bt+34}" text-anchor="middle" font-size="12" style="fill:var(--muted)">minutes after ${H}:00</text>`;
+    if(dg===0)o+=ytitle(Bt-Hh/2);
+    o+=`<g clip-path="url(#ckc)">`;
+    o+=`<rect x="${X(0)+1.5}" y="${Y(p)}" width="5" height="${Y(0)-Y(p)}" fill="${C}"/>`;
+    o+=`<line x1="${X(ox)}" y1="${Y(ox)}" x2="${X(ox+Rg)}" y2="${Y(ox+Rg)}" stroke="${A}" stroke-width="2.5"/><line x1="${X(ox)}" y1="${Y(p+ox/12)}" x2="${X(ox+Rg)}" y2="${Y(p+(ox+Rg)/12)}" stroke="${B_}" stroke-width="2.5"/>`;
+    if(cp===1){
+      let ks=0;while(ks<4&&xk(ks+1)<=t+1e-9)ks++;
+      const pts=[[0,p]];for(let j=1;j<=ks;j++)pts.push([xk(j),p+xk(j-1)/12],[xk(j),p+xk(j)/12]);
+      const part=ks<4&&t>xk(ks)+1e-12;if(part)pts.push([t,p+xk(ks)/12]);
+      o+=`<polyline points="${pts.map(q=>X(q[0])+','+Y(q[1])).join(' ')}" fill="none" stroke="${C}" stroke-width="3" stroke-linejoin="round"/>`;
+      if(!ks&&!part)o+=`<text x="${X(0)+12}" y="${Y(p)-9}" font-size="13" font-weight="700" style="fill:${C}">head start ${p}</text>`;
+      for(let j=1;j<=ks+(part?1:0);j++){const xa=X(xk(j-1)),ya=Y(p+xk(j-1)/12),w=(xk(j)-xk(j-1))/Rg*W;
+        if(w>24&&xa>=L-2&&xa<L+W-40&&ya>Bt-Hh+24&&ya<Bt)o+=`<text x="${xa+7}" y="${ya-10}" font-size="13" font-weight="700" style="fill:${C}">${j===1?p:p+'/'+Math.pow(12,j-1)}</text>`}
+    }else{
+      o+=`<text x="${X(0)+12}" y="${Y(p)-9}" font-size="13" font-weight="700" style="fill:${C}">head start ${p}</text>`;
+      if(Math.abs(g)>1e-7&&t>=0&&t<=60)o+=`<line x1="${X(t)}" y1="${Y(t)}" x2="${X(t)}" y2="${Y(p+t/12)}" stroke="${C}" stroke-width="4"/>`}
+    o+=`</g>`;
+    const xr=X(T),yr=Y(T);
+    o+=`<circle cx="${xr}" cy="${yr}" r="10" fill="none" stroke="${C}" stroke-width="3"/>`;
+    const lb=xr<363?[xr+14,yr+24,'start']:yr-14>=Bt-Hh+18?[xr-14,yr-14,'end']:[L+W-6,yr+70,'end'];
+    o+=`<text x="${lb[0]}" y="${lb[1]}" text-anchor="${lb[2]}" font-size="14" font-weight="700" style="fill:${C}">${mixed(60*H,11)} min</text>`;
+    if(t>=ox-1e-9&&t<=ox+Rg+1e-9)o+=`<circle cx="${X(t)}" cy="${Y(t)}" r="5.5" fill="${A}" stroke="var(--card)" stroke-width="1.5"/><circle cx="${X(t)}" cy="${Y(p+t/12)}" r="5.5" fill="${B_}" stroke="var(--card)" stroke-width="1.5"/>`;
+  }
+  if(cp===2){
+    // ride along with the hour hand: the gap is a strip of marks, eaten 11 at a time
+    const c=Math.min(28,410/Math.max(p,13)),x0=30,closed=Math.max(0,Math.min(p,11*t/12)),by=354,bh=36,xe=x0+p*c;
+    o+=`<text x="${x0}" y="222" font-size="13" style="fill:var(--muted)">Every 12 minutes</text>`;
+    o+=`<rect x="${x0}" y="230" width="${12*c}" height="16" fill="${A}"/><text x="${x0}" y="262" font-size="13" font-weight="700" style="fill:${A}">minute hand moves 12 marks</text>`;
+    o+=`<rect x="${x0}" y="272" width="${c}" height="16" fill="${B_}"/><rect x="${x0+c}" y="272" width="${11*c}" height="16" fill="${C}"/><text x="${x0}" y="304" font-size="13" font-weight="700"><tspan style="fill:${B_}">hour hand moves 1</tspan><tspan style="fill:${C}">, so the gap closes by 11</tspan></text>`;
+    for(let i=1;i<12;i++)o+=`<line x1="${x0+i*c}" y1="230" x2="${x0+i*c}" y2="246" stroke="var(--card)"/><line x1="${x0+i*c}" y1="272" x2="${x0+i*c}" y2="288" stroke="var(--card)"/>`;
+    o+=`<rect x="${x0}" y="${by}" width="${p*c}" height="${bh}" fill="var(--c-soft)"/><rect x="${x0+closed*c}" y="${by}" width="${(p-closed)*c}" height="${bh}" fill="${C}"/>`;
+    for(let i=1;i<p;i++)o+=`<line x1="${x0+i*c}" y1="${by}" x2="${x0+i*c}" y2="${by+bh}" stroke="${i%11?'var(--card)':'var(--ink)'}" stroke-width="${i%11?1:2}"/>`;
+    o+=`<rect x="${x0}" y="${by}" width="${p*c}" height="${bh}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    for(let j=0;11*j<p;j++){const a=11*j,e=Math.min(p,a+11),xa=x0+a*c,xb=x0+e*c;
+      o+=`<path d="M${xa+1.5} ${by-6} v-7 H${xb-1.5} v7" fill="none" stroke="var(--ink)" stroke-width="1.5"/><text x="${(xa+xb)/2}" y="${by-19}" text-anchor="middle" font-size="13" font-weight="700">${e-a===11?'12 min':(e-a)+'/11 of 12'}</text>`;
+      o+=`<text x="${xa}" y="${by+bh+16}" text-anchor="middle" font-size="12" style="fill:var(--muted)">${12*j}</text>`}
+    o+=`<text x="${xe}" y="${by+bh+36}" text-anchor="${xe>400?'end':'middle'}" font-size="14" font-weight="700" style="fill:${C}">${mixed(60*H,11)} min</text>`;
+    if(p-closed<1e-7)o+=`<circle cx="${xe}" cy="${by+bh/2}" r="13" fill="none" stroke="${C}" stroke-width="3"/>`;
+    o+=`<circle cx="${xe}" cy="${by+bh/2}" r="8" fill="${B_}" stroke="var(--ink)" stroke-width="1.5"/><circle cx="${x0+closed*c}" cy="${by+bh/2}" r="8" fill="${A}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  }
+  if(cp===3){
+    // twelve hours at once: twelve parallel minute-hand lines cut the hour-hand line into eleven equal pieces
+    const L=46,W=406,Bt=478,Hh=250,X=h=>L+h/12*W,Y=d=>Bt-d/12*Hh;
+    o+=legend(218)+ytitle(Bt-Hh/2);
+    for(let k=0;k<=12;k++)o+=`<line x1="${X(k)}" y1="${Bt}" x2="${X(k)}" y2="${Bt-Hh}" stroke="var(--line)"/>`;
+    for(let d=0;d<=12;d+=3)o+=`<line x1="${L}" y1="${Y(d)}" x2="${L+W}" y2="${Y(d)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(d)+4}" text-anchor="end" font-size="11" style="fill:var(--muted)">${d||12}</text>`;
+    o+=`<rect x="${L}" y="${Bt-Hh}" width="${W}" height="${Hh}" fill="none" stroke="var(--ink)" stroke-width="1.2"/>`;
+    for(let k=0;k<12;k++)o+=`<line x1="${X(k)}" y1="${Y(0)}" x2="${X(k+1)}" y2="${Y(12)}" stroke="${A}" stroke-width="2"/>`;
+    o+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(12)}" y2="${Y(12)}" stroke="${B_}" stroke-width="2.5"/>`;
+    // the two scales: 12 hours above, 11 meetings below
+    o+=`<rect class="metal" x="${L-8}" y="${Bt+4}" width="${W+16}" height="24"/><rect class="slide" x="${L-8}" y="${Bt+28}" width="${W+16}" height="28"/>`;
+    for(let k=0;k<=12;k++)o+=`<line x1="${X(k)}" y1="${Bt+19}" x2="${X(k)}" y2="${Bt+28}" stroke="var(--ink)" stroke-width="2"/><text x="${X(k)}" y="${Bt+16}" text-anchor="middle" font-size="11" font-weight="700">${k%12||12}</text>`;
+    for(let k=0;k<=11;k++){const m=12*k/11,on=atK&&k===km;
+      o+=`<line x1="${X(m)}" y1="${Y(m)}" x2="${X(m)}" y2="${Bt+4}" stroke="${C}" stroke-dasharray="3 4" opacity=".45"/>`;
+      o+=`<line x1="${X(m)}" y1="${Bt+28}" x2="${X(m)}" y2="${Bt+38}" stroke="${C}" stroke-width="${on?4:2}"/><text x="${X(m)}" y="${Bt+51}" text-anchor="middle" font-size="11" font-weight="700" style="fill:${C}">${k}</text>`;
+      o+=`<circle cx="${X(m)}" cy="${Y(m)}" r="${on?9:5.5}" fill="${on?C:'var(--card)'}" stroke="${C}" stroke-width="2.5"/>`}
+    const xh=tm/60;
+    o+=`<line x1="${X(xh)}" y1="${Y(0)}" x2="${X(xh)}" y2="${Y(12)}" stroke="var(--muted)" stroke-dasharray="2 3"/>`;
+    o+=`<circle cx="${X(xh)}" cy="${Y(tm%60/5)}" r="5.5" fill="${A}" stroke="var(--card)" stroke-width="1.5"/><circle cx="${X(xh)}" cy="${Y(xh)}" r="5.5" fill="${B_}" stroke="var(--card)" stroke-width="1.5"/>`;
+  }
+  sv.innerHTML=o;
+}
+function ckRead(){
+  const p=5*H,T=`<b style="color:var(--c)">${mixed(60*H,11)} minutes</b>`,r=$('read');
+  if(cp===0)r.innerHTML=`<span class="big">t = ${p} + t/12</span><span>So 11/12 of t is ${p}, and t = ${p} &times; 12/11 = ${T} after ${H}:00.</span>`;
+  if(cp===1)r.innerHTML=`<span class="big">${p} + ${p}/12 + ${p}/144 + &hellip;</span><span>So far: ${(tm-60*H).toFixed(6)} minutes. Every zoom is 12 times closer, and the total is ${p} &times; 12/11 = ${T}.</span>`;
+  if(cp===2)r.innerHTML=`<span class="big">${p} &divide; 11 &times; 12</span><span>The gap is ${p} marks. It closes 11 marks every 12 minutes, which takes ${T}.</span>`;
+  if(cp===3){const k=Math.round(tm*11/720),at=Math.abs(tm-720*k/11)<1e-6;
+    r.innerHTML=`<span class="big">12 hours &divide; 11</span><span>Top scale: 12 hours. Bottom scale: 11 meetings, one every 1 1/11 hours.</span><span>${at?`Meeting ${k} is at <b style="color:var(--c)">${meetAt(k)}</b>.`:'Press Next to step from meeting to meeting.'}</span>`}
+}
 function drawZoom(){
   if(tab===1){drawWhy();return}
   const v=mm(),Z=N===10?40:44,VW=N===10?420:900,x0=v-.75,X=m=>(m-x0)*Z,hid=hidden(),B=112;let o='';
@@ -268,10 +420,21 @@ function notes(){
 <li><b>1851, Rhode Island</b><span><b>Joseph R. Brown</b>, a clockmaker turned toolmaker, built a vernier caliper that read to a thousandth of an inch, at a price ordinary machinists could afford. That is the kind of tool on this page.</span></li>
 <li><b>Today</b><span>Most calipers have a digital display, but the matching-lines trick is still used inside electronic sensors that measure position.</span></li>
 </ol><p class="hint">Try it: with Vernier&rsquo;s 31-into-30 spacing each line would get 1/30 of a space <em>ahead</em>. Can you explain why one line still matches?</p>`;
+  if(tab===5){const p=5*H,T=mixed(60*H,11);
+    n.innerHTML=`<h2>Bonus: when do the clock hands meet?</h2><p class="hint">It is the vernier idea on a clock: two scales that move at slightly different rates, and the one place where they line up. At ${H}:00 the hour hand is ${p} minute marks ahead. Four pictures, four ways to work it out.</p>
+<ol class="steps" id="cksteps">
+<li role="button" tabindex="0"><span><b>Two lines.</b> After t minutes the minute hand points at t and the hour hand at ${p} + t/12. They cross when t = ${p} + t/12, so t = ${60*H}/11 = ${T}. In degrees the same equation reads 6t = ${30*H} + t/2.</span></li>
+<li role="button" tabindex="0"><span><b>Zoom in.</b> When the minute hand gets to where the hour hand was, the hour hand has moved on, 1/12 as far. Zoom in 12 times and the picture is the same again. Adding the pieces: ${p} + ${p}/12 + ${p}/144 + &hellip; = ${p} &times; 12/11.</span></li>
+<li role="button" tabindex="0"><span><b>Close the gap.</b> Every 12 minutes the minute hand moves 12 marks and the hour hand 1, so the gap shrinks by 11. A gap of ${p} needs ${p}/11 lots of 12 minutes, which is ${T} minutes.</span></li>
+<li role="button" tabindex="0"><span><b>Eleven meetings.</b> In 12 hours the minute hand goes round 12 times and the hour hand once, so it catches the hour hand 11 times, evenly spaced, 12/11 hours apart. Meeting ${H} is at ${H} &times; 12/11 hours, which is ${meetAt(H)}.</span></li>
+</ol>${H===11?'<p class="hint">Between 11 and 12 the hands do not meet until exactly 12:00. That is why there are 11 meetings and not 12.</p>':''}
+<p class="hint">Compare with the caliper. There a small gap is stretched 10 times, because 1 &divide; (1 &minus; 9/10) = 10. Here the head start is stretched by 1 &divide; (1 &minus; 1/12) = 12/11. And the last picture is a vernier scale itself: 12 hour marks against 11 meeting marks.</p>`;
+    [...$('cksteps').children].forEach((li,j)=>{li.classList.toggle('on',j===cp);li.setAttribute('aria-current',j===cp?'step':'false')})}
   if(tab===3){let best='';try{const b=localStorage.getItem('vernier-best-'+N);if(b)best=`<p class="hint">Best time on this device: ${(+b).toFixed(1)} s</p>`}catch(e){}
     n.innerHTML=`<h2>Challenge: eight readings</h2><ol class="how"><li>Press Start. The jaws jump to a random opening.</li><li>Type the reading and press Enter.</li><li>Eight correct readings stops the clock. A wrong answer costs nothing but time.</li></ol>${game&&game.time?`<p class="good">Done in ${game.time.toFixed(1)} s, with ${game.tries} wrong ${game.tries===1?'try':'tries'}.</p>`:''}${best}`}
 }
 function draw(){
+  if(tab===5){drawClock();ckRead();$('ctime').value=tm;const st=cstops();$('prev').disabled=tm<=st[0]+1e-7;$('next').disabled=tm>=st[st.length-1]-1e-7;return}
   drawCal();drawZoom();readout();$('rng').value=s;
   $('prev').disabled=step===0;$('next').disabled=step===WHY.length-1;
 }
@@ -307,11 +470,13 @@ function check(){
     else{game.tries++;say('Not that one. Whole part from the top scale, decimal from the matching line.')}}
 }
 function select(i){
-  cancelAnimationFrame(glide);tab=i;say('');minS=0;game=null;solved=false;s=Math.round(s);$('rng').step=tab===1?.1:1;
+  cancelAnimationFrame(glide);cancelAnimationFrame(cglide);tab=i;say('');const ck=tab===5;minS=0;game=null;solved=false;s=Math.round(s);$('rng').step=tab===1?.1:1;
   [...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
-  $('c-slide').hidden=tab===3;$('c-step').hidden=true;$('c-obj').hidden=tab!==2;$('c-ans').hidden=tab!==2&&tab!==3;
-  $('hidewrap').hidden=tab!==0;$('c-opt').hidden=tab===1||tab===4;$('check').hidden=tab===3;$('go').hidden=tab!==3;$('go').textContent='Start';
+  $('c-slide').hidden=tab===3||ck;$('c-step').hidden=!ck;$('c-obj').hidden=tab!==2;$('c-ans').hidden=tab!==2&&tab!==3;
+  $('hidewrap').hidden=tab!==0;$('c-opt').hidden=tab===1||tab===4||ck;$('check').hidden=tab===3;$('go').hidden=tab!==3;$('go').textContent='Start';
   $('ans').disabled=tab===3;$('ans').value='';
+  $('cal').toggleAttribute('hidden',ck);$('zwrap').hidden=ck;$('clockfig').hidden=!ck;$('c-ck').hidden=!ck;$('c-hour').hidden=!ck;
+  if(ck){$('zhint').hidden=true;notes();cpick(cp);return}
   if(tab===1){N=10;$('res').value='10';$('rng').max=MAXMM*N;s=233;notes();draw();return}
   if(tab===2){notes();pick(0);return}
   if(tab===0&&s<N)s=23*N+7*(N/10);
@@ -325,8 +490,13 @@ $('rng').addEventListener('input',e=>setS(+e.target.value));
 $('less').addEventListener('click',()=>nudge(-1));$('more').addEventListener('click',()=>nudge(1));
 $('hide').addEventListener('change',draw);
 $('res').addEventListener('change',e=>{const v=mm();N=+e.target.value;$('rng').max=MAXMM*N;minS=obj&&tab===2?Math.round(obj.mm*N):0;game=null;if(tab===3){$('go').hidden=false;$('go').textContent='Start';$('ans').disabled=true}s=Math.round(v*N);notes();setS(s)});
-$('prev').addEventListener('click',()=>setStep(step-1));$('next').addEventListener('click',()=>setStep(step+1));
-$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li');if(li)setStep([...li.parentNode.children].indexOf(li))});
+$('prev').addEventListener('click',()=>tab===5?cgo(-1):setStep(step-1));$('next').addEventListener('click',()=>tab===5?cgo(1):setStep(step+1));
+$('cpics').innerHTML=CP.map((t,i)=>`<button class="btn" role="tab" type="button" aria-selected="${i===0}">${t}</button>`).join('');
+$('cpics').addEventListener('click',e=>{const b=e.target.closest('button');if(b)cpick([...$('cpics').children].indexOf(b))});
+$('hsel').innerHTML=Array.from({length:11},(_,i)=>`<option value="${i+1}"${i===2?' selected':''}>${i+1} and ${i+2} o&rsquo;clock</option>`).join('');
+$('hsel').addEventListener('change',e=>{H=+e.target.value;notes();cpick(cp)});
+$('ctime').addEventListener('input',e=>{cancelAnimationFrame(cglide);tm=+e.target.value;draw()});
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li'),ck=e.target.closest('#cksteps li');if(ck){cpick([...ck.parentNode.children].indexOf(ck));$('clockfig').scrollIntoView({behavior:'smooth',block:'nearest'});return}if(li)setStep([...li.parentNode.children].indexOf(li))});
 $('check').addEventListener('click',check);
 $('ans').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check()}});
 $('ans').addEventListener('input',()=>{if($('msg').className==='err')say('')});
@@ -337,10 +507,12 @@ cal.addEventListener('pointerdown',e=>{if(tab===3)return;cancelAnimationFrame(gl
 cal.addEventListener('pointermove',e=>{if(drag)setS(drag.s0+(e.clientX-drag.x)*drag.k/P*N)});
 const end=()=>{drag=null;cal.style.cursor='grab'};cal.addEventListener('pointerup',end);cal.addEventListener('pointercancel',end);
 document.addEventListener('keydown',e=>{
-  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li'),cli=e.target.closest&&e.target.closest('#cksteps li');
+  if(cli&&(e.key===' '||e.key==='Enter')){e.preventDefault();cpick([...cli.parentNode.children].indexOf(cli));return}
   if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();setStep([...li.parentNode.children].indexOf(li));return}
   if(tag==='input'||tag==='select')return;
   const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!d)return;e.preventDefault();
+  if(tab===5){cgo(d);return}
   if(tab!==3)nudge(d);
 });
 select(0);
