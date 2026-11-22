@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nim: Take the Last One</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.nm svg{display:block;width:100%;height:auto}
+.nm text{font-family:var(--body);fill:var(--ink)}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:4.2em;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.rule .big{font-family:var(--display);font-size:1.3rem}
+.rule .sm{color:var(--muted);font-size:.9rem;font-weight:400}
+.picks{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.picks label{font-weight:700;display:flex;gap:8px;align-items:center}
+.picks select{font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.picks input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:700}
+.chips button{font:inherit;font-weight:700;padding:5px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.chips button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+pre.code{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6;color:var(--ink)}
+pre.code mark{background:var(--a-soft);color:inherit;border-radius:4px;padding:1px 0;box-shadow:0 0 0 2px var(--a-soft)}
+.how{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.steps li b{color:var(--ink)}
+[hidden]{display:none!important}
+h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Nim: take the last one</h1>
+    <p class="lede">Take 1, 2 or 3 counters on your turn. Whoever takes the last counter wins. The computer knows a trick. Find it, then write the game yourself.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose an activity"></nav>
+
+  <main class="stage">
+    <section class="figure nm" aria-label="Game">
+      <svg id="fig" viewBox="0 0 440 300" role="img" aria-label="The counters"></svg>
+      <pre class="code" id="code" hidden></pre>
+      <div class="row" id="c-play">
+        <span id="moves" class="row"></span>
+        <button class="btn" id="again" type="button">New game</button>
+      </div>
+      <div class="row" id="c-step" hidden>
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+      </div>
+      <div class="rule" id="rule" aria-live="polite"></div>
+      <div class="chips" id="c-other" hidden><span>The other player takes</span><span id="others" class="chips"></span></div>
+      <div class="picks shape" id="c-set">
+        <label>Counters <select id="sn"></select></label>
+        <label>Take up to <select id="sm"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+        <label>Computer <select id="sb"><option value="clever">clever</option><option value="random">random</option></select></label>
+        <label>First move <select id="sf"><option value="you">you</option><option value="bot">computer</option></select></label>
+        <label><input id="rows" type="checkbox"> Show the rows</label>
+      </div>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Play','Why it works','Code it'];
+let tab=0,N0=21,M=3,mode='clever',first='you',rows=false,pile=21,taken=[],turn='you',last='',fresh=[],ap=1,anim=0,timer=0,ps=0,pc=2;
+const YOU='var(--b)',BOT='var(--c)';
+
+// counters sit in rows of M+1, full rows at the top, so the leftovers are the last few
+function drawPile(N,tk,showRows,ring){
+  const C=showRows?M+1:7,R=Math.ceil(N/C),px=Math.min(46,300/C),py=38,x0=220-C*px/2+px/2,y0=44,H=y0+R*py+6,left=tk.filter(x=>!x).length,rem=left%(M+1),e=ap<.5?2*ap*ap:1-2*(1-ap)*(1-ap);let o='';
+  $('fig').setAttribute('viewBox',`0 0 440 ${H}`);
+  o+=`<circle cx="${x0-px/2+8}" cy="18" r="6" fill="${YOU}"/><text x="${x0-px/2+20}" y="22.5" font-size="13" font-weight="700">you</text><circle cx="${x0-px/2+70}" cy="18" r="6" fill="${BOT}"/><text x="${x0-px/2+82}" y="22.5" font-size="13" font-weight="700">${tab===1?'other player':'computer'}</text>`;
+  if(showRows)for(let r=0;r<R;r++){const full=(r+1)*C<=N;o+=`<rect x="${x0-px/2}" y="${y0+r*py-py/2+2}" width="${C*px}" height="${py-4}" rx="${py/2-2}" fill="var(--paper)"${full?'':' stroke="var(--line)" stroke-dasharray="4 4"'}/>`}
+  for(let i=0;i<N;i++){const x=x0+(i%C)*px,y=y0+Math.floor(i/C)*py,t=tk[i],isNew=fresh.includes(i);
+    if(!t){const lo=showRows&&i>=left-rem;o+=`<circle cx="${x}" cy="${y}" r="14" fill="${lo?'var(--a)':'var(--card)'}" stroke="var(--ink)" stroke-width="2"/>`}
+    else{const rr=isNew?14-8*e:6;o+=`<circle cx="${x}" cy="${y}" r="${rr}" fill="${t==='you'?YOU:BOT}"/>`;
+      if(ring===i&&(!isNew||ap>=1))o+=`<circle cx="${x}" cy="${y}" r="13" fill="none" stroke="${YOU}" stroke-width="3"/>`}}
+  $('fig').innerHTML=o;
+}
+function run(done){cancelAnimationFrame(anim);const t0=performance.now();ap=0;const f=now=>{ap=Math.min(1,(now-t0)/420);draw();if(ap<1)anim=requestAnimationFrame(f);else if(done)done()};anim=requestAnimationFrame(f)}
+
+// ---------- tab 1: play ----------
+function newGame(){clearTimeout(timer);cancelAnimationFrame(anim);ap=1;fresh=[];pile=N0;taken=Array(N0).fill(null);turn=first;last='';draw();if(turn==='bot')timer=setTimeout(botMove,800)}
+function take(who,c){fresh=[];for(let i=0;i<c;i++){taken[pile-1-i]=who;fresh.push(pile-1-i)}pile-=c;last=who==='you'?`You took ${c}.`:`The computer took ${c}.`;
+  turn=pile===0?(who==='you'?'won':'lost'):who==='you'?'bot':'you';run();if(turn==='bot')timer=setTimeout(botMove,900)}
+function botMove(){const r=pile%(M+1);take('bot',mode==='clever'&&r?r:1+Math.floor(Math.random()*Math.min(M,pile)))}
+function drawPlay(){
+  drawPile(N0,taken,rows,-1);const r=pile%(M+1);
+  $('rule').innerHTML=turn==='won'?`<span class="big" style="color:var(--b)">You took the last one. You win!</span>`:turn==='lost'?`<span class="big" style="color:var(--c)">The computer took the last one.</span><span class="sm">Try again, or tick &ldquo;Show the rows&rdquo;.</span>`
+    :`<span class="big">${pile} left</span><span>${last} ${turn==='you'?'Your turn.':'The computer is thinking…'}</span>${rows?`<span class="sm">${r?`${r} left over after the full rows of ${M+1}.`:`Only full rows of ${M+1}: nothing left over.`}</span>`:''}`;
+  [...$('moves').children].forEach((b,i)=>b.disabled=turn!=='you'||i+1>pile);
+}
+
+// ---------- tab 2: the trick, one step at a time ----------
+function proof(){
+  const C=M+1,N=5*C+1,tk=Array(N).fill(null),was=[];let p=N;const t=(who,c)=>{for(let i=0;i<c;i++)tk[--p]=who};
+  if(ps>=1)t('you',1);if(ps>=2)t('bot',pc);if(ps>=3)t('you',C-pc);
+  if(ps>=4)[1,M,Math.min(2,M),1].forEach(c=>{t('bot',c);t('you',C-c)});
+  return{N,tk};
+}
+function drawProof(){
+  const C=M+1,{N,tk}=proof();drawPile(N,tk,true,ps===4?0:-1);
+  $('rule').innerHTML=[`<span class="big">${N} = 5 rows of ${C}, and 1 left over</span>`,
+    `<span class="big">Take the leftover.</span><span class="sm">Now there are only full rows.</span>`,
+    `<span class="big">The other player takes ${pc}.</span><span class="sm">They have to break a row.</span>`,
+    `<span class="big">You take the other ${C-pc}.</span><span class="sm">${pc} + ${C-pc} = ${C}: a whole row is gone, and it is their turn again.</span>`,
+    `<span class="big">Every row goes the same way.</span><span class="sm">You always finish the row, so you take the last counter.</span>`][ps];
+  $('prev').disabled=ps===0;$('next').disabled=ps===4;
+  [...$('others').children].forEach((b,i)=>b.classList.toggle('on',i+1===pc));
+  const s=$('steps');if(s)[...s.children].forEach((li,i)=>{li.classList.toggle('on',i===ps);li.setAttribute('aria-current',i===ps?'step':'false')});
+}
+function jump(i){const a=proof().tk;ps=Math.max(0,Math.min(4,i));const b=proof().tk;fresh=[];b.forEach((x,j)=>{if(x&&!a[j])fresh.push(j)});if(fresh.length)run();else{ap=1;draw()}}
+
+// ---------- tab 3: the program ----------
+const CODE=`import random
+
+pile = 21
+while pile &gt; 0:
+    take = int(input(f"{pile} left: "))
+    pile -= take
+    if pile == 0:
+        print("You win!")
+        break
+    <mark>bot = pile % 4 or random.randint(1, 3)</mark>
+    print("I take", bot)
+    pile -= bot
+    if pile == 0:
+        print("I win!")`;
+
+function notes(){
+  const el=$('notes'),C=M+1;
+  if(tab===0)el.innerHTML=`<h2>Play</h2><p class="hint">Beat the clever computer if you can. When you are stuck, tick &ldquo;Show the rows&rdquo;, or switch the computer to random and watch which piles you can always win from.</p>
+<ol class="how"><li>With ${N0} counters, who should go first?</li><li>Change it to ${N0%C?N0-N0%C:N0+1} counters. Now who should go first?</li><li>Let players take up to 5. How wide are the rows now?</li></ol>`;
+  if(tab===1)el.innerHTML=`<h2>Why it works</h2>
+<ol class="steps" id="steps">${[`<b>Rows of ${C}</b>, and some left over.`,'<b>Take the leftovers.</b>','<b>They break a row.</b>','<b>You finish the row.</b>','<b>Again and again</b>, down to the last one.'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
+<p class="hint">Leftovers are a remainder: ${5*C+1} &divide; ${C} = 5 remainder 1. If there are no leftovers on your turn, you are the one who has to break a row.</p>`;
+  if(tab===2)el.innerHTML=`<h2>Code it</h2><p class="hint">This is the whole game in Python. The highlighted line is the computer&rsquo;s brain: <b>pile % 4</b> is the leftover after rows of 4.</p>
+<ol class="how"><li>First write it with a computer that plays at random: bot = random.randint(1, min(3, pile)). Can you always beat it?</li><li>Now put in the highlighted line. Can you still win? From which piles?</li><li>What happens if someone types 7, or 0? Make the program ask again.</li><li>Change the rule to &ldquo;take 1 to 5&rdquo;. Which numbers in the program must change?</li><li>Write two computer players and let them play each other 1,000 times.</li></ol>`;
+}
+function draw(){if(tab===0)drawPlay();else if(tab===1)drawProof()}
+function moves(){$('moves').innerHTML=Array.from({length:M},(_,i)=>`<button class="btn primary" type="button" data-c="${i+1}">Take ${i+1}</button>`).join('');
+  $('others').innerHTML=Array.from({length:M},(_,i)=>`<button type="button" data-c="${i+1}">${i+1}</button>`).join('');if(pc>M)pc=M;
+  const opts=[];for(let v=10;v<=30;v++)opts.push(v);if(N0>30)N0=30;$('sn').innerHTML=opts.map(v=>`<option${v===N0?' selected':''}>${v}</option>`).join('')}
+function select(i){clearTimeout(timer);cancelAnimationFrame(anim);ap=1;fresh=[];tab=i;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  $('fig').toggleAttribute('hidden',tab===2);$('code').hidden=tab!==2;$('c-play').hidden=tab!==0;$('c-set').hidden=tab!==0;$('c-step').hidden=tab!==1;$('c-other').hidden=tab!==1;$('rule').hidden=tab===2;
+  notes();if(tab===0)newGame();if(tab===1){ps=0;draw()}if(tab===2)$('code').innerHTML=CODE}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('moves').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&turn==='you'&&+b.dataset.c<=pile)take('you',+b.dataset.c)});
+$('others').addEventListener('click',e=>{const b=e.target.closest('button');if(b){pc=+b.dataset.c;if(ps<2)jump(2);else{cancelAnimationFrame(anim);ap=1;fresh=[];draw()}}});
+$('again').addEventListener('click',newGame);
+$('prev').addEventListener('click',()=>jump(ps-1));$('next').addEventListener('click',()=>jump(ps+1));
+$('sn').addEventListener('change',e=>{N0=+e.target.value;notes();newGame()});
+$('sm').addEventListener('change',e=>{M=+e.target.value;moves();notes();newGame()});
+$('sb').addEventListener('change',e=>{mode=e.target.value;newGame()});
+$('sf').addEventListener('change',e=>{first=e.target.value;newGame()});
+$('rows').addEventListener('change',e=>{rows=e.target.checked;draw()});
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li');if(li)jump([...li.parentNode.children].indexOf(li))});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...li.parentNode.children].indexOf(li));return}
+  if(tag==='input'||tag==='select')return;
+  if(tab===1){const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();jump(ps+d)}}
+  if(tab===0&&turn==='you'&&/^[1-9]$/.test(e.key)&&+e.key<=Math.min(M,pile))take('you',+e.key)});
+moves();select(0);
+</script>
+</body>
+</html>

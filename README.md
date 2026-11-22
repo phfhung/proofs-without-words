@@ -27,6 +27,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `brackets.html` | Signs and brackets between numbers to hit a target; every bracketing drawn as a tree |
 | `necklaces.html` | Fermat's little theorem by sorting bead strings into necklaces; which numbers pass the test; the test as hops round a clock |
 | `squares.html` | Factoring by a difference of two squares: cut and slide, then grow the square until the corner piece is a perfect square |
+| `nim.html` | Nim (take 1, 2 or 3): play the computer, see why rows of four win, and the game in 14 lines of Python |
 | `prime-sprint.html` | Prime-tapping speed game |
 
 ## Trying a change locally
