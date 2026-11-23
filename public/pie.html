@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inclusion and Exclusion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.pe svg{display:block;width:100%;height:auto}
+.pe text{font-family:var(--body);fill:var(--ink)}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:3.6em;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.rule .big{font-family:var(--display);font-size:1.3rem}
+.rule .sm{color:var(--muted);font-size:.9rem;font-weight:400}
+.rule .term{padding:1px 5px;border-radius:6px}
+.rule .term.on{background:var(--a-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:700}
+.chips button{font:inherit;font-weight:700;padding:5px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.chips button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .4em;margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fm .op{font-weight:400}
+.fm .g{display:inline-flex;align-items:center;gap:.4em;white-space:nowrap}
+.notes a{color:var(--accent);font-weight:700}
+.steps li b{color:var(--ink)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Inclusion and exclusion</h1>
+    <p class="lede">Count each circle. Take away what was counted twice. Add back what was taken away too often.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage">
+    <section class="figure pe" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 432" role="img" aria-label="Picture"></svg>
+      <div class="row">
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+      </div>
+      <div class="rule" id="rule" aria-live="polite"></div>
+      <div class="chips" id="c-m" hidden><span>Circles</span><span id="ms" class="chips"></span></div>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Two circles','Three circles','Why it works'],PC=['var(--a)','var(--b)','var(--c)','#2f80d0','#8a6d3b'],PINK='#d6457a',N=30,R0=10.5;
+const choose=(n,k)=>{let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
+let tab=0,st=0,m=4;
+// the two pictures: which numbers each circle holds, where the circles sit, and the order of the steps.
+// a step is [sign, the circles whose overlap is counted]
+const PICS=[
+ {div:[2,3],R:118,c:[[158,196],[282,196]],lab:[[22,32,'start'],[418,32,'end']],keep:[[6,6,150,40],[284,6,150,40]],
+  steps:[[1,[0]],[1,[1]],[-1,[0,1]]]},
+ {div:[2,3,5],R:104,c:[[160,150],[280,150],[220,254]],lab:[[22,32,'start'],[418,32,'end'],[220,386,'middle']],keep:[[6,6,150,40],[284,6,150,40],[140,366,160,30]],
+  steps:[[1,[0]],[1,[1]],[1,[2]],[-1,[0,1]],[-1,[0,2]],[-1,[1,2]],[1,[0,1,2]]]}];
+// put the numbers 1..30 into the right regions, spread out so that no two touch
+PICS.forEach(P=>{const cand={},need={};
+  for(let v=1;v<=N;v++){let k=0;P.div.forEach((d,i)=>{if(v%d===0)k|=1<<i});(need[k]=need[k]||[]).push(v)}
+  for(let y=24;y<=376;y+=4)for(let x=24;x<=416;x+=4){let k=0,ok=!P.keep.some(z=>x>z[0]-12&&x<z[0]+z[2]+12&&y>z[1]-12&&y<z[1]+z[3]+12);
+    P.c.forEach((c,i)=>{const d=Math.hypot(x-c[0],y-c[1]);if(Math.abs(d-P.R)<15)ok=false;if(d<P.R)k|=1<<i});if(ok)(cand[k]=cand[k]||[]).push([x,y])}
+  P.pos={};
+  for(const k in need){const pts=cand[k],sel=[],cx=pts.reduce((a,q)=>a+q[0],0)/pts.length,cy=pts.reduce((a,q)=>a+q[1],0)/pts.length;
+    sel.push(pts.reduce((a,q)=>Math.hypot(q[0]-cx,q[1]-cy)<Math.hypot(a[0]-cx,a[1]-cy)?q:a));
+    while(sel.length<need[k].length){let best=null,bd=-1;for(const q of pts){let d=1e9;for(const t of sel)d=Math.min(d,Math.hypot(q[0]-t[0],q[1]-t[1]));if(d>bd){bd=d;best=q}}sel.push(best)}
+    sel.sort((a,b)=>a[1]-b[1]||a[0]-b[0]);need[k].forEach((v,i)=>P.pos[v]=sel[i])}});
+const inAll=(P,v,set)=>set.every(i=>v%P.div[i]===0);
+const count=(P,v,upto)=>{let c=0;for(let j=0;j<upto;j++)if(inAll(P,v,P.steps[j][1]))c+=P.steps[j][0];return c};
+const size=(P,set)=>{let c=0;for(let v=1;v<=N;v++)if(inAll(P,v,set))c++;return c};
+const lcm=(P,set)=>set.reduce((a,i)=>a*P.div[i],1);
+
+function drawVenn(){
+  const P=PICS[tab],K=P.steps.length,done=Math.min(st,K),act=st>=1&&st<=K?P.steps[st-1]:null,fin=st===K+1;let o='';
+  $('fig').setAttribute('viewBox','0 0 440 432');
+  o+=`<defs>${P.c.map((c,i)=>`<clipPath id="q${i}"><circle cx="${c[0]}" cy="${c[1]}" r="${P.R}"/></clipPath>`).join('')}</defs><rect x="6" y="6" width="428" height="388" rx="14" fill="var(--card)" stroke="var(--ink)" stroke-width="1.5"/>`;
+  // the part this step counts, shaded: one circle, or the overlap of several
+  if(act){const s=act[1],last=s[s.length-1];let g=`<circle cx="${P.c[last][0]}" cy="${P.c[last][1]}" r="${P.R}" fill="${act[0]>0?'var(--b)':PINK}" fill-opacity=".22"/>`;
+    for(let i=s.length-2;i>=0;i--)g=`<g clip-path="url(#q${s[i]})">${g}</g>`;o+=g}
+  P.c.forEach((c,i)=>o+=`<circle cx="${c[0]}" cy="${c[1]}" r="${P.R}" fill="none" stroke="${PC[i]}" stroke-width="${act&&act[1].includes(i)?5:2.5}"/>`);
+  P.lab.forEach((l,i)=>o+=`<text x="${l[0]}" y="${l[1]}" text-anchor="${l[2]}" font-size="14" font-weight="700" style="fill:${PC[i]}">multiples of ${P.div[i]}</text>`);
+  for(let v=1;v<=N;v++){const q=P.pos[v],c=count(P,v,done),out=!P.div.some(d=>v%d===0),hot=fin&&out;
+    o+=`<circle cx="${q[0]}" cy="${q[1]}" r="${R0}" fill="${hot?'var(--ink)':c===1?'var(--b)':c===2?'var(--a)':c>=3?PINK:'var(--card)'}" stroke="var(--ink)" stroke-width="${c||hot?1.2:1}"${c||hot||!st?'':' stroke-dasharray="2 2"'}/><text x="${q[0]}" y="${q[1]+3.8}" text-anchor="middle" font-size="10.5" font-weight="700" style="fill:${c||hot?'var(--card)':'var(--ink)'}">${v}</text>`}
+  // key
+  [['var(--card)','not counted'],['var(--b)','once'],['var(--a)','twice'],[PINK,'3 times']].slice(0,tab?4:3).forEach((k,i)=>{const x=18+i*(tab?106:140);o+=`<circle cx="${x}" cy="414" r="8" fill="${k[0]}" stroke="var(--ink)" stroke-width="1.2"/><text x="${x+14}" y="418.5" font-size="13">${k[1]}</text>`});
+  $('fig').innerHTML=o;
+  let sum='',tot=0;for(let j=0;j<done;j++){const s=P.steps[j],z=size(P,s[1]);tot+=s[0]*z;sum+=`${j?(s[0]>0?' + ':' − '):''}<span class="term${j===st-1?' on':''}">${z}</span>`}
+  const L=act?lcm(P,act[1]):0,cap=st===0?`the numbers 1 to ${N}`:fin?'in no circle at all':act[1].length===1?`count the multiples of ${L}`:act[0]<0?`take away the multiples of ${L}: counted twice`:`add back the multiples of ${L}: missed`;
+  $('rule').innerHTML=`<span class="sm">${cap}</span><span class="big"${tab?' style="font-size:clamp(.8rem,3.9vw,1.08rem);white-space:nowrap"':''}>${st===0?N:fin?`${N} − ${tot} = ${N-tot}`:sum+(done>1?' = '+tot:'')}</span>`;
+}
+
+// tab 3: one item that sits inside m circles. Singles count it m times, pairs take it away, threes add it back...
+function drawWhy(){
+  let o='',run=0;$('fig').setAttribute('viewBox','0 0 440 400');
+  const cx=112,cy=116,R=64,d=m===1?0:32;
+  for(let i=0;i<m;i++){const a=i/m*2*Math.PI-Math.PI/2;o+=`<circle cx="${cx+d*Math.cos(a)}" cy="${cy+d*Math.sin(a)}" r="${R}" fill="${PC[i]}" fill-opacity=".12" stroke="${PC[i]}" stroke-width="2.5"/>`}
+  for(let j=1;j<=st;j++)run+=(j%2?1:-1)*choose(m,j);
+  o+=`<circle cx="${cx}" cy="${cy}" r="21" fill="${run===1?'var(--b)':run===0?'var(--card)':run>1?'var(--a)':PINK}" stroke="var(--ink)" stroke-width="2"/><text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="22" font-weight="800" style="font-family:var(--display);fill:${run===0?'var(--ink)':'var(--card)'}">${run<0?'−'+(-run):run}</text>`;
+  o+=`<text x="${cx}" y="${cy+R+d+26}" text-anchor="middle" font-size="13.5" style="fill:var(--muted)">times counted so far</text>`;
+  // one row for each size of group: every tile is one way to pick that many of the m circles
+  const names=['','circle','pair','three','four','five'],x0=244,ts=m===5?19:21,pitch=m===5?44:46;
+  for(let j=1;j<=m;j++){const y=18+(j-1)*pitch,on=j<=st,k=choose(m,j),plus=j%2===1,col=plus?'var(--b)':PINK;
+    o+=`<text x="${x0-20}" y="${y+22}" text-anchor="middle" font-size="24" font-weight="800"${on?` style="fill:${col}"`:' opacity=".25"'}>${plus?'+':'−'}</text><text x="${x0}" y="${y+6}" font-size="14"${on?'':' opacity=".35"'}><tspan font-weight="800">${k}</tspan> ${names[j]}${k>1?'s':''}</text>`;
+    for(let i=0;i<k;i++)o+=`<rect x="${x0+i*ts}" y="${y+13}" width="${ts-3}" height="${ts-3}" rx="3.5" fill="${on?col:'none'}" stroke="${on?'var(--ink)':'var(--line)'}" stroke-width="1"/>`}
+  // Pascal's triangle: the tiles in each row are the numbers along row m
+  const py=280;o+=`<line x1="14" y1="${py-22}" x2="426" y2="${py-22}" stroke="var(--line)"/>`;
+  for(let r=0;r<=5;r++)for(let c=0;c<=r;c++){const x=220+(c-r/2)*42,y=py+r*22,hi=r===m,act=hi&&c>=1&&c<=st;
+    o+=`<text x="${x}" y="${y}" text-anchor="middle" font-size="${hi?17:14}" font-weight="${hi?800:400}" style="fill:${act?(c%2?'var(--b)':PINK):hi?'var(--ink)':'var(--muted)'}">${choose(r,c)}</text>`}
+  $('fig').innerHTML=o;
+  let t='';for(let j=1;j<=st;j++)t+=`${j>1?(j%2?' + ':' − '):''}<span class="term${j===st?' on':''}">${choose(m,j)}</span>`;
+  $('rule').innerHTML=`<span class="sm">${st===0?`one item inside ${m} ${m===1?'circle':'circles'}`:st===m?'counted exactly once':st%2?'counted too often':'taken away too often'}</span><span class="big">${st?t+(st>1?' = '+(run<0?'−'+(-run):run):''):'0'}</span>`;
+  [...$('ms').children].forEach((b,i)=>b.classList.toggle('on',i+1===m));
+}
+
+const OP=x=>`<span class="op">${x}</span>`;
+function notes(){
+  const el=$('notes'),steps=a=>`<ol class="steps" id="steps">${a.map(x=>`<li role="button" tabindex="0"><span><b>${x}</b></span></li>`).join('')}</ol>`;
+  if(tab<2){const P=PICS[tab],a=[`The numbers 1 to ${N}`];P.steps.forEach(s=>a.push(`${s[1].length===1?'Count':s[0]>0?'Add back':'Take away'} multiples of ${lcm(P,s[1])}`));a.push('What is left outside');
+    el.innerHTML=`<h2>${TABS[tab]}</h2>${steps(a)}`+(tab===0
+      ?`<p class="fm"><span class="g"><span>|A or B|</span>${OP('=')}<span>|A|</span>${OP('+')}<span>|B|</span></span><span class="g">${OP('&minus;')}<span>|A and B|</span></span></p>`
+      :`<p class="fm"><span class="g"><span>|A or B or C|</span>${OP('=')}</span><span class="g"><span>|A|</span>${OP('+')}<span>|B|</span>${OP('+')}<span>|C|</span></span><span class="g">${OP('&minus;')}<span>|A and B|</span>${OP('&minus;')}<span>|A and C|</span>${OP('&minus;')}<span>|B and C|</span></span><span class="g">${OP('+')}<span>|A and B and C|</span></span></p>`)
+      +`<p class="hint">|A| means how many are in circle A.</p>`}
+  else{const a=[`One item, inside ${m} ${m===1?'circle':'circles'}`];for(let j=1;j<=m;j++)a.push(`${j%2?'Add':'Take away'} ${choose(m,j)}`);
+    let t='';for(let j=1;j<=m;j++)t+=`${j>1?OP(j%2?'+':'&minus;'):''}<span>${choose(m,j)}</span>`;
+    el.innerHTML=`<h2>Why it works</h2>${steps(a)}<p class="fm">${t}${OP('=')}<span>1</span></p>
+<p class="hint">Along any row of Pascal&rsquo;s triangle, plus and minus in turn, the total is 0. Leave off the first 1 and what remains is 1.</p>
+<p class="hint">Used in <a href="derangements.html">Secret Santa</a>.</p>`}
+  mark();
+}
+function mark(){const t=$('steps');if(t)[...t.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')})}
+const last=()=>tab<2?PICS[tab].steps.length+1:m;
+function draw(){if(tab<2)drawVenn();else drawWhy();$('prev').disabled=st===0;$('next').disabled=st===last();mark()}
+function jump(i){st=Math.max(0,Math.min(last(),i));draw()}
+function select(i){tab=i;st=0;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));$('c-m').hidden=tab!==2;notes();draw()}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('ms').innerHTML=[1,2,3,4,5].map(x=>`<button type="button" data-m="${x}">${x}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('prev').addEventListener('click',()=>jump(st-1));$('next').addEventListener('click',()=>jump(st+1));
+$('ms').addEventListener('click',e=>{const b=e.target.closest('button');if(b){m=+b.dataset.m;st=0;notes();draw()}});
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li');if(li)jump([...li.parentNode.children].indexOf(li))});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...li.parentNode.children].indexOf(li));return}
+  if(tag==='input'||tag==='select')return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();jump(st+d)}});
+select(0);
+</script>
+</body>
+</html>
