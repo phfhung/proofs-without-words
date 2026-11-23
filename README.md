@@ -25,7 +25,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `newton.html` | Square roots by guess and average (Heron and Newton) |
 | `catalan.html` | Catalan numbers: five pictures of one count, the reflection proof, and the recurrence |
 | `brackets.html` | Signs and brackets between numbers to hit a target; every bracketing drawn as a tree |
-| `derangements.html` | Secret Santa: derangements by sorting every draw, inclusion and exclusion as a running count, the recurrence with arrows, and 1/e |
+| `derangements.html` | Secret Santa: derangements by taking away rectangles of bad draws, inclusion and exclusion as a running count, the recurrence with arrows, and 1/e |
 | `necklaces.html` | Fermat's little theorem by sorting bead strings into necklaces; which numbers pass the test; the test as hops round a clock |
 | `squares.html` | Factoring by a difference of two squares: cut and slide, then grow the square until the corner piece is a perfect square |
 | `nim.html` | Nim (take 1, 2 or 3): play the computer, see why rows of four win, and the game in 14 lines of Python |
