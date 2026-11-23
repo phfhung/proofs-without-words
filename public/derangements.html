@@ -101,6 +101,10 @@ ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color
 .fm .g{display:inline-flex;align-items:center;gap:.4em;white-space:nowrap}
 .fm .fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.2}
 .fm .fr>span:first-child{border-bottom:2px solid currentColor;padding:0 .25em}
+.fm .bn{display:inline-flex;align-items:center}
+.fm .bn>span{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15}
+.fm .bn::before{content:'(';font-size:2.1em;font-weight:400;line-height:1;margin-top:-.1em}
+.fm .bn::after{content:')';font-size:2.1em;font-weight:400;line-height:1;margin-top:-.1em}
 .seq{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center;font-variant-numeric:tabular-nums}
 .seq span{padding:5px 0;border-radius:8px;background:var(--paper);font-weight:700}
 .seq span.h{background:none;color:var(--muted);font-weight:400;font-size:.85rem;padding:0}
@@ -116,7 +120,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
   <header>
     <a class="back" href="index.html">&larr; All activities</a>
     <h1>Secret Santa</h1>
-    <p class="lede">Everyone puts their name in a hat and draws one out. The draw works only if nobody gets their own name. How many draws work? Mathematicians call them derangements.</p>
+    <p class="lede">Everyone puts their name in a hat and draws one out. The draw works only if nobody gets their own name. How many draws work? Count them all, take away too many, add some back, and repeat: that is inclusion and exclusion.</p>
   </header>
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
@@ -141,7 +145,7 @@ h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:6px 0 0}
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const TABS=['Take away the bad draws','Plus and minus','Big from small','About 37%'];
+const TABS=['Take away, add back','Big from small','About 37%'];
 const PC=['var(--a)','var(--b)','var(--c)','#2f80d0','#8a6d3b','#5b8a3b'],PINK='#d6457a',NAME='ABCDEF';
 const D=[1,0,1,2,9,44,265,1854,14833,133496,1334961],F=[1,1,2,6,24,120,720,5040,40320,362880,3628800];
 const choose=(n,k)=>F[n]/F[k]/F[n-k],fmt=x=>x.toLocaleString('en-US');
@@ -150,65 +154,52 @@ const ez=u=>u<.5?2*u*u:1-2*(1-u)*(1-u);
 function perms(k){const o=[];(function go(p,rest){if(!rest.length){o.push(p);return}rest.forEach((v,i)=>go(p.concat(v),rest.slice(0,i).concat(rest.slice(i+1))))})([],[...Array(k).keys()]);return o}
 const fixed=p=>p.filter((v,i)=>v===i).length;
 
-// ---------- tab 1: count the bad draws as rectangles, and take them away from all the draws ----------
-// A draw where exactly k friends keep their own name = (which k friends) x (a way for the others to all miss).
-function subsets(k){const o=[];(function go(s,a){if(a.length===k){o.push(a);return}for(let i=s;i<n;i++)go(i+1,a.concat(i))})(0,[]);return o}
+// ---------- tab 1: inclusion and exclusion ----------
+// Step k looks at every way to pick k friends who must keep their own name, while the others do anything at all.
+// mult(f,k): how many times a draw with f own names has been counted after step k.
+const mult=(f,k)=>{let t=0;for(let j=0;j<=k&&j<=f;j++)t+=(j%2?-1:1)*choose(f,j);return t};
+const total=k=>{let t=0;for(let j=0;j<=k;j++)t+=(j%2?-1:1)*F[n]/F[j];return t};
+function subsets(k){const o=[];(function go(a,b){if(b.length===k){o.push(b);return}for(let i=a;i<n;i++)go(i+1,b.concat(i))})(0,[]);return o}
 function draw0(){
-  const k=st>=1&&st<=n?st:0,fin=st===n+1,T=n===5?30:n===4?12:6,ts=n===5?12:n===4?22:30,tx=220-T*ts/2,ty=30,trows=F[n]/T;let o='',bad=0;
-  for(let j=1;j<=Math.min(st,n);j++)bad+=choose(n,j)*D[n-j];
-  const dp=n===5?6:n===4?12:15,w=(n-1)*dp+8,cw=w+(n===5?9:12),ch=n===5?27:32,hw=n===5?44:58,maxR=Math.max(...[...Array(n+1).keys()].map(j=>choose(n,j))),Y1=ty+trows*ts+34,H=Y1+34+maxR*ch+12;
+  const k=st,fs=[];for(let f=0;f<=n;f++)if(choose(n,f)*D[n-f])fs.push(f);
+  const dp=n===5?6:n===4?12:15,w=(n-1)*dp+8,cw=w+(n===5?9:12),ch=n===5?27:32,hw=n===5?44:58,maxR=Math.max(...[...Array(n).keys()].map(j=>choose(n,j+1)));
+  const RY=30,TY=RY+34+maxR*ch+42,rh=30,H=TY+22+fs.length*rh+8,V='var(--c)';let o='';
   $('fig').setAttribute('viewBox',`0 0 440 ${H}`);
-  // one small square for every draw: nobody has to list them, there are n x (n-1) x ... x 1
-  o+=`<text x="${tx}" y="20" font-size="12" style="fill:var(--muted)">one square for every draw: ${Array.from({length:n},(_,i)=>n-i).join(' × ')} = ${F[n]}</text>`;
-  for(let i=0;i<F[n];i++)o+=`<rect x="${tx+(i%T)*ts+1}" y="${ty+Math.floor(i/T)*ts+1}" width="${ts-2}" height="${ts-2}" rx="2" fill="${i<bad?PINK:fin?'var(--b)':'var(--line)'}"${i<bad?' fill-opacity=".55"':''}/>`;
-  const mini=(x,y,q,cnt)=>{let g='';q.forEach((v,j)=>{const own=v===j;g+=`<line x1="${x+4+j*dp}" y1="${y+4}" x2="${x+4+v*dp}" y2="${y+18}" stroke="${own?PINK:'var(--b)'}" stroke-width="${own?2.6:1.4}"/>`});
-    for(let j=0;j<cnt;j++)g+=`<circle cx="${x+4+j*dp}" cy="${y+4}" r="1.8" fill="var(--ink)"/><circle cx="${x+4+j*dp}" cy="${y+18}" r="1.8" fill="var(--ink)"/>`;return g};
-  if(k){
-    const rowsS=subsets(k),cols=perms(n-k).filter(q=>fixed(q)===0),x0=Math.max(14,220-(hw+Math.max(1,cols.length)*cw)/2),gx=x0+hw,gy=Y1+34;
-    o+=`<text x="${x0}" y="${Y1+12}" font-size="12" font-weight="700" style="fill:${PINK}">keeps</text><text x="${x0}" y="${Y1+26}" font-size="12" font-weight="700" style="fill:${PINK}">own</text>`;
-    if(cols.length){o+=`<text x="${gx+cols.length*cw+6>300?gx:gx+cols.length*cw+8}" y="${gx+cols.length*cw+6>300?Y1-3:Y1+21}" font-size="12" font-weight="700" style="fill:var(--b)">how the other ${n-k} all miss</text>`;
-      cols.forEach((q,c)=>{const wd=(n-k-1)*dp+8;if(n-k>0)o+=`<rect x="${gx+c*cw+(w-wd)/2-3}" y="${Y1+4}" width="${wd+6}" height="26" rx="6" fill="var(--paper)"/>`+mini(gx+c*cw+(w-wd)/2,Y1+6,q,n-k)})}
-    rowsS.forEach((S_,r)=>{const y=gy+r*ch,rest=[...Array(n).keys()].filter(i=>!S_.includes(i));
-      o+=`<text x="${x0}" y="${y+16}" font-size="${n===5?12:14}" font-weight="700" style="fill:${PINK}">${S_.map(i=>NAME[i]).join('')}</text>`;
-      cols.forEach((q,c)=>{const full=[];S_.forEach(i=>full[i]=i);rest.forEach((i,j)=>full[i]=rest[q[j]]);o+=mini(gx+c*cw,y,full,n)})});
-    if(!cols.length)o+=`<text x="${gx+6}" y="${gy+16}" font-size="13" font-weight="700" style="fill:var(--muted)">no way: the one friend left</text><text x="${gx+6}" y="${gy+34}" font-size="13" font-weight="700" style="fill:var(--muted)">would get their own name too</text>`;
-  }else o+=`<text x="220" y="${Y1+70}" text-anchor="middle" font-size="40" font-weight="800" style="font-family:var(--display);fill:${fin?'var(--b)':'var(--ink)'}">${fin?D[n]:F[n]}</text><text x="220" y="${Y1+96}" text-anchor="middle" font-size="14" font-weight="700"${fin?' style="fill:var(--b)"':''}>${fin?'draws work':'draws altogether'}</text>`;
+  const mini=(x,y,q,S_)=>{let g='';q.forEach((v,j)=>{const must=S_.includes(j),own=v===j;g+=`<line x1="${x+4+j*dp}" y1="${y+4}" x2="${x+4+v*dp}" y2="${y+18}" stroke="${must?PINK:own?V:'var(--b)'}" stroke-width="${own?2.8:1.4}"/>`});
+    for(let j=0;j<q.length;j++)g+=`<circle cx="${x+4+j*dp}" cy="${y+4}" r="1.8" fill="var(--ink)"/><circle cx="${x+4+j*dp}" cy="${y+18}" r="1.8" fill="var(--ink)"/>`;return g};
+  if(k===0)o+=`<text x="220" y="${RY+86}" text-anchor="middle" font-size="44" font-weight="800" style="font-family:var(--display)">${F[n]}</text><text x="220" y="${RY+112}" text-anchor="middle" font-size="14" font-weight="700">draws altogether: ${Array.from({length:n},(_,i)=>n-i).join(' × ')}</text>`;
+  else{
+    const rowsS=subsets(k),cols=perms(n-k),sq=hw+cols.length*cw>426,c2=sq?Math.min(15,(424-hw)/cols.length):cw,r2=sq?c2+3:ch,x0=Math.max(8,220-(hw+cols.length*c2)/2),gx=x0+hw,gy=RY+34,minus=k%2===1;
+    o+=`<text x="${x0}" y="${RY-12}" font-size="13" font-weight="700" style="fill:${minus?PINK:'var(--b)'}">${minus?'take away':'add back'} ${choose(n,k)} × ${F[n-k]} = ${F[n]/F[k]}</text>`;
+    o+=`<text x="${x0}" y="${RY+12}" font-size="12" font-weight="700" style="fill:${PINK}">must</text><text x="${x0}" y="${RY+26}" font-size="12" font-weight="700" style="fill:${PINK}">keep</text>`;
+    if(!sq&&n-k>0)cols.forEach((q,c)=>{const wd=(n-k-1)*dp+8;o+=`<rect x="${gx+c*cw+(w-wd)/2-3}" y="${RY+4}" width="${wd+6}" height="26" rx="6" fill="var(--paper)"/>`+mini(gx+c*cw+(w-wd)/2,RY+6,q,[])});
+    if(sq)o+=`<text x="${gx}" y="${RY+22}" font-size="12" font-weight="700" style="fill:var(--b)">the other ${n-k} in every order: ${F[n-k]} ways</text>`;
+    rowsS.forEach((S_,r)=>{const y=gy+r*r2,rest=[...Array(n).keys()].filter(i=>!S_.includes(i));
+      o+=`<text x="${x0}" y="${y+(sq?c2-2:16)}" font-size="${n===5?12:14}" font-weight="700" style="fill:${PINK}">${S_.map(i=>NAME[i]).join('')}</text>`;
+      cols.forEach((q,c)=>{if(sq){const a=fixed(q);o+=`<rect x="${gx+c*c2+1}" y="${y+1}" width="${c2-2}" height="${c2-2}" rx="2" fill="${a?V:PINK}" fill-opacity="${a?.8:.45}"/>`}
+        else{const full=[];S_.forEach(i=>full[i]=i);rest.forEach((i,j)=>full[i]=rest[q[j]]);o+=mini(gx+c*cw,y,full,S_)}})});
+    const ly=RY+34+maxR*ch+10;
+    o+=`<line x1="14" y1="${ly}" x2="30" y2="${ly}" stroke="${PINK}" stroke-width="3"/><text x="36" y="${ly+4}" font-size="11.5">must keep own name</text><line x1="168" y1="${ly}" x2="184" y2="${ly}" stroke="${V}" stroke-width="3"/><text x="190" y="${ly+4}" font-size="11.5">kept it by chance, so it is in another row too</text>`;
+  }
+  // the score so far: how many times each kind of draw has been counted
+  o+=`<line x1="10" y1="${TY-14}" x2="430" y2="${TY-14}" stroke="var(--line)"/><text x="14" y="${TY+6}" font-size="12" style="fill:var(--muted)">own names</text><text x="98" y="${TY+6}" font-size="12" style="fill:var(--muted)">draws</text><text x="426" y="${TY+6}" text-anchor="end" font-size="12" style="fill:var(--muted)">times each is counted so far</text>`;
+  const mx=Math.max(...fs.map(f=>choose(n,f)*D[n-f]));
+  fs.forEach((f,r)=>{const y=TY+12+r*rh,size=choose(n,f)*D[n-f],c=mult(f,st),wd=Math.max(4,size/mx*100),m2=Math.abs(c),bw=15,x1=426;
+    o+=`<text x="14" y="${y+19}" font-size="15" font-weight="700" style="fill:${f?PINK:'var(--b)'}">${f===0?'none':f}</text><rect x="98" y="${y+6}" width="${wd}" height="18" rx="4" fill="${f?PINK:'var(--b)'}" fill-opacity="${f?.45:1}"/><text x="${104+wd}" y="${y+20}" font-size="14" font-weight="700">${size}</text>`;
+    if(m2===0)o+=`<text x="${x1}" y="${y+20}" text-anchor="end" font-size="14" font-weight="700" style="fill:var(--muted)">0 ✓</text>`;
+    else{for(let j=0;j<m2;j++)o+=`<rect x="${x1-(j+1)*bw+2}" y="${y+7}" width="${bw-3}" height="${bw-1}" rx="3" fill="${c>0?'var(--b)':PINK}"/><text x="${x1-(j+.5)*bw+.5}" y="${y+19}" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--card)">${c>0?'+':'−'}</text>`;
+      o+=`<text x="${x1-m2*bw-6}" y="${y+20}" text-anchor="end" font-size="13" font-weight="700">${c>0?'':'−'}${m2}</text>`}});
   $('fig').innerHTML=o;
-  const parts=[];for(let j=1;j<=n;j++)parts.push(choose(n,j)*D[n-j]);
-  $('rule').innerHTML=st===0?`<span>Count every draw without listing any: ${n} choices for the first friend, ${n-1} for the next, and so on.</span><span class="big">${Array.from({length:n},(_,i)=>n-i).join(' × ')} = ${F[n]}</span>`
-    :fin?`<span>Take the bad draws away from all the draws.</span><span class="big">${F[n]} − ${parts.join(' − ')} = ${D[n]}</span>`
-    :`<span>Draws where exactly ${k} ${k===1?'friend keeps':'friends keep'} their own name: ${choose(n,k)} ${choose(n,k)===1?'way':'ways'} to choose who${k===n?'.':`, and ${D[n-k]} ${D[n-k]===1?'way':'ways'} for the other ${n-k} to all miss.`}</span><span class="big">${choose(n,k)} × ${D[n-k]} = ${choose(n,k)*D[n-k]}</span>`;
+  const terms=[];for(let j=0;j<=st;j++)terms.push(`${j?(j%2?' − ':' + '):''}<span class="term${j===st?' on':''}">${F[n]/F[j]}</span>`);
+  const pick=k===1?`pick the friend (${n} ways)`:k===n?`pick all ${n} (1 way)`:`pick ${k} friends who keep their own (${choose(n,k)} ways)`,rest=k===n?'':`, and the other ${n-k} can do anything`;
+  const say=k===0?'Start with every draw, good and bad.'
+    :k===1?`Take away the draws where at least 1 friend keeps their own name: ${pick}${rest}.`
+    :k%2===0?`Draws with ${k} or more own names were taken away too often. Add back at least ${k}: ${pick}${rest}.`
+    :`Now draws with ${k} or more own names are counted too often. Take away at least ${k}: ${pick}${rest}.`;
+  $('rule').innerHTML=`<span>${say}</span><span class="big">${terms.join('')} = ${total(st)}</span>`+(st===n?`<span class="sm">Every draw with an own name is now counted 0 times. Only the ${D[n]} good draws are left.</span>`:'');
 }
 
-// ---------- tab 2: count everything, then correct the count, back and forth ----------
-const mult=(f,k)=>{let s=0;for(let j=0;j<=k&&j<=f;j++)s+=(j%2?-1:1)*choose(f,j);return s};
-const total=k=>{let s=0;for(let j=0;j<=k;j++)s+=(j%2?-1:1)*F[n]/F[j];return s};
-function draw1(){
-  const fs=[];for(let f=0;f<=n;f++)if(choose(n,f)*D[n-f])fs.push(f);
-  const mx=Math.max(...fs.map(f=>choose(n,f)*D[n-f])),y0=30,rh=36,cy0=y0+fs.length*rh+34,ch=118,H=cy0+ch+34;let o='';
-  $('fig').setAttribute('viewBox',`0 0 440 ${H}`);
-  o+=`<text x="14" y="16" font-size="12" style="fill:var(--muted)">drew their own</text><text x="150" y="16" font-size="12" style="fill:var(--muted)">draws</text><text x="426" y="16" text-anchor="end" font-size="12" style="fill:var(--muted)">times each one is counted</text>`;
-  fs.forEach((f,r)=>{const y=y0+r*rh,size=choose(n,f)*D[n-f],c=mult(f,st),wd=Math.max(4,size/mx*110);
-    o+=`<text x="14" y="${y+19}" font-size="15" font-weight="700" style="fill:${f?PINK:'var(--b)'}">${f===0?'nobody':f}</text>`;
-    o+=`<rect x="84" y="${y+6}" width="${wd}" height="18" rx="4" fill="${f?PINK:'var(--b)'}" fill-opacity="${f?.45:1}"/><text x="${90+wd}" y="${y+20}" font-size="14" font-weight="700">${size}</text>`;
-    const k=Math.abs(c),bw=15,x1=426;
-    if(k===0)o+=`<text x="${x1}" y="${y+20}" text-anchor="end" font-size="14" font-weight="700" style="fill:var(--muted)">0 ✓</text>`;
-    else{for(let j=0;j<k;j++)o+=`<rect x="${x1-(j+1)*bw+2}" y="${y+7}" width="${bw-3}" height="${bw-1}" rx="3" fill="${c>0?'var(--b)':PINK}"/><text x="${x1-(j+.5)*bw+.5}" y="${y+19}" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--card)">${c>0?'+':'−'}</text>`;
-      o+=`<text x="${x1-k*bw-6}" y="${y+20}" text-anchor="end" font-size="13" font-weight="700">${c>0?'':'−'}${k}</text>`}});
-  // the running total, zig-zagging down to the answer
-  const X=k=>40+k*(360/n),Y=v=>cy0+ch-v/F[n]*ch;
-  o+=`<line x1="30" y1="${Y(0)}" x2="420" y2="${Y(0)}" stroke="var(--ink)" stroke-width="1.5"/><line x1="30" y1="${Y(D[n])}" x2="420" y2="${Y(D[n])}" stroke="var(--b)" stroke-dasharray="4 4"/><text x="424" y="${Y(D[n])-5}" text-anchor="end" font-size="12" font-weight="700" style="fill:var(--b)">${D[n]}</text>`;
-  let pth='';for(let k=0;k<=st;k++)pth+=(k?'L':'M')+X(k)+' '+Y(total(k));
-  o+=`<path d="${pth}" fill="none" stroke="var(--a)" stroke-width="3" stroke-linejoin="round"/>`;
-  for(let k=0;k<=st;k++)o+=`<circle cx="${X(k)}" cy="${Y(total(k))}" r="${k===st?7:5}" fill="var(--a)" stroke="var(--ink)" stroke-width="1.5"/>`+(k===n?'':`<text x="${X(k)+10}" y="${Y(total(k))+(total(k)>F[n]*.8?16:-8)}" font-size="13" font-weight="700">${total(k)}</text>`);
-  o+=`<text x="30" y="${H-8}" font-size="12" style="fill:var(--muted)">the running total</text>`;
-  $('fig').innerHTML=o;
-  const terms=[];for(let k=0;k<=st;k++)terms.push(`${k?(k%2?' − ':' + '):''}<span class="term${k===st?' on':''}">${F[n]/F[k]}</span>`);
-  const say=['Count every draw once.','Take one away for each friend holding their own name.','That took too much from draws with two. Add one back for each pair.','Take one away for each three.','Add one back for each four.','Take one away for each five.'][st];
-  $('rule').innerHTML=`<span>${say}</span><span class="big">${terms.join('')} = ${total(st)}</span>`+(st===n?`<span class="sm">Every pink pile is now counted 0 times. Only the ${D[n]} good draws are left.</span>`:st?`<span class="sm">${choose(n,st)} ways to pick ${st}, times ${F[n-st]} ways for everyone else: ${F[n]/F[st]}.</span>`:'');
-}
-
-// ---------- tab 3: one draw for m friends becomes one for m-1 or m-2 ----------
+// ---------- tab 2: one draw for m friends becomes one for m-1 or m-2 ----------
 function example(){const all=perms(m).filter(p=>fixed(p)===0&&(cs===0?p[p[0]]===0:p[p[0]]!==0));let p;do{p=all[Math.floor(Math.random()*all.length)]}while(all.length>1&&ex&&p.join()===ex.join());ex=p}
 function draw2(){
   const p=ex,k=p[0],swap=p[k]===0,e=st===3?ez(gl):0,cx=220,cy=168,R=112;let o='';
@@ -234,7 +225,7 @@ function draw2(){
   [...$('c-case').children].forEach((b,i)=>{b.classList.toggle('on',i===cs);b.disabled=i===0&&m===3});
 }
 
-// ---------- tab 4: the share of draws that work ----------
+// ---------- tab 3: the share of draws that work ----------
 function draw3(){
   const L=46,W=372,B=268,Hh=220,X=k=>L+(k-1)*(W/9),Y=v=>B-v/.55*Hh,E=1/Math.E;let o='';
   $('fig').setAttribute('viewBox','0 0 440 316');
@@ -250,51 +241,48 @@ function draw3(){
   $('rule').innerHTML=`<span>${pn} ${pn===1?'friend':'friends'}: ${fmt(D[pn])} of the ${fmt(F[pn])} draws work.</span><span class="big">${(r*100).toFixed(pn>6?4:2)}%</span><span class="sm">${fmt(F[pn])} ÷ e = ${(F[pn]*1/Math.E).toFixed(2)}, and the nearest whole number is ${fmt(Math.round(F[pn]/Math.E))}.</span>`;
 }
 
-const FR=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`,OP=x=>`<span class="op">${x}</span>`,D_=x=>`<span>D<sub>${x}</sub></span>`;
+const FR=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`,OP=x=>`<span class="op">${x}</span>`,D_=x=>`<span>D<sub>${x}</sub></span>`,BN=(a,b)=>`<span class="bn" role="img" aria-label="${a} choose ${b}"><span><span>${a}</span><span>${b}</span></span></span>`;
 const seq=on=>`<div class="seq" aria-label="How many draws work"><span class="h">friends</span>${[1,2,3,4,5,6].map(i=>`<span class="h">${i}</span>`).join('')}<span class="h">work</span>${[1,2,3,4,5,6].map(i=>`<span${i===on?' class="on"':''}>${D[i]}</span>`).join('')}</div>`;
 function notes(){
   const el=$('notes');
-  if(tab===0){const st_=['<b>All the draws.</b>'];for(let j=1;j<=n;j++)st_.push(`<b>${j===n?'Everyone keeps':j+(j===1?' keeps':' keep')}</b> their own name.`);st_.push('<b>What is left.</b>');
-    let t=`<span>${F[n]}</span>`;for(let j=1;j<=n;j++)t+=OP('&minus;')+`<span>${choose(n,j)}&times;${D[n-j]}</span>`;
-    el.innerHTML=`<h2>Take away the bad draws</h2><p class="hint">Nothing is listed here. Each bad pile is a rectangle: the rows are who keeps their own name, and the columns are the ways the others can all miss, which is the same puzzle with fewer friends.</p>
+  if(tab===0){const st_=['<b>Count every draw.</b>'];for(let j=1;j<=n;j++)st_.push(`<b>${j%2?'Take away':'Add back'}</b> at least ${j} own ${j===1?'name':'names'}.`);
+    let t='';for(let j=0;j<=n;j++)t+=`${j?OP(j%2?'&minus;':'+'):''}<span>${j?choose(n,j)+'&times;'+F[n-j]:F[n]}</span>`;
+    el.innerHTML=`<h2>Take away, add back</h2><p class="hint">This is the principle of inclusion and exclusion. D<sub>n</sub> is the number of draws where nobody keeps their own name.</p>
 <ol class="steps" id="steps">${st_.map(x=>`<li role="button" tabindex="0"><span>${x}</span></li>`).join('')}</ol>
-<p class="fm sm">${D_(n)}${OP('=')}${t}${OP('=')}<span>${D[n]}</span></p>${seq(n)}
-<p class="hint">The column counts 0, 1, 2, 9 are the answers for fewer friends, from the table above. So each new answer is built from the earlier ones.</p>`}
-  if(tab===1){let t='';for(let k=0;k<=n;k++)t+=`${k?OP(k%2?'&minus;':'+'):''}<span>${F[n]/F[k]}</span>`;
-    el.innerHTML=`<h2>Plus and minus</h2><p class="hint">Start with every draw, then correct the count. Each correction overshoots, and the next one pulls it back. Watch the right-hand column: every pile with someone holding their own name ends on 0.</p>
-<p class="fm"><span class="g">${D_('n')}${OP('=')}<span>n!</span></span><span class="g">${OP('(')}<span>1</span>${OP('&minus;')}${FR('1','1!')}${OP('+')}${FR('1','2!')}${OP('&minus;')}${FR('1','3!')}${OP('+ &hellip; &plusmn;')}${FR('1','n!')}${OP(')')}</span></p>
+<p class="fm sm"><span class="g">${D_('n')}${OP('=')}<span>n!</span></span><span class="g">${OP('&minus;')}${BN('n','1')}<span>(n&minus;1)!</span></span><span class="g">${OP('+')}${BN('n','2')}<span>(n&minus;2)!</span></span><span class="g">${OP('&minus;')}${BN('n','3')}<span>(n&minus;3)!</span></span><span class="g">${OP('+ &hellip;')}</span></p>
 <p class="fm sm">${D_(n)}${OP('=')}${t}${OP('=')}<span>${D[n]}</span></p>
-<p class="hint">n! means n &times; (n &minus; 1) &times; &hellip; &times; 1, so ${n}! = ${F[n]}. The terms are ${F[n]} divided by 1, 1, 2, 6, 24 and so on.</p>`}
-  if(tab===2)el.innerHTML=`<h2>Big from small</h2>
+<p class="hint">Each bracket is &ldquo;choose who must keep their own name&rdquo;, and each factorial is &ldquo;the others in any order&rdquo;. Multiplied together they are n! &divide; 1!, n! &divide; 2!, n! &divide; 3! and so on, which gives the short form:</p>
+<p class="fm"><span class="g">${D_('n')}${OP('=')}<span>n!</span></span><span class="g">${OP('(')}<span>1</span>${OP('&minus;')}${FR('1','1!')}${OP('+')}${FR('1','2!')}${OP('&minus;')}${FR('1','3!')}${OP('+ &hellip; &plusmn;')}${FR('1','n!')}${OP(')')}</span></p>${seq(n)}`}
+  if(tab===1)el.innerHTML=`<h2>Big from small</h2>
 <ol class="steps" id="steps">${['<b>A draw that works.</b>','<b>Follow A&rsquo;s arrow.</b>','<b>Does it come straight back?</b>','<b>Shrink the picture.</b>'].map(t=>`<li role="button" tabindex="0"><span>${t}</span></li>`).join('')}</ol>
 <p class="fm"><span class="g">${D_('n')}${OP('=')}<span>(n &minus; 1)</span></span><span class="g">${OP('(')}${D_('n&minus;1')}${OP('+')}${D_('n&minus;2')}${OP(')')}</span></p>
 <p class="fm sm">${D_(m)}${OP('=')}<span>${m-1} &times; (${D[m-1]} + ${D[m-2]})</span>${OP('=')}<span>${D[m]}</span></p>${seq(m)}
 <p class="hint">Both shrinking moves can be undone, so nothing is counted twice and nothing is missed.</p>`;
-  if(tab===3)el.innerHTML=`<h2>About 37%</h2><p class="hint">Divide the draws that work by all the draws. The share zigzags, then settles almost at once. A secret Santa draw works first time about 37 times in 100, whether there are 5 friends or 500.</p>
+  if(tab===2)el.innerHTML=`<h2>About 37%</h2><p class="hint">Divide the draws that work by all the draws. The share zigzags, then settles almost at once. A secret Santa draw works first time about 37 times in 100, whether there are 5 friends or 500.</p>
 <div class="chips" id="pts">${[1,2,3,4,5,6,7,8,9,10].map(k=>`<button type="button" data-k="${k}">${k}</button>`).join('')}</div>
 <p class="fm"><span class="g">${D_('n')}${OP('&asymp;')}${FR('n!','e')}</span><span class="g">${OP('where')}<span>e = 2.71828&hellip;</span></span></p>
-<p class="hint">The plus-and-minus sum from the second tab is exactly how 1 &divide; e is worked out, which is why it turns up here.</p>`;
+<p class="hint">The take-away, add-back sum from the first tab is exactly how 1 &divide; e is worked out, which is why it turns up here.</p>`;
   mark();
 }
-function mark(){const s=$('steps');if(s)[...s.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')});
+function mark(){const t=$('steps');if(t)[...t.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')});
   const p=$('pts');if(p)[...p.children].forEach(b=>b.classList.toggle('on',+b.dataset.k===pn))}
-const last=()=>tab===0?n+1:tab===1?n:tab===2?3:10,cur=()=>tab===3?pn:st,first=()=>tab===3?1:0;
-function draw(){[draw0,draw1,draw2,draw3][tab]();$('prev').disabled=cur()===first();$('next').disabled=cur()===last();mark()}
+const last=()=>tab===0?n:tab===1?3:10,cur=()=>tab===2?pn:st,first=()=>tab===2?1:0;
+function draw(){[draw0,draw2,draw3][tab]();$('prev').disabled=cur()===first();$('next').disabled=cur()===last();mark()}
 function glide(v,ms){cancelAnimationFrame(anim);const from=gl,t0=performance.now();if(from===v){draw();return}
   const f=now=>{const u=Math.min(1,(now-t0)/ms);gl=from+(v-from)*u;draw();if(u<1)anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)}
 function jump(i){
-  if(tab===3){pn=Math.max(1,Math.min(10,i));draw();return}
+  if(tab===2){pn=Math.max(1,Math.min(10,i));draw();return}
   st=Math.max(0,Math.min(last(),i));
-  if(tab===2){if(st===3){gl=0;glide(1,900)}else{cancelAnimationFrame(anim);gl=0;draw()}}else draw()}
-function sizes(){const a=tab===2?[3,4,5,6]:[3,4,5],v=tab===2?m:n;$('size').innerHTML=a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('')}
+  if(tab===1){if(st===3){gl=0;glide(1,900)}else{cancelAnimationFrame(anim);gl=0;draw()}}else draw()}
+function sizes(){const a=tab===1?[3,4,5,6]:[3,4,5],v=tab===1?m:n;$('size').innerHTML=a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('')}
 function select(i){cancelAnimationFrame(anim);tab=i;st=0;gl=0;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
-  $('alt').hidden=$('c-case').hidden=tab!==2;$('c-size').hidden=tab===3;sizes();if(tab===2)example();if(tab===3)pn=1;notes();draw()}
+  $('alt').hidden=$('c-case').hidden=tab!==1;$('c-size').hidden=tab===2;sizes();if(tab===1)example();if(tab===2)pn=1;notes();draw()}
 $('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
 $('prev').addEventListener('click',()=>jump(cur()-1));$('next').addEventListener('click',()=>jump(cur()+1));
 $('alt').addEventListener('click',()=>{cancelAnimationFrame(anim);example();st=0;gl=0;draw()});
 $('c-case').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled){cancelAnimationFrame(anim);cs=+b.dataset.c;example();st=0;gl=0;draw()}});
-$('size').addEventListener('change',e=>{cancelAnimationFrame(anim);st=0;gl=0;if(tab===2){m=+e.target.value;if(m===3&&cs===0)cs=1;example()}else{n=+e.target.value}notes();draw()});
+$('size').addEventListener('change',e=>{cancelAnimationFrame(anim);st=0;gl=0;if(tab===1){m=+e.target.value;if(m===3&&cs===0)cs=1;example()}else n=+e.target.value;notes();draw()});
 $('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li'),p=e.target.closest('#pts button');if(li)jump([...li.parentNode.children].indexOf(li));if(p)jump(+p.dataset.k)});
 document.addEventListener('keydown',e=>{
   const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
