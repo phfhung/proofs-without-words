@@ -28,6 +28,7 @@ Live site: https://proofs-without-words.phfhung.workers.dev/
 | `pie.html` | Inclusion and exclusion: multiples of 2, 3 and 5 among 1 to 30 as dots in circles, and why every item ends up counted once |
 | `derangements.html` | Secret Santa: derangements from three circles, then blocks for more friends, the recurrence with arrows, and 1/e |
 | `stopping.html` | Look, then leap: optimal stopping as a card game, all six orders of three cards, why the chance is a teal area, and the 37% rule |
+| `facts.html` | Facts and formulas to know by heart, starting with units (length, volume, weight, time, metric, dozen); the facts are one list at the top of the script |
 | `necklaces.html` | Fermat's little theorem by sorting bead strings into necklaces; which numbers pass the test; the test as hops round a clock |
 | `squares.html` | Factoring by a difference of two squares: cut and slide, then grow the square until the corner piece is a perfect square |
 | `nim.html` | Nim (take 1, 2 or 3): play the computer, see why rows of four win, and the game in 14 lines of Python |
