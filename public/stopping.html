@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Look, Then Leap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.os svg{display:block;width:100%;height:auto}
+.os text{font-family:var(--body);fill:var(--ink)}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:3.6em;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.rule .big{font-family:var(--display);font-size:clamp(1rem,5vw,1.3rem);white-space:nowrap}
+.rule .sm{color:var(--muted);font-size:.9rem;font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:700}
+.chips button{font:inherit;font-weight:700;padding:5px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.chips button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tally{margin-left:auto;font-variant-numeric:tabular-nums}
+.sl{display:flex;gap:12px;align-items:center;font-weight:700;font-variant-numeric:tabular-nums}
+.sl span{min-width:5.2em}
+.sl input{flex:1;min-width:0;accent-color:var(--accent)}
+.fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .4em;margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fm .op{font-weight:400}
+.fm .g{display:inline-flex;align-items:center;gap:.4em;white-space:nowrap}
+.fm .fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.2}
+.fm .fr>span:first-child{border-bottom:2px solid currentColor;padding:0 .25em}
+.notes a{color:var(--accent);font-weight:700}
+.steps li b{color:var(--ink)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Look, then leap</h1>
+    <p class="lede">Cards turn over one at a time. Take the biggest. No going back.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage">
+    <section class="figure os" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 330" role="img" aria-label="Picture"></svg>
+      <div class="row" id="nav">
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+      </div>
+      <div class="row" id="prow" hidden>
+        <button class="btn" id="take" type="button">Take it</button>
+        <button class="btn primary" id="turn" type="button">Next card &rarr;</button>
+      </div>
+      <div class="rule" id="rule" aria-live="polite"></div>
+      <div class="chips" id="c-n"><span>Cards</span><span id="ns" class="chips"></span><span class="tally" id="tally"></span></div>
+      <label class="sl" id="c-r" hidden><span id="rl">Look at 3</span><input type="range" id="rs" min="1" max="9" value="3" aria-label="How many cards to look at"></label>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Play','Three cards','Why it works','Where to cut'],PINK='#d6457a',STAR='M0,-9 2.6,-2.9 9,-2.9 3.9,1.3 5.6,7.8 0,3.9 -5.6,7.8 -3.9,1.3 -9,-2.9 -2.6,-2.9Z';
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tab=0,st=0,n=10,r=3;
+// chance to win with n cards if you only look at the first R, then take the first card that beats them all
+const win=(N,R)=>{if(R===0)return 1/N;let s=0;for(let k=R+1;k<=N;k++)s+=R/(k-1);return s/N};
+const best=N=>{let b=0;for(let R=1;R<N;R++)if(win(N,R)>win(N,b))b=R;return b};
+const pct=x=>(100*x).toFixed(1)+'%',lerp=(a,b,t)=>a+(b-a)*t,fmt=x=>x.toLocaleString('en-US');
+const star=(x,y,s,fill,op)=>`<path d="${STAR}" transform="translate(${x} ${y}) scale(${s})" fill="${fill}" stroke="var(--ink)" stroke-width="${1.2/s}" stroke-linejoin="round"${op===undefined?'':` opacity="${op}"`}/>`;
+let raf=0;
+function tween(step,dur){cancelAnimationFrame(raf);if(still){step(1);return}const t0=performance.now();
+  const f=t=>{const u=Math.min(1,(t-t0)/dur);step(u*u*(3-2*u));if(u<1)raf=requestAnimationFrame(f)};raf=requestAnimationFrame(f)}
+
+// ---------- tab 1: play ----------
+let G={v:[],shown:0,took:-1,done:false},dh=[],W=0,T=0;
+function deal(){const S=Math.min(9999,Math.round(n*Math.pow(10,1+2*Math.random()))),s=new Set();while(s.size<n)s.add(1+Math.floor(Math.random()*S));
+  G={v:[...s],shown:0,took:-1,done:false};for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[G.v[i],G.v[j]]=[G.v[j],G.v[i]]}
+  dh=G.v.map(()=>0);cancelAnimationFrame(raf);paintPlay()}
+function settle(){const top=Math.max(...(G.done?G.v:G.v.slice(0,G.shown))),th=G.v.map((x,i)=>i<G.shown||G.done?x/top*196:0),from=dh.slice();
+  tween(u=>{dh=th.map((x,i)=>lerp(from[i],x,u));paintPlay()},280)}
+function paintPlay(){
+  const sw=420/n,bw=Math.min(sw-6,36),base=276,top=Math.max(...G.v),b=G.v.indexOf(top);let o='';
+  $('fig').setAttribute('viewBox','0 0 440 306');
+  o+=`<line x1="6" y1="${base}" x2="434" y2="${base}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  for(let i=0;i<n;i++){const x=10+i*sw+(sw-bw)/2,seen=i<G.shown;
+    if(!seen&&!G.done){o+=`<rect x="${x}" y="${base-40}" width="${bw}" height="40" rx="5" fill="var(--c-soft)" stroke="var(--ink)" stroke-width="1.5"/><text x="${x+bw/2}" y="${base-14}" text-anchor="middle" font-size="${Math.min(18,bw*.6)}" font-weight="800" style="fill:var(--c)">?</text>`;continue}
+    const h=Math.max(2,dh[i]),tk=i===G.took,fill=tk?(i===b?'var(--b)':PINK):!seen?'none':i===G.shown-1&&!G.done?'var(--a)':'var(--card)';
+    o+=`<rect x="${x}" y="${base-h}" width="${bw}" height="${h}" rx="3" fill="${fill}" stroke="var(--ink)" stroke-width="${tk?2.2:1.5}"${seen?'':' stroke-dasharray="3 3" opacity=".6"'}/>`;
+    if(sw>=40)o+=`<text x="${x+bw/2}" y="${base-h-6}" text-anchor="middle" font-size="11.5" font-weight="700"${seen?'':' opacity=".6"'}>${G.v[i]}</text>`;
+    if(G.done&&i===b)o+=star(x+bw/2,base-h-(sw>=40?30:14),1.1,'var(--a)')}
+  for(let i=0;i<n;i++)if(n<=10||(i+1)%5===0||i===0)o+=`<text x="${10+i*sw+sw/2}" y="${base+18}" text-anchor="middle" font-size="11.5" style="fill:var(--muted)">${i+1}</text>`;
+  $('fig').innerHTML=o;
+  const v=G.v[G.shown-1],won=G.done&&G.took===b;
+  $('rule').innerHTML=G.shown===0?`<span class="sm">${n} cards, any numbers at all</span><span class="big">take the biggest</span>`
+    :!G.done?`<span class="sm">card ${G.shown} of ${n}</span><span class="big">${fmt(v)}</span>`
+    :won?`<span class="sm">you took the biggest</span><span class="big">${fmt(top)}</span>`
+    :`<span class="sm">the biggest was card ${b+1}</span><span class="big">${fmt(G.v[G.took])} &lt; ${fmt(top)}</span>`;
+  $('take').disabled=G.shown===0||G.done;$('turn').innerHTML=G.done?'New deal':'Next card &rarr;';
+  $('tally').textContent=T?`Won ${W} of ${T}`:'';
+}
+function finish(i){G.took=i;G.done=true;T++;if(G.v[i]===Math.max(...G.v))W++;settle()}
+function turn(){if(G.done){deal();return}G.shown++;if(G.shown===n)finish(n-1);else settle()}
+
+// ---------- tab 2: three cards, six orders ----------
+const PERMS=[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]];
+// which card the rule takes: look at the first R, then the first card bigger than all of them (or the last card)
+const pick=(p,R)=>{let m=0;for(let i=0;i<R;i++)m=Math.max(m,p[i]);for(let i=R;i<p.length;i++)if(p[i]>m)return i;return p.length-1};
+function drawThree(){
+  let o='',wins=0;const R=st-1;$('fig').setAttribute('viewBox','0 0 440 330');
+  PERMS.forEach((p,q)=>{const cx=12+(q%3)*142,cy=10+Math.floor(q/3)*158,t=st?pick(p,R):-1,ok=t>=0&&p[t]===3;if(ok)wins++;
+    o+=`<rect x="${cx}" y="${cy}" width="132" height="148" rx="12" fill="var(--card)" stroke="${!st?'var(--line)':ok?'var(--b)':PINK}" stroke-width="${st?2.5:1.5}"/>`;
+    if(R>0)o+=`<rect x="${cx+11}" y="${cy+12}" width="${R*36+2}" height="124" rx="6" fill="var(--paper)" stroke="var(--muted)" stroke-dasharray="4 3"/>`;
+    p.forEach((v,i)=>{const x=cx+16+i*36,h=v*30;o+=`<rect x="${x}" y="${cy+128-h}" width="28" height="${h}" rx="3" fill="${i===t?(ok?'var(--b)':PINK):'var(--card)'}" stroke="var(--ink)" stroke-width="${i===t?2.2:1.5}"${st&&i>t?' opacity=".35"':''}/>`});
+    if(st){const bx=cx+114,by=cy+18;o+=`<circle cx="${bx}" cy="${by}" r="11" fill="${ok?'var(--b)':PINK}" stroke="var(--ink)" stroke-width="1.5"/>`+(ok?`<path d="M${bx-5} ${by} l3.5 4 l6.5 -8" fill="none" stroke="var(--card)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`:`<path d="M${bx-4} ${by-4} l8 8 M${bx+4} ${by-4} l-8 8" stroke="var(--card)" stroke-width="2.6" stroke-linecap="round"/>`)}});
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=`<span class="sm">${['three cards can come in six orders','take the first card','look at one, then take the next bigger card','look at two, then take the last'][st]}</span><span class="big">${st?wins+' of 6':'6'}</span>`;
+}
+
+// ---------- tab 3: why. First one deal (10 cards, look at 3, biggest is 7th), then every place the biggest can be ----------
+const EXW=[5,8,3,4,7,6,10],EXL=[5,7,3,4,8,6,10];
+let cur={h:EXW.slice(),t:0};
+const goal=()=>({h:st===2||st===3?EXL:EXW,t:st>=5?1:0});
+function paintEx(){
+  const x0=20,sw=40,bw=28,base=266,u=21,R=3,h=cur.h,X=i=>x0+i*sw+(sw-bw)/2;let o='';
+  o+=`<rect x="${x0-4}" y="34" width="${R*sw+8}" height="${base-34}" rx="8" fill="var(--paper)" stroke="var(--muted)" stroke-dasharray="4 3"/><text x="${x0+R*sw/2}" y="24" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--muted)">just look</text>`;
+  o+=`<line x1="8" y1="${base}" x2="432" y2="${base}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  const took=st===1?6:st===2?4:-1,zm=Math.max(h[0],h[1],h[2]);
+  for(let i=0;i<10;i++){const x=X(i);
+    if(i>6){o+=`<rect x="${x}" y="${base-34}" width="${bw}" height="34" rx="5" fill="var(--c-soft)" stroke="var(--ink)" stroke-width="1.5" opacity=".7"/>`;continue}
+    const fill=st===1?(i===6?'var(--b)':i===1?'var(--a)':'var(--card)'):st===2?(i===4?PINK:'var(--card)'):i===6?'var(--a)':'var(--card)';
+    o+=`<rect x="${x}" y="${base-h[i]*u}" width="${bw}" height="${h[i]*u}" rx="3" fill="${fill}" stroke="var(--ink)" stroke-width="${i===took?2.2:1.5}"${st===2&&i>4?' opacity=".35"':''}/>`}
+  o+=star(X(6)+bw/2,base-10*u-16,1.2,st===2?'var(--card)':'var(--a)');
+  if(took>=0)o+=`<line x1="${X(0)}" y1="${base-zm*u}" x2="${X(took)+bw+6}" y2="${base-zm*u}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  for(let i=0;i<10;i++)o+=`<text x="${x0+i*sw+sw/2}" y="${base+17}" text-anchor="middle" font-size="11.5" style="fill:var(--muted)">${i+1}</text>`;
+  if(st>=1){for(let i=0;i<6;i++){const lit=st===3||(st===1&&i===1)||(st===2&&i===4);
+      o+=`<rect x="${x0+i*sw+3}" y="300" width="${sw-6}" height="30" rx="5" fill="${lit?(i<R?'var(--b)':PINK):'none'}" stroke="${lit?'var(--ink)':'var(--line)'}" stroke-width="1.5"/>`}
+    o+=star(x0+6*sw+sw/2,315,1.1,'var(--a)')+`<text x="${x0+3*sw}" y="354" text-anchor="middle" font-size="12.5" style="fill:var(--muted)">where the biggest of the first six is</text>`}
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=`<span class="sm">${['look at 3, then take the first card that beats them','the biggest of the first six is in the look zone','the biggest of the first six comes after the zone','it is just as likely to be in any of the six places'][st]}</span><span class="big">${['the biggest is 7th','you reach the biggest','you stop too soon','3 of 6 win'][st]}</span>`;
+}
+function paintRows(){
+  const Wd=330,X=42,top=40,h=Math.min(34,340/n),w=Wd/n,t=cur.t,g=n>10?1.5:3,fs=h<20?10:12.5;let o='';
+  for(let k=1;k<=n;k++){const y=top+(k-1)*h+g/2,hh=h-g;
+    o+=`<text x="${X-8}" y="${y+hh/2+fs*.36}" text-anchor="end" font-size="${fs}" style="fill:var(--muted)">${k}</text>`;
+    if(k<=r)o+=`<rect x="${X}" y="${y}" width="${lerp(k*w,Wd,t)}" height="${hh}" rx="2" fill="${PINK}" fill-opacity=".8"/>`;
+    else{const wt=lerp(r*w,Wd*r/(k-1),t),wp=lerp((k-1-r)*w,Wd*(k-1-r)/(k-1),t);
+      o+=`<rect x="${X}" y="${y}" width="${wt}" height="${hh}" rx="2" fill="var(--b)"/><rect x="${X+wt}" y="${y}" width="${wp}" height="${hh}" rx="2" fill="${PINK}" fill-opacity=".8"/>`}
+    if(t<1){for(let c=1;c<(k<=r?k:k-1);c++)o+=`<line x1="${X+c*w}" y1="${y}" x2="${X+c*w}" y2="${y+hh}" stroke="var(--card)" stroke-width="${g}" opacity="${1-t}"/>`;
+      o+=star(X+(k-1)*w+w/2,y+hh/2,Math.min(1.1,Math.min(hh,w)/22),k<=r?'var(--card)':'var(--a)',1-t)}
+    o+=`<text x="436" y="${y+hh/2+fs*.36}" text-anchor="end" font-size="${fs}" font-weight="700" style="fill:${k>r?'var(--ink)':'var(--muted)'}">${k>r?r+'/'+(k-1):'0'}</text>`}
+  if(t<1)o+=`<g opacity="${1-t}"><line x1="${X+r*w}" y1="${top-8}" x2="${X+r*w}" y2="${top+n*h+2}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${Math.max(36,X+r*w/2)}" y="${top-14}" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--muted)">just look</text></g>`;
+  if(t>0)o+=`<text x="${X+Wd/2}" y="${top-14}" text-anchor="middle" font-size="13" font-weight="700" opacity="${t}" style="fill:var(--muted)">every row stretched to the same width</text>`;
+  $('fig').innerHTML=o;
+  const terms=[];for(let k=r+1;k<=n;k++)terms.push(r+'/'+(k-1));const sum=terms.length>3?terms[0]+' + '+terms[1]+' + … + '+terms[terms.length-1]:terms.join(' + ');
+  $('rule').innerHTML=st===4?`<span class="sm">one row for each place the biggest can be: teal wins</span><span class="big">(${sum}) ÷ ${n}</span>`
+    :`<span class="sm">the teal share of the picture is your chance</span><span class="big">${pct(win(n,r))}</span>`;
+  $('rl').textContent='Look at '+r;$('rs').max=n-1;$('rs').value=r;
+}
+function paintWhy(){$('fig').setAttribute('viewBox','0 0 440 390');if(st<=3)paintEx();else paintRows()}
+
+// ---------- tab 4: the chance for every cut-off ----------
+const NS=[3,5,10,20,50,100,1000],E=Math.exp(-1);
+function drawCut(){
+  const N=NS[st],b=best(N),X0=56,X1=424,Y0=304,Y1=30,px=x=>X0+x*(X1-X0),py=p=>Y0-p/.6*(Y0-Y1);let o='';
+  $('fig').setAttribute('viewBox','0 0 440 350');
+  o+=`<line x1="${X0}" y1="${Y0}" x2="${X1}" y2="${Y0}" stroke="var(--ink)" stroke-width="1.5"/><line x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1-8}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  o+=`<line x1="${px(E)}" y1="${Y0}" x2="${px(E)}" y2="${py(E)}" stroke="var(--muted)" stroke-dasharray="4 4"/><line x1="${X0}" y1="${py(E)}" x2="${px(E)}" y2="${py(E)}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+  o+=`<text x="${X0}" y="${Y0+18}" text-anchor="middle" font-size="12" style="fill:var(--muted)">0</text><text x="${px(E)}" y="${Y0+18}" text-anchor="middle" font-size="12.5" font-weight="700">37%</text><text x="${X1}" y="${Y0+18}" text-anchor="end" font-size="12" style="fill:var(--muted)">all</text><text x="${(X0+X1)/2+30}" y="${Y0+38}" text-anchor="middle" font-size="12.5" style="fill:var(--muted)">share of the cards you only look at</text>`;
+  o+=`<text x="${X0-8}" y="${Y0+4}" text-anchor="end" font-size="12" style="fill:var(--muted)">0</text><text x="${X0-8}" y="${py(E)+4}" text-anchor="end" font-size="12.5" font-weight="700">37%</text><text x="${X0-8}" y="${py(.6)+4}" text-anchor="end" font-size="12" style="fill:var(--muted)">60%</text><text transform="translate(14 ${(Y0+Y1)/2-40}) rotate(-90)" text-anchor="middle" font-size="12.5" style="fill:var(--muted)">chance to win</text>`;
+  if(N>=100){let d='';for(let R=0;R<N;R++)d+=(R?'L':'M')+px(R/N).toFixed(1)+' '+py(win(N,R)).toFixed(1);o+=`<path d="${d}" fill="none" stroke="var(--b)" stroke-width="3" stroke-linejoin="round"/>`}
+  else for(let R=0;R<N;R++)if(R!==b)o+=`<circle cx="${px(R/N)}" cy="${py(win(N,R))}" r="${N>20?3:5}" fill="var(--b)" stroke="var(--ink)" stroke-width="${N>20?.8:1.2}"/>`;
+  o+=`<circle cx="${px(b/N)}" cy="${py(win(N,b))}" r="7.5" fill="var(--a)" stroke="var(--ink)" stroke-width="1.8"/>`;
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=`<span class="sm">${fmt(N)} cards: look at ${b}</span><span class="big">${pct(win(N,b))}</span>`;
+}
+
+const OP=x=>`<span class="op">${x}</span>`,FR=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+function notes(){
+  const el=$('notes'),steps=a=>`<ol class="steps" id="steps">${a.map(x=>`<li role="button" tabindex="0"><span><b>${x}</b></span></li>`).join('')}</ol>`;
+  el.innerHTML=tab===0?`<h2>Play</h2><p class="hint">Pass a card and it is gone. Reach the last card and it is yours.</p>`
+   :tab===1?`<h2>Three cards</h2>${steps(['Six orders','Take the first','Look at one','Look at two'])}`
+   :tab===2?`<h2>Why it works</h2>${steps(['The biggest is 7th','Biggest before it: in the look zone','Biggest before it: after the zone','Six places, three win','Every place for the biggest','Stretch the rows'])}
+<p class="fm"><span class="g"><span>win</span>${OP('=')}${FR(1,'n')}${OP('&times;')}</span><span class="g">${OP('(')}${FR('r','r')}${OP('+')}${FR('r','r + 1')}${OP('+ &hellip; +')}${FR('r','n &minus; 1')}${OP(')')}</span></p>
+<p class="hint">n cards, look at r.</p>`
+   :`<h2>Where to cut</h2>${steps(NS.map(x=>fmt(x)+' cards'))}
+<p class="fm"><span class="g"><span>win</span>${OP('&rarr;')}<span>x</span>${OP('&times;')}<span>ln</span>${FR(1,'x')}</span></p>
+<p class="fm"><span class="g"><span>best x</span>${OP('=')}${FR(1,'e')}${OP('&asymp;')}<span>37%</span></span><span class="g"><span>win</span>${OP('=')}${FR(1,'e')}</span></p>
+<p class="hint">x is the share of the cards you only look at. The same 37% as <a href="derangements.html">Secret Santa</a>.</p>`;
+  mark();
+}
+function mark(){const t=$('steps');if(t)[...t.children].forEach((li,i)=>{li.classList.toggle('on',i===st);li.setAttribute('aria-current',i===st?'step':'false')})}
+const last=()=>[0,3,5,6][tab];
+function ui(){$('prev').disabled=st===0;$('next').disabled=st===last();const live=tab===2&&st>=4;$('c-n').hidden=!(tab===0||live);$('c-r').hidden=!live;$('tally').hidden=tab!==0;
+  [...$('ns').children].forEach(b=>b.classList.toggle('on',+b.dataset.n===n));mark()}
+function draw(){if(tab===0)paintPlay();else if(tab===1)drawThree();else if(tab===2)paintWhy();else drawCut();ui()}
+function jump(i){i=Math.max(0,Math.min(last(),i));if(i===st)return;st=i;
+  if(tab===2){const from={h:cur.h.slice(),t:cur.t},to=goal();ui();tween(u=>{cur={h:to.h.map((x,j)=>lerp(from.h[j],x,u)),t:lerp(from.t,to.t,u)};paintWhy()},340)}else draw()}
+function select(i){cancelAnimationFrame(raf);tab=i;st=0;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  $('nav').hidden=tab===0;$('prow').hidden=tab!==0;cur=goal();notes();if(tab===0)deal();draw()}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('ns').innerHTML=[5,10,20].map(x=>`<button type="button" data-n="${x}">${x}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('prev').addEventListener('click',()=>jump(st-1));$('next').addEventListener('click',()=>jump(st+1));
+$('turn').addEventListener('click',turn);$('take').addEventListener('click',()=>{if(G.shown&&!G.done)finish(G.shown-1)});
+$('ns').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;n=+b.dataset.n;r=Math.max(1,Math.min(n-1,r));if(tab===0)deal();draw()});
+$('rs').addEventListener('input',e=>{r=+e.target.value;paintRows()});
+$('notes').addEventListener('click',e=>{const li=e.target.closest('#steps li');if(li)jump([...li.parentNode.children].indexOf(li))});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase(),li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();jump([...li.parentNode.children].indexOf(li));return}
+  if(tag==='input'||tag==='select')return;
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!d)return;e.preventDefault();if(tab===0){if(d>0)turn()}else jump(st+d)});
+select(0);
+</script>
+</body>
+</html>
