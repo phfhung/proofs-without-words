@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flip Until HTH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: figure on the left, numbered steps on the right; one proof on screen at a time.
+     Colour code used in every proof: amber = a, teal = b, violet = c. */
+  --paper:#eef1f5; --card:#ffffff; --ink:#16202b; --muted:#566370; --line:#cdd5de;
+  --tri:#c5d0dd; --sq:#e9e2c8;
+  --a:#e58a22; --b:#18a08f; --c:#6157e0;
+  --a-soft:#fbe0c2; --b-soft:#c4ebe5; --c-soft:#dcd9fa;
+  --accent:#1c4f8f; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+    --tri:#3d4d60; --sq:#5a5335;
+    --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+    --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+    --accent:#86b6f0; --on-accent:#0d1620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10151b; --card:#19212b; --ink:#e9eef3; --muted:#9ba8b5; --line:#34414f;
+  --tri:#3d4d60; --sq:#5a5335;
+  --a:#f0a14c; --b:#3fc6b6; --c:#948dff;
+  --a-soft:#573a19; --b-soft:#1b4a44; --c-soft:#322f60;
+  --accent:#86b6f0; --on-accent:#0d1620;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.back{display:inline-block;margin-bottom:10px;color:var(--accent);font-weight:700;text-decoration:none}
+.back:hover{text-decoration:underline}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:0 0 auto;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button .n{font-family:var(--display);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tabs button[aria-selected="true"] .n{color:inherit}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:860px){.stage{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.figure,.notes{background:var(--card);border:1.5px solid var(--line);border-radius:14px}
+.figure{padding:14px;display:flex;flex-direction:column;gap:12px}
+#fig{display:block;width:100%;max-height:min(62vh,600px);touch-action:pan-y}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent);height:28px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{border-color:var(--line)}
+ol.steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:88px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.shape{border-top:1.5px solid var(--line);padding-top:12px}
+.shape label{font-weight:700}
+.nums{font-variant-numeric:tabular-nums;color:var(--muted);flex:1 1 100%}
+.nums b{color:var(--ink)}
+.ka{color:var(--a)} .kb{color:var(--b)} .kc{color:var(--c)}
+.notes{padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.credit{margin:0;color:var(--muted);font-size:.92rem}
+h2{font-family:var(--display);font-weight:800;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid transparent;color:var(--muted)}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line)}
+ol.steps li.on{color:var(--ink);border-color:var(--accent);background:var(--paper)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.algebra{margin:0;padding:12px 14px;border-radius:10px;background:var(--paper);font-weight:700;font-variant-numeric:tabular-nums;overflow-x:auto}
+.algebra span{display:block;white-space:nowrap}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.cf svg{display:block;width:100%;height:auto}
+.cf text{font-family:var(--body);fill:var(--ink)}
+.rule{margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:700;text-align:center;min-height:3.6em;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.rule .big{font-family:var(--display);font-size:clamp(1rem,5vw,1.3rem)}
+.rule .sm{color:var(--muted);font-size:.9rem;font-weight:400}
+.pat{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:700}
+.pat .pc{display:inline-flex;gap:5px}
+.pat .pc button{font:inherit;font-family:var(--display);font-weight:800;width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);color:var(--ink);cursor:pointer;padding:0}
+.pat .pc button.H{background:var(--a-soft)}
+.pat .pc button.T{background:var(--c-soft)}
+.pat .sz{font:inherit;font-weight:800;width:34px;height:34px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;padding:0}
+.pat .sz:disabled{opacity:.35;cursor:default}
+.fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .4em;margin:0;padding:10px 14px;border-radius:10px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fm .op{font-weight:400}
+.fm .g{display:inline-flex;align-items:center;gap:.35em;white-space:nowrap}
+.fm .fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;font-size:.8em}
+.fm .fr>span:first-child{border-bottom:2px solid currentColor;padding:0 .2em}
+.eqs{display:flex;flex-direction:column;gap:6px}
+.notes a{color:var(--accent);font-weight:700}
+.steps li b{color:var(--ink)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">&larr; All activities</a>
+    <h1>Flip until HTH</h1>
+    <p class="lede">Flip a coin until a pattern shows up. How many flips, on average?</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Choose a picture"></nav>
+
+  <main class="stage">
+    <section class="figure cf" aria-label="Picture">
+      <svg id="fig" viewBox="0 0 440 330" role="img" aria-label="Picture"></svg>
+      <div class="row" id="nav">
+        <button class="btn" id="prev" type="button" aria-label="Back">&larr; Back</button>
+        <button class="btn primary" id="next" type="button" aria-label="Next">Next &rarr;</button>
+        <button class="btn" id="again" type="button" hidden>Another game</button>
+      </div>
+      <div class="row" id="prow" hidden>
+        <button class="btn primary" id="flip" type="button">Flip</button>
+        <button class="btn" id="many" type="button">100 games</button>
+      </div>
+      <div class="rule" id="rule" aria-live="polite"></div>
+      <div class="pat"><span>Pattern</span><span class="pc" id="pc"></span><button class="sz" id="less" type="button" aria-label="Shorter pattern">&minus;</button><button class="sz" id="more" type="button" aria-label="Longer pattern">+</button></div>
+    </section>
+
+    <section class="notes" id="notes"></section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const TABS=['Flip','Slip back','The doubling game','Any pattern'],PINK='#d6457a';
+let tab=0,st=0,pat='HTH';
+const L=()=>pat.length,other=c=>c==='H'?'T':'H';
+// after matching the first s letters and then flipping c, how many letters are matched now
+const nxt=(s,c)=>{const t=pat.slice(0,s)+c;for(let k=Math.min(t.length,pat.length);k>0;k--)if(t.endsWith(pat.slice(0,k)))return k;return 0};
+// lengths k where the first k letters of p equal its last k letters
+const laps=p=>{const o=[];for(let k=p.length;k>=1;k--)if(p.slice(0,k)===p.slice(p.length-k))o.push(k);return o};
+const wait=p=>laps(p).reduce((a,k)=>a+2**k,0);
+// flips still to go once the first s letters are matched
+const rem=()=>[...Array(L()+1)].map((_,s)=>wait(pat)-wait(pat.slice(0,s)));
+const coin=(x,y,r,c,extra)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c==='H'?'var(--a-soft)':'var(--c-soft)'}" stroke="var(--ink)" stroke-width="1.5" ${extra||''}/><text x="${x}" y="${y+r*.36}" text-anchor="middle" font-size="${r*1.05}" font-weight="800" ${extra||''}>${c}</text>`;
+
+// ---------- tab 1: flip ----------
+let sim;
+const fresh=()=>{sim={seq:[],s:0,done:false,games:0,total:0,counts:{}}};
+function record(n){sim.games++;sim.total+=n;sim.counts[n]=(sim.counts[n]||0)+1}
+function flip(){if(sim.done){sim.seq=[];sim.s=0;sim.done=false}const c=Math.random()<.5?'H':'T';sim.seq.push(c);sim.s=nxt(sim.s,c);if(sim.s===L()){sim.done=true;record(sim.seq.length)}paintFlip()}
+function many(){for(let g=0;g<100;g++){let s=0,n=0;while(s<L()){s=nxt(s,Math.random()<.5?'H':'T');n++}record(n)}sim.seq=[];sim.s=0;sim.done=false;paintFlip()}
+function paintFlip(){
+  let o='';$('fig').setAttribute('viewBox','0 0 440 330');
+  const show=sim.seq.slice(-42),off=sim.seq.length-show.length,lit=sim.done?L():sim.s;
+  show.forEach((c,i)=>{const x=25+(i%14)*30,y=22+Math.floor(i/14)*30,hot=i>=show.length-lit;
+    o+=coin(x,y,12,c)+(hot?`<circle cx="${x}" cy="${y}" r="13.5" fill="none" stroke="var(--b)" stroke-width="3.5"/>`:'')});
+  if(!show.length)for(let i=0;i<L();i++)o+=`<circle cx="${25+i*30}" cy="22" r="12" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  if(off)o+=`<text x="432" y="112" text-anchor="end" font-size="11.5" style="fill:var(--muted)">last 42 of ${sim.seq.length}</text>`;
+  // how long the games took
+  const bins=26,w=Math.max(1,Math.ceil(wait(pat)*2.2/bins)),X0=20,X1=424,Y0=288,bw=(X1-X0)/(bins+1),cnt=Array(bins+1).fill(0);
+  for(const k in sim.counts){const b=Math.min(bins,Math.floor((k-L())/w));cnt[b]+=sim.counts[k]}
+  const top=Math.max(1,...cnt);
+  o+=`<line x1="${X0-6}" y1="${Y0}" x2="${X1+6}" y2="${Y0}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  cnt.forEach((c,b)=>{if(c)o+=`<rect x="${X0+b*bw+1}" y="${Y0-c/top*150}" width="${bw-2}" height="${c/top*150}" rx="2" fill="var(--b)"/>`});
+  for(let b=0;b<bins;b++){const v=L()+b*w;if(b===0||v%(5*w)===0)o+=`<text x="${X0+b*bw+bw/2}" y="${Y0+16}" text-anchor="middle" font-size="11" style="fill:var(--muted)">${v}</text>`}
+  o+=`<text x="${X0+bins*bw+bw/2}" y="${Y0+16}" text-anchor="middle" font-size="11" style="fill:var(--muted)">more</text><text x="${(X0+X1)/2}" y="${Y0+34}" text-anchor="middle" font-size="12" style="fill:var(--muted)">flips in a game</text>`;
+  if(sim.games){const m=sim.total/sim.games,x=X0+Math.min(bins+.5,(m-L())/w+.5)*bw;o+=`<path d="M${x} ${Y0-158} v156" stroke="var(--a)" stroke-width="2.5" stroke-dasharray="5 4"/><path d="M${x-7} ${Y0-170} h14 l-7 11z" fill="var(--a)" stroke="var(--ink)" stroke-width="1.2"/>`}
+  $('fig').innerHTML=o;
+  $('rule').innerHTML=sim.games?`<span class="sm">${sim.games} game${sim.games>1?'s':''}${sim.seq.length?` &middot; this one: ${sim.seq.length} flip${sim.seq.length>1?'s':''}${sim.done?', done':''}`:''}</span><span class="big">average ${(sim.total/sim.games).toFixed(1)} flips</span>`
+    :`<span class="sm">${sim.seq.length?sim.seq.length+' flip'+(sim.seq.length>1?'s':'')+' so far':'flip until the pattern shows up'}</span><span class="big">how many flips?</span>`;
+}
+
+// ---------- tab 2: stepping stones. A right flip moves on, a wrong flip slips back ----------
+const ARROWS=`<defs><marker id="at" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--b)"/></marker><marker id="ap" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="${PINK}"/></marker></defs>`;
+const VAR='abcdef';
+function paintStones(){
+  const n=L(),gap=n<=3?34:22,sw=Math.min(84,(424-n*gap)/(n+1)),x0=(440-((n+1)*sw+n*gap))/2,X=s=>x0+s*(sw+gap),y=124,h=46,R=rem();let o=ARROWS,deep=0;
+  for(let s=0;s<n;s++)deep=Math.max(deep,s-nxt(s,other(pat[s])));
+  $('fig').setAttribute('viewBox',`0 0 440 ${Math.max(236,y+h+(deep?(40+22*deep)/2+32:20))}`);
+  for(let s=0;s<n;s++){const c=pat[s],w=other(c),t=nxt(s,w),cx=X(s)+sw/2;
+    o+=`<g opacity="${st===n||st===s?1:.15}"><line x1="${X(s)+sw+2}" y1="${y+h/2}" x2="${X(s+1)-6}" y2="${y+h/2}" stroke="var(--b)" stroke-width="2.6" marker-end="url(#at)"/><text x="${X(s)+sw+gap/2-1}" y="${y+h/2-9}" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--b)">${c}</text>`;
+    if(t===s)o+=`<path d="M${cx-11} ${y-2} C${cx-24} ${y-36} ${cx+24} ${y-36} ${cx+11} ${y-6}" fill="none" stroke="${PINK}" stroke-width="2.6" marker-end="url(#ap)"/><text x="${cx}" y="${y-33}" text-anchor="middle" font-size="14" font-weight="800" style="fill:${PINK}">${w}</text>`;
+    else{const tx=X(t)+sw/2+Math.min(sw/2-9,(s-t-1)*10),d=40+22*(s-t);
+      o+=`<path d="M${cx} ${y+h+2} Q${(cx+tx)/2} ${y+h+d} ${tx} ${y+h+7}" fill="none" stroke="${PINK}" stroke-width="2.6" marker-end="url(#ap)"/><text x="${(cx+tx)/2}" y="${y+h+d/2+19}" text-anchor="middle" font-size="14" font-weight="800" style="fill:${PINK}">${w}</text>`}
+    o+='</g>'}
+  for(let s=0;s<=n;s++){const lab=s?pat.slice(0,s):'start';
+    o+=`<rect x="${X(s)}" y="${y}" width="${sw}" height="${h}" rx="10" fill="${s===n?'var(--b)':st===s?'var(--a-soft)':'var(--card)'}" stroke="var(--ink)" stroke-width="${st===s||s===n?2.2:1.5}"/><text x="${X(s)+sw/2}" y="${y+h/2+5}" text-anchor="middle" font-size="${Math.min(17,sw/(lab.length*.74))}" font-weight="800">${lab}</text>`;
+    if(st===n&&s<n)o+=`<rect x="${X(s)+sw/2-22}" y="24" width="44" height="26" rx="13" fill="var(--a)" stroke="var(--ink)" stroke-width="1.5"/><text x="${X(s)+sw/2}" y="42" text-anchor="middle" font-size="14" font-weight="800">${R[s]}</text><text x="${X(s)+sw/2}" y="66" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" style="fill:var(--muted)">${VAR[s]}</text>`}
+  if(st===n)o+=`<text x="${X(0)+sw/2-22}" y="15" font-size="12.5" style="fill:var(--muted)">flips still to go</text>`;
+  $('fig').innerHTML=o;
+  if(st<n){const c=pat[st],w=other(c),t=nxt(st,w);
+    $('rule').innerHTML=`<span class="sm">on ${st?'&ldquo;'+pat.slice(0,st)+'&rdquo;':'the start'}</span><span class="big">${c} moves on &middot; ${w} ${t===st?'stays put':t?'slips back to '+pat.slice(0,t):'slips back to the start'}</span>`}
+  else $('rule').innerHTML=`<span class="sm">flips still to go from each stone</span><span class="big">${R[0]} flips from the start</span>`;
+}
+
+// ---------- tab 3: the doubling game ----------
+let game=[];
+function deal(rand,lo,hi){for(;;){const g=[];let s=0;while(s<L()&&g.length<hi){const c=rand()<.5?'H':'T';g.push(c);s=nxt(s,c)}if(s===L()&&g.length>=lo)return g}}
+function firstGame(){let x=12345+[...pat].reduce((a,c,i)=>a+(c==='H'?1<<i:0),0)*977;const rand=()=>(x=(x*1103515245+12345)%2147483648)/2147483648;for(let t=0;t<300;t++){const g=deal(rand,L()+2,L()+4);game=g;let tease=false;
+    // prefer a game where somebody gets going and then goes out
+    for(let j=0;j<g.length&&!tease;j++)if(held(j,j)&&!held(j,g.length-1))tease=true;if(tease)return g}
+  return deal(rand,L()+2,L()+4)}
+// chips player j holds after flip i (0-based), 0 if out
+const held=(j,i)=>game.slice(j,i+1).join('')===pat.slice(0,i-j+1)?2**(i-j+1):0;
+function paintGame(){
+  const n=game.length,k=Math.min(st,n),x0=96,cw=Math.min(48,(440-x0-8)/n),rh=Math.min(40,262/n),y0=54;let o='';
+  $('fig').setAttribute('viewBox','0 0 440 330');
+  for(let i=0;i<n;i++){const x=x0+i*cw+cw/2,r=Math.min(15,cw/2-2);o+=i<k?coin(x,26,r,game[i])+(st>=n&&i>=n-L()?`<circle cx="${x}" cy="26" r="${r+2}" fill="none" stroke="var(--b)" stroke-width="3.5"/>`:''):`<circle cx="${x}" cy="26" r="${r}" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 3"/>`}
+  for(let j=0;j<k;j++){const y=y0+j*rh,fs=Math.min(14,rh*.5);
+    o+=`<text x="8" y="${y+rh/2+fs*.36}" font-size="${fs}" style="fill:var(--muted)">player ${j+1}</text><circle cx="${x0-16}" cy="${y+rh/2}" r="${Math.min(11,rh/2-2)}" fill="var(--a)" stroke="var(--ink)" stroke-width="1.2"/><text x="${x0-16}" y="${y+rh/2+fs*.34}" text-anchor="middle" font-size="${fs*.85}" font-weight="800">1</text>`;
+    for(let i=j;i<k;i++){const v=held(j,i),x=x0+i*cw;
+      if(v)o+=`<rect x="${x+2}" y="${y+3}" width="${cw-4}" height="${rh-6}" rx="5" fill="${st>=n&&i===n-1?'var(--b)':'var(--b-soft)'}" stroke="var(--ink)" stroke-width="${st>=n&&i===n-1?1.8:1}"/><text x="${x+cw/2}" y="${y+rh/2+fs*.36}" text-anchor="middle" font-size="${Math.min(fs,cw*.45)}" font-weight="800">${v}</text>`;
+      else{const m=Math.min(7,rh/2-5),cx=x+cw/2,cy=y+rh/2;o+=`<path d="M${cx-m} ${cy-m}l${2*m} ${2*m}M${cx+m} ${cy-m}l${-2*m} ${2*m}" stroke="${PINK}" stroke-width="2.4" stroke-linecap="round"/>`;break}}}
+  $('fig').innerHTML=o;
+  const out=[];for(let j=0;j<n;j++){const v=held(j,n-1);if(v)out.push(v)}
+  let alive=0;for(let j=0;j<k;j++)if(k&&held(j,k-1))alive++;
+  $('rule').innerHTML=st===0?`<span class="sm">every flip, a new player pays 1 chip and calls the pattern from its first letter</span><span class="big">right: chips double &middot; wrong: out</span>`
+    :st<n?`<span class="sm">flip ${k}: ${game[k-1]}</span><span class="big">${alive} player${alive===1?'':'s'} still in</span>`
+    :st===n?`<span class="sm">the pattern shows up. Chips paid out:</span><span class="big">${out.join(' + ')}${out.length>1?' = '+wait(pat):''}</span>`
+    :`<span class="sm">paid in: ${n} chips, 1 a flip. Double or nothing is fair, so on average paid in = paid out</span><span class="big">${wait(pat)} flips on average</span>`;
+}
+
+// ---------- tab 4: slide the pattern under itself ----------
+function paintSlide(){
+  const n=L(),cw=Math.min(52,330/(2*n-1)),x0=20,rowH=cw+10,r=cw*.39,lx=Math.min(432,x0+(2*n-1)*cw+62);let o='';
+  $('fig').setAttribute('viewBox',`0 0 440 ${(n+1)*rowH+14}`);
+  if(st>0){const s=st-1,ok=pat.slice(s)===pat.slice(0,n-s);o+=`<rect x="${x0+s*cw}" y="6" width="${(n-s)*cw}" height="${(st+1)*rowH}" rx="12" fill="${ok?'var(--b-soft)':PINK}" fill-opacity="${ok?.7:.18}"/>`}
+  for(let i=0;i<n;i++)o+=coin(x0+i*cw+cw/2,6+rowH/2,r,pat[i]);
+  for(let s=0;s<st;s++){const y=6+rowH/2+(s+1)*rowH,ok=pat.slice(s)===pat.slice(0,n-s);
+    for(let i=0;i<n;i++){const over=i+s<n,x=x0+(i+s)*cw+cw/2;o+=coin(x,y,r,pat[i],over?'':'opacity=".3"');
+      if(over&&!ok&&pat[i]!==pat[i+s])o+=`<circle cx="${x}" cy="${y}" r="${r+1.5}" fill="none" stroke="${PINK}" stroke-width="3.5"/>`}
+    o+=`<text x="${lx}" y="${y+7}" text-anchor="end" font-size="20" font-weight="800" style="fill:${ok?'var(--ink)':'var(--muted)'}">${ok?'+ '+2**(n-s):'0'}</text>`}
+  $('fig').innerHTML=o;
+  const got=[];for(let s=0;s<st;s++)if(pat.slice(s)===pat.slice(0,n-s))got.push(2**(n-s));
+  if(st===0)$('rule').innerHTML=`<span class="sm">slide a copy of the pattern along under itself</span><span class="big">${[...pat].join(' ')}</span>`;
+  else{const s=st-1,ok=pat.slice(s)===pat.slice(0,n-s);
+    $('rule').innerHTML=`<span class="sm">slide by ${s}: ${ok?`${n-s} matching, add ${Array(n-s).fill(2).join(' &times; ')}`:'no match, add nothing'}</span><span class="big">${got.join(' + ')}${st===n&&got.length>1?' = '+wait(pat):''}${st===n&&got.length===1?' flips':''}</span>`}
+}
+
+const OP=x=>`<span class="op">${x}</span>`,HALF=`<span class="fr"><span>1</span><span>2</span></span>`;
+function notes(){
+  const el=$('notes'),n=L(),steps=a=>`<ol class="steps" id="steps">${a.map(x=>`<li role="button" tabindex="0"><span><b>${x}</b></span></li>`).join('')}</ol>`;
+  if(tab===0)el.innerHTML=`<h2>Flip</h2><p class="hint">Tap a coin in the pattern to change it. Try HTH, then HHH.</p>`;
+  else if(tab===1){const R=rem(),eq=[];
+    for(let s=0;s<n;s++){const a=s+1,b=nxt(s,other(pat[s])),term=t=>t===n?'':`${OP('+')}${HALF}<i>${VAR[t]}</i>`;eq.push(`<p class="fm"><span class="g"><i>${VAR[s]}</i>${OP('=')}<span>1</span>${term(a)}${term(b)}</span></p>`)}
+    el.innerHTML=`<h2>Slip back</h2>${steps([...Array(n)].map((_,s)=>s?'On '+pat.slice(0,s):'On the start').concat('Flips still to go'))}
+<div class="eqs">${eq.join('')}<p class="fm"><span class="g">${R.slice(0,n).map((v,s)=>`<i>${VAR[s]}</i>${OP('=')}<span>${v}</span>`).join(`</span><span class="g">`)}</span></p></div>
+<p class="hint">Each letter is the flips still to go from one stone: one flip, then half the time you are on one stone and half the time on the other.</p>`}
+  else if(tab===2)el.innerHTML=`<h2>The doubling game</h2>${steps(['A new player every flip','Right doubles, wrong is out','The pattern shows up','Paid in = paid out'])}
+<p class="hint">The pay-out is the same in every game. Press Another game to check.</p>`;
+  else{const ks=laps(pat);
+    el.innerHTML=`<h2>Any pattern</h2>${steps(['The pattern'].concat([...Array(n)].map((_,s)=>'Slide by '+s)))}
+<p class="fm"><span class="g"><span>${pat}</span>${OP(':')}</span><span class="g">${ks.map(k=>`<span>2<sup>${k}</sup></span>`).join(OP('+'))}${OP('=')}<span>${wait(pat)}</span></span></p>
+<p class="hint">Add 2<sup>k</sup> each time the first k coins match the last k. The matching slides are the players still holding chips in <a href="#" id="tog">the doubling game</a>.</p>`}
+  mark();
+}
+const gameItem=()=>st===0?0:st<game.length?1:st===game.length?2:3;
+function mark(){const t=$('steps');if(!t)return;const on=tab===2?gameItem():st;[...t.children].forEach((li,i)=>{li.classList.toggle('on',i===on);li.setAttribute('aria-current',i===on?'step':'false')})}
+const last=()=>tab===1?L():tab===2?game.length+1:tab===3?L():0;
+function draw(){if(tab===0)paintFlip();else if(tab===1)paintStones();else if(tab===2)paintGame();else paintSlide();
+  $('prev').disabled=st===0;$('next').disabled=st===last();$('again').hidden=tab!==2;mark()}
+function jump(i){i=Math.max(0,Math.min(last(),i));if(i===st)return;st=i;draw()}
+function select(i){tab=i;st=0;[...$('tabs').children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));$('nav').hidden=tab===0;$('prow').hidden=tab!==0;notes();draw()}
+function setPat(p){pat=p;st=0;fresh();game=firstGame();
+  $('pc').innerHTML=[...pat].map((c,i)=>`<button type="button" class="${c}" data-i="${i}" aria-label="Coin ${i+1}: ${c==='H'?'heads':'tails'}. Tap to flip it">${c}</button>`).join('');
+  $('less').disabled=L()<=2;$('more').disabled=L()>=5;notes();draw()}
+$('tabs').innerHTML=TABS.map((t,i)=>`<button role="tab" type="button" aria-selected="${i===0}"><span class="n">${i+1}</span>${t}</button>`).join('');
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select([...$('tabs').children].indexOf(b))});
+$('prev').addEventListener('click',()=>jump(st-1));$('next').addEventListener('click',()=>jump(st+1));
+$('flip').addEventListener('click',flip);$('many').addEventListener('click',many);
+$('pc').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;setPat(pat.slice(0,i)+other(pat[i])+pat.slice(i+1))});
+$('less').addEventListener('click',()=>{if(L()>2)setPat(pat.slice(0,-1))});
+$('more').addEventListener('click',()=>{if(L()<5)setPat(pat+'H')});
+$('again').addEventListener('click',()=>{game=deal(Math.random,L(),12);st=game.length;draw()});
+$('notes').addEventListener('click',e=>{if(e.target.id==='tog'){e.preventDefault();select(2);return}
+  const li=e.target.closest('#steps li');if(!li)return;const i=[...li.parentNode.children].indexOf(li);jump(tab===2?[0,1,game.length,game.length+1][i]:i)});
+document.addEventListener('keydown',e=>{
+  const li=e.target.closest&&e.target.closest('#steps li');
+  if(li&&(e.key===' '||e.key==='Enter')){e.preventDefault();li.click();return}
+  const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!d||tab===0)return;e.preventDefault();jump(st+d)});
+fresh();setPat('HTH');select(0);
+</script>
+</body>
+</html>
